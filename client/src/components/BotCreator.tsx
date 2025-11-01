@@ -1,0 +1,260 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TradingRecommendations } from "@/components/TradingRecommendations";
+import { useCreateBot } from "@/hooks/useApi";
+import { toast } from "@/hooks/use-toast";
+import { Plus, Loader2, Target } from "lucide-react";
+import type { InsertBotConfig } from "../../../shared/schema";
+
+const botSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  strategy: z.string().min(1, "Strategy is required"),
+  tradingPair: z.string().min(1, "Trading pair is required"),
+  maxPositionSize: z.number().min(0.01, "Must be at least 0.01"),
+  stopLoss: z.number().min(0.1, "Must be at least 0.1%").max(50, "Cannot exceed 50%"),
+  takeProfit: z.number().min(0.1, "Must be at least 0.1%").max(100, "Cannot exceed 100%"),
+  riskPerTrade: z.number().min(0.1, "Must be at least 0.1%").max(10, "Cannot exceed 10%"),
+});
+
+type BotFormData = z.infer<typeof botSchema>;
+
+const strategies = [
+  { value: "q-learning", label: "Q-Learning (ML)" },
+  { value: "mean-reversion", label: "Mean Reversion" },
+  { value: "trend-following", label: "Trend Following" },
+  { value: "grid-trading", label: "Grid Trading" },
+];
+
+const tradingPairs = [
+  { value: "BTC/USD", label: "BTC/USD" },
+  { value: "ETH/USD", label: "ETH/USD" },
+  { value: "SOL/USD", label: "SOL/USD" },
+  { value: "ADA/USD", label: "ADA/USD" },
+  { value: "DOT/USD", label: "DOT/USD" },
+];
+
+export function BotCreator() {
+  const [open, setOpen] = useState(false);
+  const createBotMutation = useCreateBot();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    reset,
+  } = useForm<BotFormData>({
+    resolver: zodResolver(botSchema),
+    defaultValues: {
+      maxPositionSize: 0.1,
+      stopLoss: 2.0,
+      takeProfit: 5.0,
+      riskPerTrade: 1.0,
+    },
+  });
+
+  const onSubmit = async (data: BotFormData) => {
+    try {
+      const botData: InsertBotConfig = {
+        ...data,
+        mode: "paper", // Default to paper trading
+        status: "stopped",
+      };
+
+      await createBotMutation.mutateAsync(botData);
+      toast({
+        title: "Bot Created",
+        description: `${data.name} has been created successfully.`,
+      });
+      reset();
+      setOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create bot. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleApplyRecommendation = (pair: string, config: any) => {
+    setValue("tradingPair", pair);
+    setValue("riskPerTrade", config.riskPerTrade);
+    setValue("stopLoss", config.stopLoss);
+    setValue("takeProfit", config.takeProfit);
+    setValue("maxPositionSize", config.maxPositionSize);
+
+    toast({
+      title: "Settings Applied",
+      description: `Applied recommended settings for ${pair}`,
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Bot
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Target className="w-5 h-5" />
+            Create New Trading Bot
+          </DialogTitle>
+        </DialogHeader>
+
+        <Tabs defaultValue="manual" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="manual">Manual Setup</TabsTrigger>
+            <TabsTrigger value="recommended">AI Recommendations</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="manual" className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Bot Name</Label>
+            <Input
+              id="name"
+              placeholder="e.g., ML Trend Follower"
+              {...register("name")}
+            />
+            {errors.name && (
+              <p className="text-sm text-destructive">{errors.name.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="strategy">Strategy</Label>
+            <Select onValueChange={(value) => setValue("strategy", value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a strategy" />
+              </SelectTrigger>
+              <SelectContent>
+                {strategies.map((strategy) => (
+                  <SelectItem key={strategy.value} value={strategy.value}>
+                    {strategy.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.strategy && (
+              <p className="text-sm text-destructive">{errors.strategy.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="tradingPair">Trading Pair</Label>
+            <Select onValueChange={(value) => setValue("tradingPair", value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a trading pair" />
+              </SelectTrigger>
+              <SelectContent>
+                {tradingPairs.map((pair) => (
+                  <SelectItem key={pair.value} value={pair.value}>
+                    {pair.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.tradingPair && (
+              <p className="text-sm text-destructive">{errors.tradingPair.message}</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="maxPositionSize">Max Position Size</Label>
+              <Input
+                id="maxPositionSize"
+                type="number"
+                step="0.01"
+                placeholder="0.1"
+                {...register("maxPositionSize", { valueAsNumber: true })}
+              />
+              {errors.maxPositionSize && (
+                <p className="text-sm text-destructive">{errors.maxPositionSize.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="riskPerTrade">Risk per Trade (%)</Label>
+              <Input
+                id="riskPerTrade"
+                type="number"
+                step="0.1"
+                placeholder="1.0"
+                {...register("riskPerTrade", { valueAsNumber: true })}
+              />
+              {errors.riskPerTrade && (
+                <p className="text-sm text-destructive">{errors.riskPerTrade.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="stopLoss">Stop Loss (%)</Label>
+              <Input
+                id="stopLoss"
+                type="number"
+                step="0.1"
+                placeholder="2.0"
+                {...register("stopLoss", { valueAsNumber: true })}
+              />
+              {errors.stopLoss && (
+                <p className="text-sm text-destructive">{errors.stopLoss.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="takeProfit">Take Profit (%)</Label>
+              <Input
+                id="takeProfit"
+                type="number"
+                step="0.1"
+                placeholder="5.0"
+                {...register("takeProfit", { valueAsNumber: true })}
+              />
+              {errors.takeProfit && (
+                <p className="text-sm text-destructive">{errors.takeProfit.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={createBotMutation.isPending}>
+              {createBotMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create Bot"
+              )}
+            </Button>
+          </div>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="recommended" className="space-y-4">
+            <TradingRecommendations onApplyRecommendation={handleApplyRecommendation} />
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  );
+}

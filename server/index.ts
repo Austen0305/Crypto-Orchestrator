@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
+import compression from 'compression';
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import logger from "./services/logger";
 
 const app = express();
 
@@ -9,6 +11,17 @@ declare module 'http' {
     rawBody: unknown
   }
 }
+app.use(compression({
+  level: 6, // Good balance between compression and performance
+  threshold: 1024, // Only compress responses larger than 1KB
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  }
+}));
+
 app.use(express.json({
   verify: (req, _res, buf) => {
     req.rawBody = buf;
@@ -40,6 +53,14 @@ app.use((req, res, next) => {
       }
 
       log(logLine);
+      logger.info(logLine, {
+        method: req.method,
+        path,
+        statusCode: res.statusCode,
+        duration,
+        userAgent: req.get('User-Agent'),
+        ip: req.ip,
+      });
     }
   });
 
@@ -53,14 +74,22 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    logger.error('Unhandled error:', {
+      error: err.message,
+      stack: err.stack,
+      status,
+      url: _req.url,
+      method: _req.method,
+      ip: _req.ip,
+    });
+
     res.status(status).json({ message });
-    throw err;
   });
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
+  if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
@@ -73,9 +102,15 @@ app.use((req, res, next) => {
   const port = parseInt(process.env.PORT || '5000', 10);
   server.listen({
     port,
-    host: "0.0.0.0",
-    reusePort: true,
+    host: "127.0.0.1",
   }, () => {
-    log(`serving on port ${port}`);
+    const message = `serving on port ${port}`;
+    log(message);
+    logger.info(message, {
+      port,
+      environment: process.env.NODE_ENV || 'development',
+      nodeVersion: process.version,
+      platform: process.platform,
+    });
   });
 })();

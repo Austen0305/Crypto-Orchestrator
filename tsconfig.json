@@ -14,7 +14,10 @@
     "allowImportingTsExtensions": true,
     "moduleResolution": "bundler",
     "baseUrl": ".",
+    "forceConsistentCasingInFileNames": true,
     "types": ["node", "vite/client"],
+    "downlevelIteration": true,
+    "target": "es2020",
     "paths": {
       "@/*": ["./client/src/*"],
       "@shared/*": ["./shared/*"]

@@ -55,7 +55,7 @@ export function PriceChart({ pair, currentPrice, change24h, data }: PriceChartPr
               {tf}
             </Button>
           ))}
-          <Button variant="ghost" size="icon" data-testid="button-fullscreen">
+          <Button variant="ghost" size="icon" data-testid="button-fullscreen" aria-label="Fullscreen">
             <Maximize2 className="h-4 w-4" />
           </Button>
         </div>

@@ -9,12 +9,60 @@ interface State {
 
 type Action = "buy" | "sell" | "hold";
 
-export class MLEngine {
+interface Prediction {
+  action: Action;
+  confidence: number;
+}
+
+export interface MLBase {
+  predict(marketData: MarketData[]): Promise<Prediction>;
+  getRecentAccuracy(): number;
+}
+
+export class MLEngine implements MLBase {
+  async predict(marketData: MarketData[]): Promise<Prediction> {
+    const currentState = this.deriveState(marketData, marketData.length - 1);
+    const action = this.chooseAction(this.qTable, currentState);
+    return {
+      action,
+      confidence: this.getConfidenceScore(currentState, action)
+    };
+  }
+
+  getRecentAccuracy(): number {
+    if (this.recentPredictions.length === 0) {
+      return 0.5; // Default to neutral confidence
+    }
+    const correct = this.recentPredictions.filter(
+      p => p.predicted === p.actual
+    ).length;
+    return correct / this.recentPredictions.length;
+  }
+
+  private getConfidenceScore(state: State, action: Action): number {
+    const stateKey = this.getStateKey(state);
+    const qValues = this.qTable[stateKey] || {};
+    const currentQValue = qValues[action] || 0;
+    
+    // Normalize Q-value to [0,1] range
+    const allQValues = Object.values(qValues);
+    if (allQValues.length === 0) return 0.5;
+    
+    const maxQ = Math.max(...allQValues);
+    const minQ = Math.min(...allQValues);
+    const range = maxQ - minQ;
+    
+    if (range === 0) return 0.5;
+    return (currentQValue - minQ) / range;
+  }
   private learningRate: number;
   private discountFactor: number;
   private epsilon: number;
   private epsilonDecay: number = 0.995;
   private epsilonMin: number = 0.01;
+  private recentPredictions: { predicted: Action; actual: Action }[] = [];
+  private qTable: Record<string, Record<string, number>> = {};
+  private maxRecentPredictions = 100;
 
   constructor(
     learningRate: number = 0.1,
@@ -26,7 +74,7 @@ export class MLEngine {
     this.epsilon = epsilon;
   }
 
-  private getStateKey(state: State): string {
+  getStateKey(state: State): string {
     return `${state.priceDirection}_${state.rsi}_${state.volume}`;
   }
 
@@ -100,45 +148,56 @@ export class MLEngine {
     position: "long" | "short" | null
   ): number {
     if (action === "hold") {
-      return -0.01;
+      return -0.001; // Small penalty for holding
     }
 
     const priceChange = (exitPrice - entryPrice) / entryPrice;
 
     if (action === "buy" && position === null) {
-      return priceChange > 0 ? priceChange * 10 : priceChange * 5;
+      // Reward for entering a position that becomes profitable
+      return priceChange > 0 ? priceChange * 20 : priceChange * 10;
     }
 
     if (action === "sell" && position === "long") {
-      return priceChange > 0 ? priceChange * 10 : priceChange * 5;
+      // Reward for closing a profitable long position
+      return priceChange > 0 ? priceChange * 20 : priceChange * -15;
     }
 
     if (action === "sell" && position === null) {
-      return -priceChange > 0 ? -priceChange * 10 : -priceChange * 5;
+      // Reward for entering a short position that becomes profitable
+      return -priceChange > 0 ? -priceChange * 20 : -priceChange * 10;
     }
 
     if (action === "buy" && position === "short") {
-      return -priceChange > 0 ? -priceChange * 10 : -priceChange * 5;
+      // Reward for closing a profitable short position
+      return -priceChange > 0 ? -priceChange * 20 : -priceChange * -15;
     }
 
-    return -1;
+    return -2; // Penalty for invalid actions
   }
 
   deriveState(marketData: MarketData[], currentIndex: number): State {
     const current = marketData[currentIndex];
     const previous = currentIndex > 0 ? marketData[currentIndex - 1] : current;
 
-    const priceChange = (current.close - previous.close) / previous.close;
+    // Calculate short-term momentum (last 5 periods)
+    const shortTermChange = currentIndex >= 5
+      ? (current.close - marketData[currentIndex - 5].close) / marketData[currentIndex - 5].close
+      : (current.close - previous.close) / previous.close;
+
     const priceDirection: State["priceDirection"] =
-      priceChange > 0.001 ? "up" : priceChange < -0.001 ? "down" : "stable";
+      shortTermChange > 0.002 ? "up" : shortTermChange < -0.002 ? "down" : "stable";
 
     const rsi = this.calculateRSI(marketData, currentIndex);
     const rsiState: State["rsi"] =
-      rsi < 30 ? "oversold" : rsi > 70 ? "overbought" : "neutral";
+      rsi < 35 ? "oversold" : rsi > 65 ? "overbought" : "neutral";
 
-    const avgVolume = marketData.slice(Math.max(0, currentIndex - 20), currentIndex).reduce((sum, d) => sum + d.volume, 0) / 20;
+    // Calculate volume relative to recent average
+    const lookback = Math.min(20, currentIndex);
+    const avgVolume = marketData.slice(currentIndex - lookback, currentIndex).reduce((sum, d) => sum + d.volume, 0) / lookback;
+    const volumeRatio = current.volume / avgVolume;
     const volumeState: State["volume"] =
-      current.volume > avgVolume * 1.5 ? "high" : current.volume < avgVolume * 0.5 ? "low" : "medium";
+      volumeRatio > 1.3 ? "high" : volumeRatio < 0.7 ? "low" : "medium";
 
     return {
       priceDirection,

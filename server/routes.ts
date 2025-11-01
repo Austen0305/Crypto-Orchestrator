@@ -3,16 +3,27 @@ import { createServer, type Server } from "http";
 import { WebSocketServer } from "ws";
 import { storage } from "./storage";
 import { krakenService } from "./services/krakenService";
+import { getDefaultExchange, setDefaultExchange } from './services/exchangeManager';
 import { paperTradingService } from "./services/paperTradingService";
 import { botRunner } from "./services/botRunner";
+import { tradingOrchestrator } from './services/tradingOrchestrator';
+import { marketAnalysisService } from "./services/marketAnalysisService";
 import { insertTradeSchema, insertBotConfigSchema } from "@shared/schema";
+import authRoutes from "./routes/auth";
+import notificationRoutes from "./routes/notifications";
+import healthRoutes from "./routes/health";
+import integrationsRoutes from './routes/integrations';
+import { apiLimiter, authLimiter, tradeLimiter } from "./middleware/rateLimit";
+import { authenticateToken, optionalAuth } from "./middleware/auth";
+import { cacheMiddleware, invalidateCache } from "./middleware/cache";
+import logger from "./services/logger";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
 
   wss.on("connection", (ws) => {
-    console.log("WebSocket client connected");
+    logger.info("WebSocket client connected");
     ws.send(JSON.stringify({ type: "connected", message: "Connected to CryptoML Trading Platform" }));
   });
 
@@ -24,17 +35,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   };
 
-  await krakenService.connect();
+  // connect the configured default exchange (env EXCHANGE_NAME or 'kraken')
+  const defaultExchange = getDefaultExchange();
+  await defaultExchange.connect();
 
   const ingestMarketData = async () => {
     try {
-      const pairs = await krakenService.getAllTradingPairs();
+  const pairs = await defaultExchange.getAllTradingPairs();
       await storage.updateTradingPairs(pairs);
       await paperTradingService.updatePortfolioPrices(pairs);
 
       for (const pair of pairs.slice(0, 20)) {
         try {
-          const ohlcv = await krakenService.getOHLCV(pair.symbol, "1h", 1);
+          const ohlcv = await defaultExchange.getOHLCV(pair.symbol, "1h", 1);
           if (ohlcv && ohlcv.length > 0) {
             const [timestamp, open, high, low, close, volume] = ohlcv[0];
             await storage.saveMarketData({
@@ -48,13 +61,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
         } catch (error) {
-          console.error(`Error ingesting data for ${pair.symbol}:`, error);
+          logger.error(`Error ingesting data for ${pair.symbol}:`, error);
         }
       }
 
       broadcastUpdate("market_data", pairs);
     } catch (error) {
-      console.error("Error updating market data:", error);
+      logger.error("Error updating market data:", error);
     }
   };
 
@@ -62,7 +75,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   setInterval(ingestMarketData, 60000);
 
-  app.get("/api/markets", async (req, res) => {
+  // Apply rate limiting to all routes
+  app.use(apiLimiter);
+
+  // Auth routes with stricter rate limiting
+  app.use("/api/auth", authLimiter);
+  app.use("/api/auth", authRoutes);
+
+  // Health routes (no auth required)
+  app.use("/api/health", healthRoutes);
+
+  // Notification routes (require authentication)
+  app.use("/api/notifications", authenticateToken, notificationRoutes);
+
+  app.get("/api/markets", cacheMiddleware(600), async (req, res) => {
     try {
       const pairs = await storage.getTradingPairs();
       res.json(pairs);
@@ -71,28 +97,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/markets/:pair/ohlcv", async (req, res) => {
+  app.get("/api/markets/:pair/ohlcv", cacheMiddleware(300), async (req, res) => {
     try {
       const { pair } = req.params;
       const { timeframe = "1h", limit = "100" } = req.query;
-      const ohlcv = await krakenService.getOHLCV(pair, timeframe as string, parseInt(limit as string));
+      const ohlcv = await defaultExchange.getOHLCV(pair, timeframe as string, parseInt(limit as string));
       res.json(ohlcv);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch OHLCV data" });
     }
   });
 
-  app.get("/api/markets/:pair/orderbook", async (req, res) => {
+  app.get("/api/markets/:pair/orderbook", cacheMiddleware(60), async (req, res) => {
     try {
       const { pair } = req.params;
-      const orderBook = await krakenService.getOrderBook(pair);
+      const orderBook = await defaultExchange.getOrderBook(pair);
       res.json(orderBook);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch order book" });
     }
   });
 
-  app.get("/api/portfolio/:mode", async (req, res) => {
+  app.get("/api/portfolio/:mode", optionalAuth, async (req, res) => {
     try {
       const { mode } = req.params;
       if (mode !== "paper" && mode !== "live") {
@@ -105,7 +131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/trades", async (req, res) => {
+  app.get("/api/trades", optionalAuth, async (req, res) => {
     try {
       const { botId, mode } = req.query;
       const trades = await storage.getTrades(botId as string, mode as any);
@@ -115,15 +141,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/trades", async (req, res) => {
+  app.post("/api/trades", authenticateToken, tradeLimiter, async (req, res) => {
     try {
       const validated = insertTradeSchema.parse(req.body);
-      
+
       if (validated.mode === "paper") {
         const result = await paperTradingService.executeTrade(
           validated.pair,
           validated.side,
-          validated.type,
+          validated.type === "stop-loss" ? "limit" : validated.type,
           validated.amount,
           validated.price,
           validated.botId
@@ -145,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/bots", async (req, res) => {
+  app.get("/api/bots", optionalAuth, async (req, res) => {
     try {
       const bots = await storage.getBots();
       res.json(bots);
@@ -154,7 +180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/bots/:id", async (req, res) => {
+  app.get("/api/bots/:id", optionalAuth, async (req, res) => {
     try {
       const bot = await storage.getBotById(req.params.id);
       if (!bot) {
@@ -166,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/bots", async (req, res) => {
+  app.post("/api/bots", authenticateToken, async (req, res) => {
     try {
       const validated = insertBotConfigSchema.parse(req.body);
       const bot = await storage.createBot(validated);
@@ -177,7 +203,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/bots/:id", async (req, res) => {
+  app.patch("/api/bots/:id", authenticateToken, async (req, res) => {
     try {
       const bot = await storage.updateBot(req.params.id, req.body);
       if (!bot) {
@@ -190,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/bots/:id", async (req, res) => {
+  app.delete("/api/bots/:id", authenticateToken, async (req, res) => {
     try {
       const success = await storage.deleteBot(req.params.id);
       if (!success) {
@@ -203,7 +229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/bots/:id/start", async (req, res) => {
+  app.post("/api/bots/:id/start", authenticateToken, async (req, res) => {
     try {
       const result = await botRunner.startBot(req.params.id);
       if (result.success) {
@@ -216,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/bots/:id/stop", async (req, res) => {
+  app.post("/api/bots/:id/stop", authenticateToken, async (req, res) => {
     try {
       const result = await botRunner.stopBot(req.params.id);
       if (result.success) {
@@ -229,7 +255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/bots/:id/model", async (req, res) => {
+  app.get("/api/bots/:id/model", optionalAuth, async (req, res) => {
     try {
       const model = await storage.getMLModelState(req.params.id);
       if (!model) {
@@ -241,7 +267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/bots/:id/performance", async (req, res) => {
+  app.get("/api/bots/:id/performance", optionalAuth, async (req, res) => {
     try {
       const metrics = await storage.getPerformanceMetrics(req.params.id);
       if (!metrics) {
@@ -260,6 +286,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(fees);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch fees" });
+    }
+  });
+
+  // Switch default exchange at runtime (requires auth)
+  app.post('/api/exchange/switch', authenticateToken, async (req, res) => {
+    try {
+      const { name } = req.body;
+      if (!name || typeof name !== 'string') return res.status(400).json({ error: 'Missing exchange name' });
+      const ex = setDefaultExchange(name);
+      await ex.connect();
+      broadcastUpdate('exchange_changed', { exchange: name });
+      res.json({ success: true, exchange: name });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to switch exchange' });
     }
   });
 
@@ -289,6 +329,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch status" });
+    }
+  });
+
+  // Integration endpoints for external frameworks (freqtrade / jesse)
+  // Handled by a separate router to keep this file smaller and optional
+  app.use('/api/integrations', integrationsRoutes);
+
+  app.get("/api/recommendations", async (req, res) => {
+    try {
+      const recommendations = await marketAnalysisService.getTradingRecommendations();
+      res.setHeader('Content-Type', 'application/json');
+      res.json(recommendations);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch trading recommendations" });
+    }
+  });
+
+  app.get("/api/recommendations/:pair", async (req, res) => {
+    try {
+      const { pair } = req.params;
+      const recommendation = await marketAnalysisService.getPairRecommendation(pair);
+      if (!recommendation) {
+        return res.status(404).json({ error: "Pair not found or insufficient data" });
+      }
+      res.json(recommendation);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch pair recommendation" });
+    }
+  });
+
+  app.post("/api/recommendations/optimize", authenticateToken, async (req, res) => {
+    try {
+      const { pair, currentConfig } = req.body;
+
+      // Get pair analysis
+      const pairAnalysis = await marketAnalysisService.getPairRecommendation(pair);
+      if (!pairAnalysis) {
+        return res.status(404).json({ error: "Pair not found or insufficient data" });
+      }
+
+      // Optimize parameters based on current bot performance
+      const optimization = {
+        recommendedConfig: {
+          tradingPair: pair,
+          riskPerTrade: pairAnalysis.recommendedRiskPerTrade,
+          stopLoss: pairAnalysis.recommendedStopLoss,
+          takeProfit: pairAnalysis.recommendedTakeProfit,
+          maxPositionSize: Math.min(1000, pairAnalysis.currentPrice * 10), // Max 10 units at current price
+        },
+        reasoning: pairAnalysis.reasoning,
+        expectedPerformance: {
+          estimatedWinRate: Math.min(60, 40 + pairAnalysis.profitabilityScore * 2),
+          estimatedProfitFactor: Math.max(1.1, 1 + pairAnalysis.profitabilityScore * 0.1),
+          riskAdjustedReturn: pairAnalysis.profitabilityScore * pairAnalysis.confidence,
+        },
+        alternatives: {
+          conservative: {
+            riskPerTrade: pairAnalysis.recommendedRiskPerTrade * 0.5,
+            stopLoss: pairAnalysis.recommendedStopLoss * 1.5,
+            takeProfit: pairAnalysis.recommendedTakeProfit * 0.8,
+          },
+          aggressive: {
+            riskPerTrade: Math.min(10, pairAnalysis.recommendedRiskPerTrade * 2),
+            stopLoss: pairAnalysis.recommendedStopLoss * 0.7,
+            takeProfit: pairAnalysis.recommendedTakeProfit * 1.5,
+          },
+        },
+      };
+
+      res.json(optimization);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to optimize bot configuration" });
     }
   });
 

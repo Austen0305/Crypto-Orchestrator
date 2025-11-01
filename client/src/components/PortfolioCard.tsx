@@ -7,13 +7,14 @@ interface PortfolioCardProps {
   change?: number;
   icon: LucideIcon;
   subtitle?: string;
+  className?: string;
 }
 
-export function PortfolioCard({ title, value, change, icon: Icon, subtitle }: PortfolioCardProps) {
+export function PortfolioCard({ title, value, change, icon: Icon, subtitle, className }: PortfolioCardProps) {
   const isPositive = change !== undefined && change >= 0;
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}

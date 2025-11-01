@@ -5,40 +5,78 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Play, Pause, Settings, TrendingUp } from "lucide-react";
-
-interface BotConfig {
-  id: string;
-  name: string;
-  strategy: string;
-  status: "running" | "stopped" | "paused";
-  profitLoss: number;
-  winRate: number;
-  trades: number;
-}
+import { Play, Pause, Settings, TrendingUp, Loader2 } from "lucide-react";
+import { useStartBot, useStopBot } from "@/hooks/useApi";
+import { useIntegrationsStatus, useStartIntegrations, useStopIntegrations } from "@/hooks/useApi";
+import { toast } from "@/hooks/use-toast";
+import type { BotConfig } from "../../../shared/schema";
 
 interface BotControlPanelProps {
   bots: BotConfig[];
 }
 
 export function BotControlPanel({ bots }: BotControlPanelProps) {
-  const [botStates, setBotStates] = useState<Record<string, boolean>>(
-    bots.reduce((acc, bot) => ({ ...acc, [bot.id]: bot.status === "running" }), {})
-  );
+  const startBotMutation = useStartBot();
+  const stopBotMutation = useStopBot();
+  const [pendingActions, setPendingActions] = useState<Set<string>>(new Set());
+  const integrationsStatus = useIntegrationsStatus();
+  const startIntegrationsMut = useStartIntegrations();
+  const stopIntegrationsMut = useStopIntegrations();
 
-  const toggleBot = (botId: string) => {
-    setBotStates((prev) => {
-      const newState = !prev[botId];
-      console.log(`${newState ? "Starting" : "Stopping"} bot ${botId}`);
-      return { ...prev, [botId]: newState };
-    });
+  const toggleBot = async (botId: string, currentStatus: string) => {
+    if (pendingActions.has(botId)) return;
+
+    setPendingActions(prev => new Set(prev).add(botId));
+
+    try {
+      if (currentStatus === "running") {
+        await stopBotMutation.mutateAsync(botId);
+        toast({
+          title: "Bot Stopped",
+          description: "The trading bot has been stopped successfully.",
+        });
+      } else {
+        await startBotMutation.mutateAsync(botId);
+        toast({
+          title: "Bot Started",
+          description: "The trading bot has been started successfully.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to ${currentStatus === "running" ? "stop" : "start"} bot. Please try again.`,
+        variant: "destructive",
+      });
+    } finally {
+      setPendingActions(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(botId);
+        return newSet;
+      });
+    }
   };
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <Button size="sm" onClick={() => startIntegrationsMut.mutate()} disabled={startIntegrationsMut.isPending}>
+            Start Adapters
+          </Button>
+          <Button size="sm" variant="destructive" onClick={() => stopIntegrationsMut.mutate()} disabled={stopIntegrationsMut.isPending}>
+            Stop Adapters
+          </Button>
+        </div>
+        <div>
+          <span className="text-sm text-muted-foreground">Adapters:</span>
+          <Badge className="ml-2">{integrationsStatus.data ? 'online' : 'offline'}</Badge>
+        </div>
+      </div>
       {bots.map((bot) => {
-        const isRunning = botStates[bot.id];
+        const isRunning = bot.status === "running";
         const isProfit = bot.profitLoss >= 0;
+        const isPending = pendingActions.has(bot.id);
 
         return (
           <Card key={bot.id} data-testid={`card-bot-${bot.id}`}>
@@ -51,7 +89,14 @@ export function BotControlPanel({ bots }: BotControlPanelProps) {
                 variant={isRunning ? "default" : "secondary"}
                 data-testid={`badge-status-${bot.id}`}
               >
-                {isRunning ? "Running" : "Stopped"}
+                {isPending ? (
+                  <div className="flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    {isRunning ? "Stopping..." : "Starting..."}
+                  </div>
+                ) : (
+                  bot.status.charAt(0).toUpperCase() + bot.status.slice(1)
+                )}
               </Badge>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -60,7 +105,7 @@ export function BotControlPanel({ bots }: BotControlPanelProps) {
                   <p className="text-sm text-muted-foreground">P&L</p>
                   <p
                     className={`text-xl font-mono font-bold ${
-                      isProfit ? "text-trading-profit" : "text-trading-loss"
+                      isProfit ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                     }`}
                     data-testid={`text-pnl-${bot.id}`}
                   >
@@ -69,12 +114,12 @@ export function BotControlPanel({ bots }: BotControlPanelProps) {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Win Rate</p>
-                  <p className="text-xl font-mono font-bold">{bot.winRate}%</p>
+                  <p className="text-xl font-mono font-bold">{bot.winRate.toFixed(1)}%</p>
                   <Progress value={bot.winRate} className="mt-1 h-1" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Trades</p>
-                  <p className="text-xl font-mono font-bold">{bot.trades}</p>
+                  <p className="text-xl font-mono font-bold">{bot.totalTrades}</p>
                 </div>
               </div>
 
@@ -82,7 +127,8 @@ export function BotControlPanel({ bots }: BotControlPanelProps) {
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={isRunning}
-                    onCheckedChange={() => toggleBot(bot.id)}
+                    onCheckedChange={() => toggleBot(bot.id, bot.status)}
+                    disabled={isPending || startBotMutation.isPending || stopBotMutation.isPending}
                     data-testid={`switch-bot-${bot.id}`}
                   />
                   <Label className="cursor-pointer">

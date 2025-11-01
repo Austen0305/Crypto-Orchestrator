@@ -10,6 +10,13 @@ import {
   type PerformanceMetrics,
   type MarketData,
   type TradingMode,
+  type User,
+  type InsertUser,
+  type Notification,
+  type InsertNotification,
+  type BacktestResult,
+  type ApiKey,
+  type InsertApiKey,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -17,28 +24,52 @@ export interface IStorage {
   getTrades(botId?: string, mode?: TradingMode): Promise<Trade[]>;
   getTradeById(id: string): Promise<Trade | undefined>;
   createTrade(trade: InsertTrade): Promise<Trade>;
-  
+
   getBots(): Promise<BotConfig[]>;
   getBotById(id: string): Promise<BotConfig | undefined>;
   createBot(bot: InsertBotConfig): Promise<BotConfig>;
   updateBot(id: string, updates: Partial<BotConfig>): Promise<BotConfig | undefined>;
   deleteBot(id: string): Promise<boolean>;
-  
+
   getMLModelState(botId: string): Promise<MLModelState | undefined>;
   saveMLModelState(state: InsertMLModelState): Promise<MLModelState>;
   updateMLModelState(id: string, updates: Partial<MLModelState>): Promise<MLModelState | undefined>;
-  
+
   getPortfolio(mode: TradingMode): Promise<Portfolio>;
   updatePortfolio(mode: TradingMode, portfolio: Portfolio): Promise<Portfolio>;
-  
+
   getTradingPairs(): Promise<TradingPair[]>;
   updateTradingPairs(pairs: TradingPair[]): Promise<void>;
-  
+
   getPerformanceMetrics(botId: string): Promise<PerformanceMetrics | undefined>;
   savePerformanceMetrics(metrics: PerformanceMetrics): Promise<void>;
-  
+
   getMarketData(pair: string, limit?: number): Promise<MarketData[]>;
   saveMarketData(data: MarketData): Promise<void>;
+  getMarketDataForPeriod(pair: string, startDate: number, endDate: number): Promise<MarketData[]>;
+
+  saveBacktestResult(result: Omit<BacktestResult, 'id' | 'createdAt'>): Promise<BacktestResult>;
+  getBacktestResults(botId: string): Promise<BacktestResult[]>;
+
+  // User authentication methods
+  getUserById(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
+
+  // Notification methods
+  getNotifications(userId: string): Promise<Notification[]>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  markNotificationAsRead(id: string): Promise<boolean>;
+  deleteNotification(id: string): Promise<boolean>;
+
+  // API Key methods
+  getApiKeysByUserId(userId: string): Promise<ApiKey[]>;
+  getApiKeyById(id: string): Promise<ApiKey | undefined>;
+  getApiKeyByKey(key: string): Promise<ApiKey | undefined>;
+  createApiKey(apiKey: InsertApiKey): Promise<ApiKey>;
+  updateApiKey(id: string, updates: Partial<ApiKey>): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -49,6 +80,10 @@ export class MemStorage implements IStorage {
   private tradingPairs: TradingPair[];
   private performanceMetrics: Map<string, PerformanceMetrics>;
   private marketData: Map<string, MarketData[]>;
+  private users: Map<string, User>;
+  private notifications: Map<string, Notification>;
+  private backtestResults: Map<string, BacktestResult>;
+  private apiKeys: Map<string, ApiKey>;
 
   constructor() {
     this.trades = new Map();
@@ -58,7 +93,11 @@ export class MemStorage implements IStorage {
     this.tradingPairs = [];
     this.performanceMetrics = new Map();
     this.marketData = new Map();
-    
+    this.users = new Map();
+    this.notifications = new Map();
+    this.backtestResults = new Map();
+    this.apiKeys = new Map();
+
     this.portfolios.set("paper", {
       totalBalance: 100000,
       availableBalance: 100000,
@@ -66,7 +105,7 @@ export class MemStorage implements IStorage {
       profitLoss24h: 0,
       profitLossTotal: 0,
     });
-    
+
     this.portfolios.set("live", {
       totalBalance: 0,
       availableBalance: 0,
@@ -131,7 +170,7 @@ export class MemStorage implements IStorage {
   async updateBot(id: string, updates: Partial<BotConfig>): Promise<BotConfig | undefined> {
     const bot = this.bots.get(id);
     if (!bot) return undefined;
-    
+
     const updated = {
       ...bot,
       ...updates,
@@ -160,7 +199,7 @@ export class MemStorage implements IStorage {
       this.mlModels.set(existing.id, updated);
       return updated;
     }
-    
+
     const id = randomUUID();
     const state: MLModelState = {
       ...insertState,
@@ -174,7 +213,7 @@ export class MemStorage implements IStorage {
   async updateMLModelState(id: string, updates: Partial<MLModelState>): Promise<MLModelState | undefined> {
     const state = this.mlModels.get(id);
     if (!state) return undefined;
-    
+
     const updated: MLModelState = {
       ...state,
       ...updates,
@@ -227,6 +266,140 @@ export class MemStorage implements IStorage {
       existing.shift();
     }
     this.marketData.set(data.pair, existing);
+  }
+
+  async getMarketDataForPeriod(pair: string, startDate: number, endDate: number): Promise<MarketData[]> {
+    const data = this.marketData.get(pair) || [];
+    return data.filter(d => d.timestamp >= startDate && d.timestamp <= endDate);
+  }
+
+  async saveBacktestResult(result: Omit<BacktestResult, 'id' | 'createdAt'>): Promise<BacktestResult> {
+    const id = randomUUID();
+    const backtestResult: BacktestResult = {
+      ...result,
+      id,
+      createdAt: Date.now(),
+    };
+    this.backtestResults.set(id, backtestResult);
+    return backtestResult;
+  }
+
+  async getBacktestResults(botId: string): Promise<BacktestResult[]> {
+    return Array.from(this.backtestResults.values())
+      .filter(result => result.botId === botId)
+      .sort((a, b) => b.createdAt - a.createdAt);
+  }
+
+  // User authentication methods
+  async getUserById(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.email === email);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.username === username);
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const id = randomUUID();
+    const now = Date.now();
+    const user: User = {
+      ...insertUser,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.users.set(id, user);
+    return user;
+  }
+
+  async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+
+    const updated = {
+      ...user,
+      ...updates,
+      updatedAt: Date.now(),
+    };
+    this.users.set(id, updated);
+    return updated;
+  }
+
+  // Notification methods
+  async getNotifications(userId: string): Promise<Notification[]> {
+    return Array.from(this.notifications.values())
+      .filter(notification => notification.userId === userId)
+      .sort((a, b) => b.createdAt - a.createdAt);
+  }
+
+  async createNotification(insertNotification: InsertNotification): Promise<Notification> {
+    const id = randomUUID();
+    const notification: Notification = {
+      ...insertNotification,
+      id,
+      createdAt: Date.now(),
+    };
+    this.notifications.set(id, notification);
+    return notification;
+  }
+
+  async markNotificationAsRead(id: string): Promise<boolean> {
+    const notification = this.notifications.get(id);
+    if (!notification) return false;
+
+    const updated = {
+      ...notification,
+      read: true,
+    };
+    this.notifications.set(id, updated);
+    return true;
+  }
+
+  async deleteNotification(id: string): Promise<boolean> {
+    return this.notifications.delete(id);
+  }
+
+  // API Key methods
+  async getApiKeysByUserId(userId: string): Promise<ApiKey[]> {
+    return Array.from(this.apiKeys.values())
+      .filter(apiKey => apiKey.userId === userId)
+      .sort((a, b) => b.createdAt - a.createdAt);
+  }
+
+  async getApiKeyById(id: string): Promise<ApiKey | undefined> {
+    return this.apiKeys.get(id);
+  }
+
+  async getApiKeyByKey(key: string): Promise<ApiKey | undefined> {
+    return Array.from(this.apiKeys.values()).find(apiKey => apiKey.key === key);
+  }
+
+  async createApiKey(insertApiKey: InsertApiKey): Promise<ApiKey> {
+    const id = randomUUID();
+    const now = Date.now();
+    const apiKey: ApiKey = {
+      ...insertApiKey,
+      id,
+      createdAt: now,
+    };
+    this.apiKeys.set(id, apiKey);
+    return apiKey;
+  }
+
+  async updateApiKey(id: string, updates: Partial<ApiKey>): Promise<boolean> {
+    const apiKey = this.apiKeys.get(id);
+    if (!apiKey) return false;
+
+    const updated = {
+      ...apiKey,
+      ...updates,
+    };
+    this.apiKeys.set(id, updated);
+    return true;
   }
 }
 

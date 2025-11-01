@@ -3,9 +3,16 @@ import { PriceChart } from "@/components/PriceChart";
 import { OrderEntryPanel } from "@/components/OrderEntryPanel";
 import { OrderBook } from "@/components/OrderBook";
 import { TradeHistory } from "@/components/TradeHistory";
-import { Wallet, TrendingUp, Activity, DollarSign } from "lucide-react";
+import { TradingRecommendations } from "@/components/TradingRecommendations";
+import { usePortfolio, useTrades, useStatus } from "@/hooks/useApi";
+import { useState } from 'react';
+import { Wallet, TrendingUp, Activity, DollarSign, Loader2, Target } from "lucide-react";
 
 export default function Dashboard() {
+  const { data: portfolio, isLoading: portfolioLoading } = usePortfolio("paper");
+  const { data: trades, isLoading: tradesLoading } = useTrades();
+  const { data: status } = useStatus();
+
   const chartData = [
     { time: "00:00", price: 45200 },
     { time: "04:00", price: 45800 },
@@ -32,84 +39,125 @@ export default function Dashboard() {
     { price: 47375, amount: 0.5421, total: 25682 },
   ];
 
-  const recentTrades = [
-    {
-      id: "1",
-      pair: "BTC/USD",
-      type: "buy" as const,
-      amount: 0.5,
-      price: 47200,
-      total: 23600,
-      timestamp: "2 mins ago",
-      status: "completed" as const,
-    },
-    {
-      id: "2",
-      pair: "ETH/USD",
-      type: "sell" as const,
-      amount: 10,
-      price: 2580,
-      total: 25800,
-      timestamp: "15 mins ago",
-      status: "completed" as const,
-    },
-    {
-      id: "3",
-      pair: "SOL/USD",
-      type: "buy" as const,
-      amount: 50,
-      price: 98.45,
-      total: 4922.5,
-      timestamp: "1 hour ago",
-      status: "completed" as const,
-    },
-  ];
+  if (portfolioLoading || tradesLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading dashboard...</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+    <div className="space-y-4">
+      {/* Portfolio Summary Cards - Grid layout that adapts to screen size */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
         <PortfolioCard
           title="Total Balance"
-          value="$125,430"
-          change={12.5}
+          value={portfolio ? `$${portfolio.totalBalance.toLocaleString()}` : "$0"}
+          change={portfolio?.profitLoss24h || 0}
           icon={Wallet}
+          className="min-w-[140px]"
         />
         <PortfolioCard
           title="24h P&L"
-          value="$3,245"
-          change={8.2}
+          value={portfolio ? `$${portfolio.profitLoss24h.toLocaleString()}` : "$0"}
+          change={portfolio?.profitLoss24h || 0}
           icon={TrendingUp}
+          className="min-w-[140px]"
         />
         <PortfolioCard
           title="Active Bots"
-          value="3"
+          value={status?.runningBots?.toString() || "0"}
           icon={Activity}
-          subtitle="2 profitable"
+          subtitle={status?.krakenConnected ? "Kraken Connected" : "Kraken Disconnected"}
+          className="min-w-[140px]"
         />
         <PortfolioCard
-          title="Daily Volume"
-          value="$45,200"
-          change={-2.4}
+          title="Total P&L"
+          value={portfolio ? `$${portfolio.profitLossTotal.toLocaleString()}` : "$0"}
+          change={portfolio?.profitLossTotal || 0}
           icon={DollarSign}
+          className="min-w-[140px]"
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 h-[600px]">
-          <PriceChart
-            pair="BTC/USD"
-            currentPrice={47350}
-            change24h={4.76}
-            data={chartData}
-          />
+      {/* Main Trading Interface - Responsive layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Chart Section - Takes more space on larger screens */}
+        <div className="lg:col-span-8 space-y-4">
+          <div className="h-[400px] md:h-[600px] rounded-lg border bg-card">
+            <PriceChart
+              pair="BTC/USD"
+              currentPrice={47350}
+              change24h={4.76}
+              data={chartData}
+            />
+          </div>
+          
+          {/* Trading Recommendations - Full width on mobile, shown below chart */}
+          <div className="lg:hidden">
+            <TradingRecommendations />
+          </div>
         </div>
-        <div className="space-y-6">
+
+        {/* Trading Controls - Side panel on desktop, bottom panel on mobile */}
+        <div className="lg:col-span-4 space-y-4">
           <OrderEntryPanel />
-          <OrderBook bids={mockBids} asks={mockAsks} spread={15} />
+          {/* Quick Predict integration panel */}
+          <div className="rounded-lg border bg-card p-4">
+            <h3 className="font-semibold mb-2">Quick Predict (Freqtrade + Jesse)</h3>
+            <PredictPanel />
+          </div>
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <OrderBook bids={mockBids} asks={mockAsks} spread={15} />
+          </div>
         </div>
       </div>
 
-      <TradeHistory trades={recentTrades} />
+      {/* Trading Recommendations - Shown on desktop */}
+      <div className="hidden lg:block">
+        <TradingRecommendations />
+      </div>
+
+      {/* Trade History - Always full width */}
+      <div className="rounded-lg border bg-card overflow-hidden">
+        <TradeHistory trades={trades || []} />
+      </div>
+    </div>
+  );
+}
+
+function PredictPanel() {
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any | null>(null);
+
+  async function callPredict() {
+    setLoading(true);
+    setResult(null);
+    try {
+      const resp = await fetch('/api/integrations/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      const data = await resp.json();
+      setResult(data);
+    } catch (e) {
+      setResult({ error: String(e) });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div>
+      <button onClick={callPredict} className="btn mr-2" disabled={loading}>
+        {loading ? 'Predicting…' : 'Predict'}
+      </button>
+      {result && (
+        <pre className="mt-2 text-sm max-h-48 overflow-auto bg-muted p-2 rounded">{JSON.stringify(result, null, 2)}</pre>
+      )}
     </div>
   );
 }

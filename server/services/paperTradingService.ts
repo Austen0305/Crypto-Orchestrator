@@ -1,6 +1,6 @@
 import type { Portfolio, InsertTrade, TradingPair } from "@shared/schema";
 import { storage } from "../storage";
-import { krakenService } from "./krakenService";
+import { getDefaultExchange } from './exchangeManager';
 
 export class PaperTradingService {
   async executeTrade(
@@ -14,12 +14,13 @@ export class PaperTradingService {
     try {
       const portfolio = await storage.getPortfolio("paper");
 
-      const currentPrice = price || (await krakenService.getMarketPrice(pair));
+      const exchange = getDefaultExchange();
+      const currentPrice = price || (await exchange.getMarketPrice(pair));
       if (!currentPrice) {
         return { success: false, error: "Could not fetch market price" };
       }
 
-      const feeCalc = krakenService.calculateTotalWithFee(
+      const feeCalc = exchange.calculateTotalWithFee(
         amount,
         currentPrice,
         side,

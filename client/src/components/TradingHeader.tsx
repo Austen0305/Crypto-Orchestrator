@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Settings, User } from "lucide-react";
+import { Bell, Settings, User, LogIn, LogOut } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
+import { AuthModal } from "./AuthModal";
+import { NotificationCenter } from "./NotificationCenter";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TradingHeaderProps {
   balance: number;
@@ -9,6 +12,8 @@ interface TradingHeaderProps {
 }
 
 export function TradingHeader({ balance, connected }: TradingHeaderProps) {
+  const { isAuthenticated, user, logout } = useAuth();
+
   return (
     <header className="h-16 border-b bg-card flex items-center justify-between px-6">
       <div className="flex items-center gap-6">
@@ -26,16 +31,33 @@ export function TradingHeader({ balance, connected }: TradingHeaderProps) {
           </p>
         </div>
         <div className="h-8 w-px bg-border" />
-        <Button variant="ghost" size="icon" data-testid="button-notifications">
-          <Bell className="h-5 w-5" />
-        </Button>
-        <Button variant="ghost" size="icon" data-testid="button-settings">
+        {isAuthenticated && <NotificationCenter />}
+        <Button variant="ghost" size="icon" data-testid="button-settings" aria-label="Settings">
           <Settings className="h-5 w-5" />
         </Button>
         <ThemeToggle />
-        <Button variant="ghost" size="icon" data-testid="button-profile">
-          <User className="h-5 w-5" />
-        </Button>
+        {isAuthenticated ? (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {user?.username}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={logout}
+              data-testid="button-logout"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
+        ) : (
+          <>
+            <AuthModal isOpen={true} onClose={() => {}} />
+            <Button variant="ghost" size="icon" data-testid="button-login">
+              <LogIn className="h-5 w-5" />
+            </Button>
+          </>
+        )}
       </div>
     </header>
   );
