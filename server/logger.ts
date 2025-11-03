@@ -1,3 +1,4 @@
+// DEPRECATED: This file is no longer used. The backend is now powered by FastAPI (Python). You can safely remove this file.
 import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import path from 'path';

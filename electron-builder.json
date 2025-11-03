@@ -1,0 +1,96 @@
+{
+  "appId": "com.cryptoorchestrator.app",
+  "productName": "CryptoOrchestrator",
+  "directories": {
+    "output": "dist-electron"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/**/*",
+    "node_modules/**/*",
+    "package.json"
+  ],
+  "extraFiles": [
+    "server_fastapi/**/*",
+    "shared/**/*",
+    "requirements.txt",
+    {
+      "from": "python/",
+      "to": "python/",
+      "filter": ["**/*"]
+    },
+    {
+      "from": ".venv/",
+      "to": ".venv/",
+      "filter": ["**/*"]
+    }
+  ],
+  "extraResources": [
+    {
+      "from": "python-runtime/",
+      "to": "python-runtime/",
+      "filter": ["**/*"]
+    }
+  ],
+  "mac": {
+    "category": "public.app-category.finance",
+    "target": [
+      {
+        "target": "dmg",
+        "arch": ["x64", "arm64"]
+      }
+    ],
+    "extraResources": [
+      {
+        "from": "python-runtime/",
+        "to": "python-runtime/",
+        "filter": ["**/*"]
+      }
+    ]
+  },
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64", "ia32"]
+      }
+    ],
+    "extraResources": [
+      {
+        "from": "python-runtime/",
+        "to": "python-runtime/",
+        "filter": ["**/*"]
+      }
+    ]
+  },
+  "linux": {
+    "target": [
+      {
+        "target": "AppImage",
+        "arch": ["x64"]
+      },
+      {
+        "target": "deb",
+        "arch": ["x64"]
+      }
+    ],
+    "extraResources": [
+      {
+        "from": "python-runtime/",
+        "to": "python-runtime/",
+        "filter": ["**/*"]
+      }
+    ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": false
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "yourusername",
+    "repo": "CryptoOrchestrator"
+  }
+}

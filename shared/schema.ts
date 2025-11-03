@@ -209,6 +209,10 @@ export const userSchema = z.object({
   mfaSecret: z.string().optional(),
   // account flags
   isActive: z.boolean().optional(),
+  emailVerified: z.boolean().optional(),
+  emailVerificationToken: z.string().optional(),
+  passwordResetToken: z.string().optional(),
+  passwordResetExpires: z.number().optional(),
   createdAt: z.number(),
   updatedAt: z.number(),
   settings: z.record(z.unknown()).optional(),

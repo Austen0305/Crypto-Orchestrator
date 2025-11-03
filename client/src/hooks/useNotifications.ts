@@ -1,13 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useWebSocket } from '@/hooks/useWebSocket';
 import type { Notification } from '../../../shared/schema';
 
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { toast } = useToast();
-  const { getAuthHeaders, isAuthenticated } = useAuth();
+  const { getAuthHeaders, isAuthenticated, user } = useAuth();
+  const { isConnected, sendMessage } = useWebSocket();
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
 
   const fetchNotifications = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -165,16 +169,104 @@ export const useNotifications = () => {
     }
   }, [getAuthHeaders, toast]);
 
+  // WebSocket connection for real-time notifications
+  useEffect(() => {
+    if (isAuthenticated && user?.token && isConnected) {
+      // Send authentication message for notifications
+      sendMessage({
+        type: 'auth',
+        token: user.token,
+        subscribe: ['notifications']
+      });
+    }
+  }, [isAuthenticated, user, isConnected, sendMessage]);
+
+  // Handle WebSocket messages for notifications
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        switch (data.type) {
+          case 'initial_notifications':
+            setNotifications(data.data || []);
+            break;
+          case 'notification':
+            setNotifications(prev => [data.data, ...prev]);
+            setUnreadCount(prev => prev + 1);
+            break;
+          case 'notification_read':
+            setNotifications(prev =>
+              prev.map(n =>
+                n.id === data.notification_id ? { ...n, read: true } : n
+              )
+            );
+            setUnreadCount(prev => Math.max(0, prev - 1));
+            break;
+          case 'all_notifications_read':
+            setNotifications(prev =>
+              prev.map(n => ({ ...n, read: true }))
+            );
+            setUnreadCount(0);
+            break;
+          case 'notification_deleted':
+            setNotifications(prev =>
+              prev.filter(n => n.id !== data.notification_id)
+            );
+            break;
+          case 'unread_count_update':
+            setUnreadCount(data.count);
+            break;
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+
+    if (isConnected) {
+      // Add event listener for WebSocket messages
+      const ws = (window as any).ws || (window as any).WebSocket;
+      if (ws) {
+        ws.addEventListener('message', handleMessage);
+      }
+
+      return () => {
+        if (ws) {
+          ws.removeEventListener('message', handleMessage);
+        }
+      };
+    }
+  }, [isConnected]);
+
+  // Fallback to polling when WebSocket is not available
+  useEffect(() => {
+    if (!isConnected && isAuthenticated) {
+      fetchNotifications();
+
+      const pollInterval = setInterval(() => {
+        fetchNotifications();
+      }, 30000); // Poll every 30 seconds
+
+      return () => clearInterval(pollInterval);
+    }
+  }, [isAuthenticated, isConnected, fetchNotifications]);
+
   // Fetch notifications on mount and when authentication changes
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isConnected) {
       fetchNotifications();
-    } else {
+    } else if (!isAuthenticated) {
       setNotifications([]);
+      setUnreadCount(0);
     }
-  }, [isAuthenticated, fetchNotifications]);
+  }, [isAuthenticated, isConnected, fetchNotifications]);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // Update unread count when notifications change (for non-WebSocket mode)
+  useEffect(() => {
+    if (!isConnected) {
+      setUnreadCount(notifications.filter(n => !n.read).length);
+    }
+  }, [notifications, isConnected]);
 
   return {
     notifications,

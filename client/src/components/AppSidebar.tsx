@@ -18,6 +18,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Link, useLocation } from "wouter";
+import { Badge } from "@/components/ui/badge";
+import { useActiveBots } from "@/hooks/useBots";
 
 const menuItems = [
   {
@@ -29,11 +31,20 @@ const menuItems = [
     title: "Trading",
     url: "/trading",
     icon: TrendingUp,
+    badge: () => null, // No badge by default
   },
   {
     title: "Bots",
     url: "/bots",
     icon: Bot,
+    badge: () => {
+      const { activeCount } = useActiveBots();
+      return activeCount > 0 ? (
+        <Badge variant="success" className="ml-2">
+          {activeCount}
+        </Badge>
+      ) : null;
+    },
   },
   {
     title: "Analytics",
@@ -66,16 +77,24 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
+        <div className="p-4 border-b">
+          <h1 className="text-lg font-bold flex items-center gap-2">
+            <span className="bg-primary rounded-full w-2 h-2 animate-pulse" />
+            CryptoOrchestrator
+          </h1>
+        </div>
+        
         <SidebarGroup>
-          <SidebarGroupLabel>Trading</SidebarGroupLabel>
+          <SidebarGroupLabel>Core</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location === item.url}>
                     <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
-                      <item.icon />
+                      <item.icon className="w-5 h-5" />
                       <span>{item.title}</span>
+                      {item.badge?.()}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -102,6 +121,14 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      
+      <div className="p-4 border-t text-xs text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-green-500" />
+          <span>Connected to Kraken</span>
+        </div>
+        <div className="mt-1">v{import.meta.env.VITE_APP_VERSION}</div>
+      </div>
     </Sidebar>
   );
 }

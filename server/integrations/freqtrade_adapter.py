@@ -174,20 +174,38 @@ class MockExchange:
         # No network calls; just mark as initialized
         self._markets_initialized = True
 
-    async def get_candle_history(self, pair: str, timeframe: str = '5m', limit: int = 100):
+    async def get_candle_history(self, pair: str, timeframe: str = '5m', limit: int = 100, timerange: str = None):
         """Return synthetic OHLCV data as a pandas DataFrame.
 
         Args:
             pair: trading pair string (unused but kept for compatibility)
             timeframe: timeframe string, only '5m' currently used
             limit: number of candles to generate
+            timerange: custom timerange string (e.g., '20250101-20250131')
 
         Returns:
             pandas.DataFrame with columns [open, high, low, close, volume]
         """
-        # Create a datetime index ending now, spaced by 5 minutes
+        # Handle custom timerange
         end = datetime.now()
-        freq = '5T'
+        if timerange:
+            try:
+                # Parse timerange format: YYYYMMDD-YYYYMMDD
+                start_str, end_str = timerange.split('-')
+                start_date = datetime.strptime(start_str, '%Y%m%d')
+                end_date = datetime.strptime(end_str, '%Y%m%d')
+                end = end_date
+                # Calculate limit based on timerange
+                time_diff = end_date - start_date
+                total_minutes = int(time_diff.total_seconds() / 60)
+                if timeframe == '5m':
+                    calculated_limit = total_minutes // 5
+                    limit = min(limit, calculated_limit) if calculated_limit > 0 else limit
+            except (ValueError, AttributeError):
+                logger.warning(f"Invalid timerange format: {timerange}, using default")
+
+        # Create a datetime index ending at specified time, spaced by timeframe
+        freq = '5T' if timeframe == '5m' else '5T'  # Default to 5m
         dates = pd.date_range(end=end, periods=limit, freq=freq)
 
         # Simple random walk around a base price
@@ -368,32 +386,43 @@ class FreqtradeManager:
         """Run backtest on historical data."""
         try:
             symbol = payload.get('symbol', 'BTC/USD')
-            start_date = datetime.fromisoformat(payload.get('startDate', '2025-01-01'))
-            end_date = datetime.fromisoformat(payload.get('endDate', '2025-10-31'))
-            
-            # Load candle data
+
+            # Enhanced custom timerange support
+            timerange = payload.get('timerange')
+            if timerange:
+                # Use provided timerange directly
+                pass
+            else:
+                # Create timerange from start/end dates or use defaults
+                start_date = datetime.fromisoformat(payload.get('startDate', '2025-01-01'))
+                end_date = datetime.fromisoformat(payload.get('endDate', '2025-10-31'))
+                timerange = f"{start_date.strftime('%Y%m%d')}-{end_date.strftime('%Y%m%d')}"
+
+            # Load candle data with custom timerange
             data = self.backtesting.load_bt_data(
                 [symbol],
                 timeframe='5m',
-                timerange=None  # TODO: support custom timerange
+                timerange=timerange
             )
-            
-            # Run backtest
+
+            # Run backtest with proper timerange handling
             results = self.backtesting.backtest(
                 processed=self.strategy.advise_all_indicators(data),
                 start_date=start_date,
-                end_date=end_date
+                end_date=end_date,
+                timerange=timerange
             )
-            
+
             stats = self.backtesting.generate_trading_stats(results)
-            
+
             return {
                 'trades': len(results),
                 'profit_pct': float(stats['profit_total_pct']),
                 'source': 'freqtrade',
-                'stats': stats
+                'stats': stats,
+                'timerange': timerange
             }
-            
+
         except Exception as e:
             logger.error(f"Backtest error: {str(e)}", exc_info=True)
             return {

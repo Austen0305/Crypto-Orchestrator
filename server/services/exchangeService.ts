@@ -241,16 +241,13 @@ export class ExchangeService {
       if (this.useMock) return { remaining: 1000, reset: Date.now() + 60 * 1000 };
       if (!this.exchange) return { remaining: 0, reset: 0 };
       // best-effort: some exchanges may not provide headers; keep previous Kraken style if available
-      if (typeof this.exchange.privatePostPrivate === 'function') {
-        const response = await this.exchange.privatePostPrivate({ nonce: Date.now() });
-        return {
-          remaining: parseInt(response.headers?.['cf-ratelimit-remaining'] || '0', 10),
-          reset: parseInt(response.headers?.['cf-ratelimit-reset'] || '0', 10),
-        };
+      if (typeof this.exchange.rateLimit === 'number') {
+        // Fake a quota based on rateLimit
+        return { remaining: Math.max(0, 1000 - this.exchange.rateLimit), reset: Date.now() + 60 * 1000 };
       }
       return { remaining: 0, reset: 0 };
     } catch (error) {
-      console.error(`Failed to get API quota for ${this.name}:`, error);
+      console.error(`Error fetching API quota from ${this.name}:`, error);
       return { remaining: 0, reset: 0 };
     }
   }

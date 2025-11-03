@@ -12,12 +12,24 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  const baseUrl = (globalThis as any).VITE_API_URL || "http://localhost:8000";
+  const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
+
+  console.log(`[API Request] ${method} ${fullUrl}`, data);
+
+  const res = await fetch(fullUrl, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
+
+  console.log(`[API Response] ${method} ${fullUrl} - Status: ${res.status}`, res.headers.get('content-type'));
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error(`[API Error] ${method} ${fullUrl} - ${res.status}: ${errorText}`);
+  }
 
   await throwIfResNotOk(res);
   return res;

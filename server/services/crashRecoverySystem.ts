@@ -176,17 +176,24 @@ export class CrashRecoverySystem extends EventEmitter {
   }
 
   private startRecoveryTimeout(): void {
+    // Clear any existing timeout
+    // @ts-ignore - class may define recoveryTimeout elsewhere
     if (this.recoveryTimeout) {
-      clearTimeout(this.recoveryTimeout);
+      clearTimeout(this.recoveryTimeout as any);
     }
 
+    const timeoutMs = (this as any).config?.recoveryTimeoutMs ?? 5 * 60 * 1000; // default 5 minutes
+    // @ts-ignore - store handle on instance
     this.recoveryTimeout = setTimeout(() => {
-      if (this.state.isRecovering) {
-        logger.error('Recovery timeout exceeded');
-        this.emit('recoveryTimeout', this.state);
-        this.cancelRecovery();
+      logger.warn('Recovery timed out', { state: this.state });
+      this.emit('recoveryTimeout', this.state);
+      // Escalate to safety monitor
+      try {
+        safetyMonitor.activateEmergencyStop('Recovery timed out');
+      } catch (e) {
+        logger.error('Failed to activate emergency stop on recovery timeout', { error: String(e) });
       }
-    }, this.RECOVERY_TIMEOUT);
+    }, timeoutMs);
   }
 
   public cancelRecovery(): void {

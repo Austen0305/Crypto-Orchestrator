@@ -1,0 +1,46 @@
+{
+  "common": {
+    "yes": "Yes",
+    "no": "No",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "markets": "Markets",
+    "bots": "Bots",
+    "analytics": "Analytics",
+    "riskManagement": "Risk Management"
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "language": "Language",
+    "notifications": "Notifications",
+    "preferences": "Preferences"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "username": "Username",
+    "password": "Password",
+    "email": "Email"
+  },
+  "trading": {
+    "buy": "Buy",
+    "sell": "Sell",
+    "order": "Order",
+    "price": "Price",
+    "amount": "Amount",
+    "total": "Total",
+    "connected": "Exchange Connected",
+    "disconnected": "Disconnected",
+    "mlActive": "ML Engine Active"
+  }
+}

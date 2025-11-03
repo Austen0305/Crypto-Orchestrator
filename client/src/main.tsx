@@ -1,18 +1,23 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import "./i18n";
 
-// Register Service Worker
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((registration) => {
-        console.log('ServiceWorker registration successful:', registration);
-      })
-      .catch((error) => {
-        console.error('ServiceWorker registration failed:', error);
-      });
-  });
+// Register Service Worker only in production
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  const swUrl = new URL('/sw.js', import.meta.url);
+  
+  if (swUrl.protocol === 'https:' || location.hostname === 'localhost') {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register(swUrl)
+        .then((registration) => {
+          console.log('ServiceWorker registration successful:', registration);
+        })
+        .catch((error) => {
+          console.warn('ServiceWorker registration failed:', error);
+        });
+    });
+  }
 }
 
 createRoot(document.getElementById("root")!).render(<App />);

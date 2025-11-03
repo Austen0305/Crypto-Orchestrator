@@ -78,9 +78,6 @@ export const integrationsApi = {
   predict: (payload: any) => apiRequest('POST', '/api/integrations/predict', payload).then((r) => r.json()),
   backtest: (payload: any) => apiRequest('POST', '/api/integrations/backtest', payload).then((r) => r.json()),
   ping: () => apiRequest('GET', '/api/integrations/ping').then((r) => r.json()),
-  startAll: () => apiRequest('POST', '/api/integrations/start').then((r) => r.json()),
-  stopAll: () => apiRequest('POST', '/api/integrations/stop').then((r) => r.json()),
-  status: () => apiRequest('GET', '/api/integrations/status').then((r) => r.json()),
-  adapterHealth: (name: string) => apiRequest('GET', `/api/integrations/adapter/${name}/health`).then((r) => r.json()),
-  adapterRestart: (name: string) => apiRequest('POST', `/api/integrations/adapter/${name}/restart`).then((r) => r.json()),
+  startAll: () => apiRequest('POST', '/api/integrations/start-all').then((r) => r.json()),
+  stopAll: () => apiRequest('POST', '/api/integrations/stop-all').then((r) => r.json()),
 };

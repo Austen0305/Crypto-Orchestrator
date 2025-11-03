@@ -1,16 +1,29 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const useWebSocket = () => {
   const wsRef = useRef<WebSocket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
     const connectWebSocket = () => {
-      const ws = new WebSocket(`ws://localhost:5000/ws`);
+      const wsBase =
+        (typeof window !== 'undefined' && (window as any).__WS_BASE__) ||
+        (import.meta as any)?.env?.VITE_WS_BASE_URL ||
+        // derive from API_BASE if present
+        (() => {
+          const api = (typeof window !== 'undefined' && (window as any).__API_BASE__) || (import.meta as any)?.env?.VITE_API_BASE_URL || '';
+          if (api.startsWith('http')) {
+            return api.replace(/^http/, 'ws');
+          }
+          return 'ws://localhost:8000';
+        })();
+      const ws = new WebSocket(`${wsBase}/api/ws`);
 
       ws.onopen = () => {
         console.log("WebSocket connected");
+        setIsConnected(true);
       };
 
       ws.onmessage = (event) => {
@@ -46,6 +59,7 @@ export const useWebSocket = () => {
 
       ws.onclose = () => {
         console.log("WebSocket disconnected, attempting to reconnect...");
+        setIsConnected(false);
         setTimeout(connectWebSocket, 3000);
       };
 
@@ -65,5 +79,11 @@ export const useWebSocket = () => {
     };
   }, [queryClient]);
 
-  return wsRef.current;
+  const sendMessage = (message: any) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(message));
+    }
+  };
+
+  return { ws: wsRef.current, isConnected, sendMessage };
 };

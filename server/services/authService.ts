@@ -2,17 +2,31 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import speakeasy from 'speakeasy';
 import qrcode from 'qrcode';
+import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 import { User, InsertUser, userSchema } from '../../shared/schema';
-import { storage } from '../storage';
+import { storage } from '../../shared/storage';
 import logger from './logger';
 
 export class AuthService {
   private jwtSecret: string;
   private jwtRefreshSecret: string;
+  private emailTransporter: nodemailer.Transporter;
 
   constructor() {
     this.jwtSecret = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
     this.jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key-change-in-production';
+    
+    // Initialize email transporter
+    this.emailTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
   }
 
   async hashPassword(password: string): Promise<string> {
@@ -92,7 +106,7 @@ export class AuthService {
     });
   }
 
-  async register(userData: InsertUser): Promise<{ user: User; accessToken: string; refreshToken: string }> {
+  async register(userData: InsertUser): Promise<{ user: User; message: string }> {
     // Check if user already exists
     const existingUser = await storage.getUserByEmail(userData.email!);
     if (existingUser) {
@@ -101,25 +115,34 @@ export class AuthService {
 
     // Hash password
     const passwordHash = await this.hashPassword(userData.password!);
+    
+    // Generate email verification token
+    const emailVerificationToken = crypto.randomBytes(32).toString('hex');
 
     // Create user
     const user = await storage.createUser({
       ...userData,
       passwordHash,
+      emailVerified: false,
+      emailVerificationToken,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
 
-    // Generate tokens
-    const accessToken = this.generateAccessToken(user);
-    const refreshToken = this.generateRefreshToken(user);
-
-    // Store refresh token
-    await storage.storeRefreshToken(user.id, refreshToken);
+    // Send verification email
+    try {
+      await this.sendVerificationEmail(user.email!, emailVerificationToken);
+    } catch (error) {
+      logger.error('Failed to send verification email:', error);
+      // Don't fail registration if email fails, but log it
+    }
 
     logger.info(`User registered: ${user.email}`);
 
-    return { user, accessToken, refreshToken };
+    return { 
+      user, 
+      message: 'Registration successful. Please check your email to verify your account.' 
+    };
   }
 
   async login(email: string, password: string, twoFactorToken?: string): Promise<{ user: User; accessToken: string; refreshToken: string }> {
@@ -127,6 +150,11 @@ export class AuthService {
     const user = await storage.getUserByEmail(email);
     if (!user) {
       throw new Error('Invalid credentials');
+    }
+
+    // Check if email is verified
+    if (!user.emailVerified) {
+      throw new Error('Please verify your email before logging in');
     }
 
     // Verify password
@@ -137,10 +165,11 @@ export class AuthService {
 
     // Check if 2FA is enabled
     if (user.mfaEnabled && user.mfaSecret) {
+      // If no token provided, indicate MFA required
       if (!twoFactorToken) {
-        throw new Error('2FA token required');
+        return { requiresMfa: true, userId: user.id };
       }
-
+      // If token provided, verify it
       const isValid2FA = this.verify2FAToken(user.mfaSecret, twoFactorToken);
       if (!isValid2FA) {
         throw new Error('Invalid 2FA token');
@@ -263,6 +292,58 @@ export class AuthService {
 
     logger.info(`User profile updated: ${user.email}`);
     return user;
+  }
+
+  async sendVerificationEmail(email: string, token: string): Promise<void> {
+    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
+    
+    await this.emailTransporter.sendMail({
+      from: process.env.SMTP_USER,
+      to: email,
+      subject: 'Email Verification - CryptoOrchestrator',
+      html: `
+        <h2>Email Verification</h2>
+        <p>Thank you for registering with CryptoOrchestrator!</p>
+        <p>Please click the link below to verify your email address:</p>
+        <a href="${verificationUrl}">Verify Email</a>
+        <p>This link will expire in 24 hours.</p>
+        <p>If you didn't request this, please ignore this email.</p>
+      `,
+    });
+  }
+
+  async verifyEmail(token: string): Promise<{ success: boolean; message: string }> {
+    // Find user by verification token
+    const users = await storage.getUsers();
+    const user = users.find(u => u.emailVerificationToken === token);
+    
+    if (!user) {
+      return { success: false, message: 'Invalid or expired verification token' };
+    }
+    
+    // Update user to mark email as verified
+    await storage.updateUser(user.id, { 
+      emailVerified: true, 
+      emailVerificationToken: undefined 
+    });
+    
+    logger.info(`Email verified for user: ${user.email}`);
+    
+    return { success: true, message: 'Email verified successfully. You can now log in.' };
+  }
+
+  async resendVerificationEmail(email: string): Promise<{ success: boolean; message: string }> {
+    const user = await storage.getUserByEmail(email);
+    
+    if (!user) {
+      return { success: false, message: 'No account with this email address exists' };
+    }
+    
+    if (user.emailVerified) {
+      return { success: false, message: 'This email is already verified' };
+    }
+    await this.sendVerificationEmail(user.email);
+    return { success: true, message: 'Verification email resent' };
   }
 }
 

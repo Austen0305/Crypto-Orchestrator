@@ -4,9 +4,9 @@ import jwt from 'jsonwebtoken';
 import speakeasy from 'speakeasy';
 import svgCaptcha from 'svg-captcha';
 import nodemailer from 'nodemailer';
-import { storage } from '../storage';
 import { registerSchema, loginSchema } from '../../shared/schema';
-import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
+import { sessionAuth, type AuthenticatedRequest } from '../middleware/auth';
+import { authService } from '../services/authService';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -27,7 +27,16 @@ const generateToken = (user: any) => {
   return jwt.sign(
     { id: user.id, email: user.email },
     JWT_SECRET,
-    { expiresIn: '24h' }
+    { expiresIn: '15m' }
+  );
+};
+
+// Generate refresh token
+const generateRefreshToken = (user: any) => {
+  return jwt.sign(
+    { id: user.id, type: 'refresh' },
+    JWT_SECRET,
+    { expiresIn: '7d' }
   );
 };
 
@@ -37,34 +46,29 @@ router.post('/register', async (req, res) => {
     const validated = registerSchema.parse(req.body);
     const { email, password, name } = validated;
 
-    // Check if user exists
-    const existingUser = await storage.getUserByEmail(email);
-    if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
+    try {
+      const result = await authService.register({ email, password, name });
+      // Generate token after registration
+      const token = jwt.sign(
+        { id: result.user.id, email: result.user.email },
+        JWT_SECRET,
+        { expiresIn: '15m' }
+      );
+      return res.status(201).json({
+        data: {
+          user: {
+            id: result.user.id,
+            email: result.user.email,
+            name: result.user.name,
+            emailVerified: result.user.emailVerified,
+          },
+          token
+        },
+        message: result.message
+      });
+    } catch (error) {
+      return res.status(400).json({ error: error instanceof Error ? error.message : 'Registration failed' });
     }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Create user (store passwordHash)
-    const user = await storage.createUser({
-      email,
-      passwordHash: hashedPassword,
-      name,
-      isActive: true,
-    });
-
-    // Generate token
-    const token = generateToken(user);
-
-    res.status(201).json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-      token,
-    });
   } catch (error) {
     res.status(400).json({ error: 'Invalid registration data' });
   }
@@ -76,97 +80,51 @@ router.post('/login', async (req, res) => {
     const validated = loginSchema.parse(req.body);
     const { email, username, password } = validated as any;
 
-    // Find user by email or username
-    let user = undefined;
-    if (email) user = await storage.getUserByEmail(email);
-    if (!user && username) user = await storage.getUserByUsername(username);
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Check passwordHash exists and compare
-    if (!user.passwordHash) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
-    if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Check if 2FA is enabled
-    if (user.mfaEnabled && user.mfaSecret) {
+    // Use authService for login logic
+    try {
+      const result = await authService.login(email, password);
+      // If 2FA required, return special response
+      if (result.requiresMfa) {
+        return res.json({ requiresMfa: true, userId: result.userId });
+      }
+      // Otherwise, return user and tokens
       return res.json({
-        requiresMfa: true,
-        userId: user.id,
+        data: {
+          user: {
+            id: result.user.id,
+            email: result.user.email,
+            name: result.user.name,
+          },
+          token: result.accessToken,
+          refreshToken: result.refreshToken
+        }
       });
+    } catch (error) {
+      return res.status(401).json({ error: error instanceof Error ? error.message : 'Invalid credentials' });
     }
-
-    // Generate token
-    const token = generateToken(user);
-
-    res.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-      token,
-    });
   } catch (error) {
     res.status(400).json({ error: 'Invalid login data' });
   }
 });
 
 // Verify 2FA
-router.post('/verify-mfa', async (req, res) => {
-  try {
-    const { userId, token } = req.body;
+// Deprecated: use /mfa/verify instead
+// router.post('/verify-mfa', async (req, res) => {
+//   try {
+//     const { userId, tok
 
-    const user = await storage.getUserById(userId);
-    if (!user || !user.mfaSecret) {
-      return res.status(400).json({ error: 'Invalid user or MFA not enabled' });
-    }
-
-    const verified = speakeasy.totp.verify({
-      secret: user.mfaSecret,
-      encoding: 'base32',
-      token,
-      window: 2,
-    });
-
-    if (!verified) {
-      return res.status(401).json({ error: 'Invalid MFA token' });
-    }
-
-    const jwtToken = generateToken(user);
-
-    res.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-      token: jwtToken,
-    });
-  } catch (error) {
-    res.status(400).json({ error: 'MFA verification failed' });
-  }
-});
-
-// Setup 2FA
-router.post('/setup-mfa', authenticateToken, async (req: AuthenticatedRequest, res) => {
+// Setup MFA (requires auth)
+router.post('/mfa/setup', sessionAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const user = req.user!;
     const secret = speakeasy.generateSecret({
       name: `CryptoOrchestrator (${user.email})`,
-      issuer: 'CryptoOrchestrator',
+      length: 20,
     });
-
     await storage.updateUser(user.id, {
       mfaSecret: secret.base32,
       mfaEnabled: false,
     });
-
     res.json({
       secret: secret.base32,
       otpauthUrl: secret.otpauth_url,
@@ -176,30 +134,25 @@ router.post('/setup-mfa', authenticateToken, async (req: AuthenticatedRequest, r
   }
 });
 
-// Enable 2FA
-router.post('/enable-mfa', authenticateToken, async (req: AuthenticatedRequest, res) => {
+// Verify/Enable MFA (requires auth)
+router.post('/mfa/verify', sessionAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const { token } = req.body;
     const user = req.user!;
-
     const dbUser = await storage.getUserById(user.id);
     if (!dbUser || !dbUser.mfaSecret) {
       return res.status(400).json({ error: 'MFA not set up' });
     }
-
     const verified = speakeasy.totp.verify({
       secret: dbUser.mfaSecret,
       encoding: 'base32',
       token,
       window: 2,
     });
-
     if (!verified) {
       return res.status(401).json({ error: 'Invalid MFA token' });
     }
-
     await storage.updateUser(user.id, { mfaEnabled: true });
-
     res.json({ message: 'MFA enabled successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to enable MFA' });
@@ -308,6 +261,110 @@ router.patch('/profile', authenticateToken, async (req: AuthenticatedRequest, re
     res.json({ message: 'Profile updated successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+// Refresh token endpoint
+router.post('/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+      return res.status(401).json({ error: 'Refresh token required' });
+    }
+
+    const decoded = jwt.verify(refreshToken, JWT_SECRET) as any;
+    if (decoded.type !== 'refresh') {
+      return res.status(401).json({ error: 'Invalid refresh token' });
+    }
+
+    // Check if refresh token exists in storage
+    const storedToken = await storage.getRefreshToken(decoded.id, refreshToken);
+    if (!storedToken) {
+      return res.status(401).json({ error: 'Refresh token not found' });
+    }
+
+    const user = await storage.getUserById(decoded.id);
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    // Generate new access token
+    const newAccessToken = jwt.sign(
+      { id: user.id, email: user.email },
+      JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    // Generate new refresh token
+    const newRefreshToken = jwt.sign(
+      { id: user.id, type: 'refresh' },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Update refresh token in storage
+    await storage.updateRefreshToken(decoded.id, refreshToken, newRefreshToken);
+
+    res.json({
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken
+    });
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid or expired refresh token' });
+  }
+});
+
+// Logout endpoint
+router.post('/logout', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (refreshToken) {
+      await storage.removeRefreshToken(req.user!.id, refreshToken);
+    }
+
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to logout' });
+  }
+});
+
+// Email verification endpoint
+router.post('/verify-email', async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ error: 'Verification token is required' });
+    }
+    const result = await authService.verifyEmail(token);
+    if (!result.success) {
+      return res.status(400).json({ error: result.message });
+    }
+    res.json({ message: result.message });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to verify email' });
+  }
+});
+
+// Resend verification email endpoint
+router.post('/resend-verification', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+    
+    const result = await authService.resendVerificationEmail(email);
+    
+    if (result.success) {
+      res.json({ message: result.message });
+    } else {
+      res.status(400).json({ error: result.message });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to resend verification email' });
   }
 });
 

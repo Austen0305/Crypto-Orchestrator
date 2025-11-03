@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { User, LoginRequest, RegisterRequest } from '../../../shared/schema';
 
+const API_BASE =
+  (typeof window !== 'undefined' && (window as any).__API_BASE__) ||
+  (import.meta as any)?.env?.VITE_API_BASE_URL ||
+  '';
+
 interface MFASetupResponse {
   secret: string;
   otpauthUrl: string;
@@ -49,17 +54,19 @@ export const useAuth = () => {
     }
   }, []);
 
-  const login = useCallback(async (credentials: LoginRequest): Promise<boolean> => {
+  const login = useCallback(async (emailOrUsername: string, password: string): Promise<boolean> => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true }));
 
-      const response = await fetch('/api/auth/login', {
+      console.log('[Auth] Attempting login with:', emailOrUsername);
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(credentials),
+        body: JSON.stringify({ email: emailOrUsername, password }),
       });
+      console.log('[Auth] Login response status:', response.status);
 
       const data = await response.json();
 
@@ -103,7 +110,7 @@ export const useAuth = () => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true }));
 
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -175,7 +182,7 @@ export const useAuth = () => {
   }, [authState.token]);
 
   const setupMFA = useCallback(async (): Promise<MFASetupResponse> => {
-    const response = await fetch('/api/auth/mfa/setup', {
+    const response = await fetch(`${API_BASE}/api/auth/mfa/setup`, {
       method: 'POST',
       headers: getAuthHeaders(),
     });
@@ -186,11 +193,11 @@ export const useAuth = () => {
       throw new Error(data.error || 'Failed to setup MFA');
     }
 
-    return data.data;
+    return data.data ?? data;
   }, [getAuthHeaders]);
 
   const verifyMFA = useCallback(async (token: string): Promise<boolean> => {
-    const response = await fetch('/api/auth/mfa/verify', {
+    const response = await fetch(`${API_BASE}/api/auth/mfa/verify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

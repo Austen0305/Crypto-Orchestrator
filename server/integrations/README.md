@@ -23,7 +23,7 @@ pip install -r requirements.txt
 .\server\integrations\start_adapters.ps1
 ```
 
-1. Run the Node server as usual (from repo root):
+4. Run the Node server as usual (from repo root):
 
 ```powershell
 npm run dev

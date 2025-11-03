@@ -1,5 +1,3 @@
-
-
 import { freqtradeAdapter, jesseAdapter } from './tradingFrameworks';
 
 type Prediction = { action: string; confidence: number; source?: string };
@@ -106,16 +104,14 @@ export class TradingOrchestrator {
       // ignore
     }
 
-    // compute simple summary
-    let totalTrades = 0;
-    let sumProfit = 0;
-    for (const r of results) {
-      if (typeof r.trades === 'number') totalTrades += r.trades;
-      if (typeof r.profit_pct === 'number') sumProfit += r.profit_pct;
-    }
-    const avgProfitPct = results.length > 0 ? sumProfit / results.length : 0;
+    // Build summary from combined results
+    const profits = results.map(r => Number(r.profit_pct ?? r.profitPct ?? 0));
+    const totalTradesArr = results.map(r => Number(r.trades ?? r.totalTrades ?? 0));
+    const sumProfit = profits.reduce((a, b) => a + (isFinite(b) ? b : 0), 0);
+    const sumTrades = totalTradesArr.reduce((a, b) => a + (isFinite(b) ? b : 0), 0);
+    const avgProfitPct = results.length ? sumProfit / results.length : 0;
 
-    return { results, summary: { avgProfitPct, totalTrades } };
+    return { results, summary: { avgProfitPct, totalTrades: sumTrades } };
   }
 }
 

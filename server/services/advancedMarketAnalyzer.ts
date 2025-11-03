@@ -73,7 +73,7 @@ export class AdvancedMarketAnalyzer extends EventEmitter {
   }
 
   private async analyzeMarketConditions(): Promise<MarketConditions> {
-    const volatility = await this.calculateVolatility();
+    const volatility = await this.analyzeVolatility();
     const trend = await this.analyzeTrend();
     const volume = await this.analyzeVolume();
     const liquidity = await this.analyzeLiquidity();
@@ -87,14 +87,24 @@ export class AdvancedMarketAnalyzer extends EventEmitter {
     };
   }
 
-  private async calculateVolatility(): Promise<number> {
-    // Implementation for advanced volatility calculation
-    return 0; // Placeholder
+  private async analyzeVolatility(): Promise<number> {
+    try {
+      // Implementation for volatility analysis
+      return 0.1; // Placeholder
+    } catch (error) {
+      console.error('Volatility analysis failed:', error);
+      return 0; // Return safe default value
+    }
   }
 
-  private async analyzeTrend(): Promise<{ direction: 'up' | 'down' | 'sideways'; strength: number }> {
-    // Implementation for trend analysis
-    return { direction: 'sideways', strength: 0 }; // Placeholder
+  private async analyzeTrend(): Promise<{ direction: string; strength: number }> {
+    try {
+      // Implementation for trend analysis
+      return { direction: 'up', strength: 0.5 }; // Placeholder
+    } catch (error) {
+      console.error('Trend analysis failed:', error);
+      return { direction: 'neutral', strength: 0 }; // Return safe default value
+    }
   }
 
   private async analyzeVolume(): Promise<{ level: 'high' | 'medium' | 'low'; anomaly: boolean }> {

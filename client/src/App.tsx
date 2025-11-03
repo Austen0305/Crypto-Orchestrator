@@ -9,11 +9,13 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { TradingHeader } from "@/components/TradingHeader";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { usePortfolio } from "@/hooks/useApi";
+import { useExchangeStatus } from "@/hooks/useExchange";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
 import Bots from "@/pages/Bots";
 import Markets from "@/pages/Markets";
 import Analytics from "@/pages/Analytics";
+import { useTranslation } from "react-i18next";
 
 function Router() {
   // Initialize WebSocket connection
@@ -32,29 +34,54 @@ function Router() {
 
 function AppContent() {
   const { data: portfolio } = usePortfolio("paper");
+  const { isConnected } = useExchangeStatus();
+  const { t, i18n } = useTranslation();
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full">
-      <div className="md:hidden sticky top-0 z-50 bg-background border-b">
-        <div className="flex items-center justify-between p-2">
+    <div className={`flex flex-col md:flex-row h-screen w-full bg-background text-foreground ${i18n.language === 'ar' ? 'rtl' : ''}`}>
+      {/* Mobile header */}
+      <header className="md:hidden sticky top-0 z-50 bg-background/80 backdrop-blur border-b">
+        <div className="flex items-center justify-between p-3">
           <SidebarTrigger data-testid="button-sidebar-toggle" />
-          <span className="text-sm text-muted-foreground">
-            CryptoML Trading
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">CryptoOrchestrator</span>
+            <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+          </div>
         </div>
-      </div>
-      <div className="hidden md:block">
+      </header>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex border-r">
         <AppSidebar />
-      </div>
+      </aside>
+
+      {/* Main content */}
       <div className="flex flex-col flex-1 min-h-0">
-        <TradingHeader balance={portfolio?.totalBalance || 100000} connected={true} />
-        <div className="hidden md:flex items-center gap-2 p-2 border-b">
-          <SidebarTrigger data-testid="button-sidebar-toggle" />
-          <span className="text-sm text-muted-foreground">
-            Kraken Connected • ML Models Active
+        <TradingHeader
+          balance={portfolio?.totalBalance || 100000}
+          connected={isConnected}
+        />
+
+        {/* Status bar */}
+        <div className="hidden md:flex items-center justify-between px-4 py-2 border-b text-sm">
+          <div className="flex items-center gap-4">
+            <SidebarTrigger data-testid="button-sidebar-toggle" />
+            <span className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+              {isConnected ? 'Exchange Connected' : 'Disconnected'}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-blue-500" />
+              ML Engine Active
+            </span>
+          </div>
+          <span className="text-muted-foreground">
+            {new Date().toLocaleString()}
           </span>
         </div>
-        <main className="flex-1 overflow-auto p-3 md:p-6">
+
+        {/* Page content */}
+        <main className="flex-1 overflow-auto p-4 md:p-6 bg-muted/10">
           <Router />
         </main>
       </div>

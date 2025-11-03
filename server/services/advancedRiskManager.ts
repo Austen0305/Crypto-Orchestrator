@@ -96,19 +96,27 @@ export class AdvancedRiskManager extends EventEmitter {
   }
 
   private calculateKellyFraction(): number {
-    const { winRate, averageWin, averageLoss } = performanceMonitor.getMetrics();
-    
-    if (averageLoss === 0 || !winRate) return 0;
+    if (this.recentTrades.length < 10) return 0.1; // Default
 
-    const probability = winRate;
-    const odds = averageWin / averageLoss;
+    const winRate = this.recentTrades.filter(t => t.profitLoss > 0).length / this.recentTrades.length;
+    const avgWin = this.calculateAverageWin();
+    const avgLoss = this.calculateAverageLoss();
 
-    let kellyFraction = (probability * (odds + 1) - 1) / odds;
+    if (avgLoss === 0) return 0; // Avoid division by zero
+    const payoffRatio = avgWin / avgLoss;
 
-    // Limit kelly fraction to reasonable bounds
-    kellyFraction = Math.min(Math.max(kellyFraction, 0), 0.5);
+    // Standard Kelly formula: f* = p - (1 - p)/b
+    return winRate - (1 - winRate) / payoffRatio;
+  }
 
-    return kellyFraction;
+  private calculateAverageWin(): number {
+    const wins = this.recentTrades.filter(t => t.profitLoss > 0);
+    return wins.reduce((sum, t) => sum + t.profitLoss, 0) / (wins.length || 1);
+  }
+
+  private calculateAverageLoss(): number {
+    const losses = this.recentTrades.filter(t => t.profitLoss <= 0);
+    return Math.abs(losses.reduce((sum, t) => sum + t.profitLoss, 0) / (losses.length || 1));
   }
 
   private calculateDynamicStopLoss(volatility: number, marketConditions: any): number {
@@ -180,18 +188,79 @@ export class AdvancedRiskManager extends EventEmitter {
   }
 
   private calculateCurrentRisk(): number {
-    // Implementation for current risk calculation
-    return 0; // Placeholder
+    if (this.recentTrades.length === 0) return 0.5; // Default medium risk
+
+    // Calculate win rate and profit factor
+    const winningTrades = this.recentTrades.filter(t => t.profitLoss > 0);
+    const winRate = winningTrades.length / this.recentTrades.length;
+    const totalProfit = winningTrades.reduce((sum, t) => sum + t.profitLoss, 0);
+    const totalLoss = this.recentTrades
+      .filter(t => t.profitLoss <= 0)
+      .reduce((sum, t) => sum + Math.abs(t.profitLoss), 0);
+    const profitFactor = totalLoss > 0 ? totalProfit / totalLoss : Infinity;
+
+    // Combine factors into risk score (0-1)
+    const riskScore = (
+      0.4 * (1 - winRate) +
+      0.3 * (1 - Math.min(1, profitFactor / 5)) +
+      0.3 * (this.calculatePositionConcentrationRisk())
+    );
+
+    return Math.min(1, Math.max(0, riskScore));
+  }
+
+  private calculatePositionConcentrationRisk(): number {
+    if (this.recentTrades.length === 0) return 0;
+
+    // Count positions per symbol
+    const positionCounts: Record<string, number> = {};
+    this.recentTrades.forEach(t => {
+      positionCounts[t.symbol] = (positionCounts[t.symbol] || 0) + 1;
+    });
+
+    // Calculate concentration risk (0-1)
+    const totalCount = this.recentTrades.length;
+    const counts = Object.values(positionCounts);
+    const concentrationRisk = counts.reduce((sum, cnt) => {
+      return sum + Math.pow(cnt / totalCount, 2);
+    }, 0);
+
+    return concentrationRisk;
   }
 
   private calculateExpectedDrawdown(): number {
-    // Implementation for expected drawdown calculation
-    return 0; // Placeholder
+    if (this.historicalData.length < 30) return 0.2; // Default
+
+    // Calculate rolling volatility
+    const returns = [];
+    for (let i = 1; i < this.historicalData.length; i++) {
+      returns.push(Math.log(this.historicalData[i].close / this.historicalData[i - 1].close));
+    }
+
+    const volatility = this.calculateStandardDeviation(returns);
+    const expectedDrawdown = volatility * 2.5; // 2.5 sigma event
+
+    return Math.min(0.5, Math.max(0.05, expectedDrawdown));
+  }
+
+  private calculateStandardDeviation(values: number[]): number {
+    const avg = values.reduce((a, b) => a + b) / values.length;
+    return Math.sqrt(values.reduce((a, v) => a + Math.pow(v - avg, 2), 0) / values.length);
   }
 
   private calculateOptimalLeverage(): number {
-    // Implementation for optimal leverage calculation
-    return 1; // Placeholder
+    const riskMetrics = this.getRiskMetrics();
+    if (riskMetrics.kellyFraction <= 0) return 1;
+
+    // Use modified Kelly criterion with volatility adjustment
+    const maxLeverage = 10;
+    const safetyMargin = 0.7; // Conservative factor
+    const volatilityFactor = Math.min(1, 0.2 / riskMetrics.historicalVolatility);
+
+    return Math.min(
+      maxLeverage,
+      Math.max(1, riskMetrics.kellyFraction * safetyMargin * volatilityFactor)
+    );
   }
 
   private updateRiskMetrics(marketConditions: any): void {

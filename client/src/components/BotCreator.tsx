@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TradingRecommendations } from "@/components/TradingRecommendations";
 import { useCreateBot } from "@/hooks/useApi";
@@ -106,12 +106,18 @@ export function BotCreator() {
           Create Bot
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+      <DialogContent 
+        className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto"
+        aria-describedby="bot-creator-description"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Target className="w-5 h-5" />
             Create New Trading Bot
           </DialogTitle>
+          <DialogDescription id="bot-creator-description">
+            Configure and launch a new automated trading bot
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="manual" className="w-full">

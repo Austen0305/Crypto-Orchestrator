@@ -30,6 +30,10 @@ export const NotificationCenter = () => {
         return '📈';
       case 'system':
         return '⚙️';
+      case 'portfolio':
+        return '📊';
+      case 'risk':
+        return '⚠️';
       default:
         return '🔔';
     }
@@ -88,20 +92,32 @@ export const NotificationCenter = () => {
                       }`}
                     >
                       <div className="text-lg">
-                        {getNotificationIcon(notification.type)}
+                        {getNotificationIcon(notification.category || notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
                             <p className="text-sm font-medium leading-tight">
-                              {notification.title}
+                              {notification.title || 'Notification'}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1 leading-tight">
                               {notification.message}
                             </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <p className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(new Date(notification.createdAt || notification.timestamp), { addSuffix: true })}
+                              </p>
+                              {notification.priority === 'high' && (
+                                <Badge variant="destructive" className="text-xs px-1 py-0">
+                                  HIGH
+                                </Badge>
+                              )}
+                              {notification.priority === 'urgent' && (
+                                <Badge variant="destructive" className="text-xs px-1 py-0">
+                                  URGENT
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                           <div className="flex gap-1">
                             {!notification.read && (

@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* RTL Support */
+.rtl {
+  direction: rtl;
+}
+
+.rtl .text-left {
+  text-align: right;
+}
+
+.rtl .text-right {
+  text-align: left;
+}
+
+/* Arabic font support */
+[dir="rtl"] {
+  font-family: 'Segoe UI', 'Noto Sans Arabic', Tahoma, Geneva, Verdana, sans-serif;
+}
+
 /* LIGHT MODE */
 :root {
   --button-outline: rgba(0,0,0, .10);
@@ -194,7 +212,7 @@
   --chart-4: 27 87% 62%;
   --chart-5: 340 82% 68%;
 
-  --shadow-2xs: 0px 1px 2px 0px hsl(220 8% 2% / 0.20);
+  --shadow-2xs: 0px 1px 2px 0px hsl(220 8% 92% / 0.05);
   --shadow-xs: 0px 1px 2px 0px hsl(220 8% 2% / 0.25);
   --shadow-sm: 0px 1px 3px 0px hsl(220 8% 2% / 0.30), 0px 1px 2px -1px hsl(220 8% 2% / 0.30);
   --shadow: 0px 4px 6px -1px hsl(220 8% 2% / 0.30), 0px 2px 4px -2px hsl(220 8% 2% / 0.30);

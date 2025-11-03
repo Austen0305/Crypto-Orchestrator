@@ -21,6 +21,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [mfaToken, setMfaToken] = useState('');
   const [captchaText, setCaptchaText] = useState('');
   const [captchaSvg, setCaptchaSvg] = useState('');
+  const [mfaQrUrl, setMfaQrUrl] = useState<string | null>(null);
 
   const {
     login,
@@ -74,7 +75,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     try {
       const result = await setupMFA();
       setMfaSecret(result.secret);
-      setCaptchaSvg(result.otpauthUrl);
+      setMfaQrUrl(result.otpauthUrl);
     } catch (err) {
       // Error handled by useAuth hook
     }
@@ -116,11 +117,11 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </AlertDescription>
             </Alert>
 
-            {mfaSecret && (
+            {mfaSecret && mfaQrUrl && (
               <div className="text-center">
                 <div className="bg-white p-4 rounded-lg inline-block">
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(captchaSvg)}`}
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(mfaQrUrl)}`}
                     alt="MFA QR Code"
                     className="w-48 h-48 mx-auto"
                   />
