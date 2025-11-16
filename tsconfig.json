@@ -23,7 +23,6 @@
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "forceConsistentCasingInFileNames": true,
-  "types": ["node", "jest", "react", "react-dom"],
     "downlevelIteration": true,
     "target": "es2022",
     "paths": {

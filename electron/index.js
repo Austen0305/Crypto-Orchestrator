@@ -105,32 +105,90 @@ function createTray() {
   }
 }
 
-// Enhanced FastAPI server management
+// Enhanced FastAPI server management with bundled Python runtime support
 async function startFastAPIServer() {
-  const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
-  const serverPath = app.isPackaged
-    ? path.join(path.dirname(app.getAppPath()), 'server_fastapi', 'main.py')
-    : path.join(__dirname, '../server_fastapi', 'main.py');
+  let pythonPath;
+  let serverPath;
+  
+  if (app.isPackaged) {
+    // In packaged app, try to use bundled Python runtime first
+    const bundledPython = process.platform === 'win32'
+      ? path.join(process.resourcesPath, 'python-runtime', 'venv', 'Scripts', 'python.exe')
+      : path.join(process.resourcesPath, 'python-runtime', 'venv', 'bin', 'python');
+    
+    serverPath = path.join(process.resourcesPath, 'python-runtime', 'server_fastapi', 'main.py');
+    
+    // Check if bundled Python exists
+    const fs = require('fs');
+    if (fs.existsSync(bundledPython)) {
+      pythonPath = bundledPython;
+      console.log('[Electron] Using bundled Python runtime');
+    } else {
+      // Fallback to system Python
+      pythonPath = process.platform === 'win32' ? 'python' : 'python3';
+      serverPath = path.join(path.dirname(app.getAppPath()), 'server_fastapi', 'main.py');
+      console.log('[Electron] Using system Python (bundled not found)');
+    }
+  } else {
+    // In development, use system Python
+    pythonPath = process.platform === 'win32' ? 'python' : 'python3';
+    serverPath = path.join(__dirname, '../server_fastapi', 'main.py');
+  }
 
   // Check Python installation
   try {
-    await exec(`${pythonPath} --version`);
+    const { execSync } = require('child_process');
+    execSync(`"${pythonPath}" --version`, { stdio: 'pipe' });
   } catch (error) {
-    dialog.showErrorBox(
-      'Python Not Found',
-      'Python 3.8+ is required to run CryptoOrchestrator. Please install Python and try again.'
-    );
+    const message = app.isPackaged
+      ? 'Python runtime not found. Please reinstall CryptoOrchestrator.'
+      : 'Python 3.8+ is required to run CryptoOrchestrator. Please install Python and try again.';
+    
+    dialog.showErrorBox('Python Not Found', message);
     app.quit();
     return;
   }
 
-  // Start FastAPI process
-  fastapiProcess = spawn(pythonPath, [serverPath], {
+  // Determine server directory - parent directory so uvicorn can find server_fastapi module
+  const parentDir = app.isPackaged 
+    ? (pythonPath.includes('python-runtime') 
+        ? path.join(process.resourcesPath, 'python-runtime')
+        : path.dirname(app.getAppPath()))
+    : path.join(__dirname, '..');
+
+  const serverDir = path.join(parentDir, 'server_fastapi');
+  const dbPath = path.join(parentDir, 'crypto_orchestrator.db');
+
+  // Start FastAPI process using uvicorn
+  const uvicornArgs = [
+    '-m', 'uvicorn',
+    'server_fastapi.main:app',
+    '--host', '127.0.0.1',
+    '--port', '8000',
+  ];
+
+  // Only add --reload in development
+  if (!app.isPackaged) {
+    uvicornArgs.push('--reload');
+  }
+
+  fastapiProcess = spawn(pythonPath, uvicornArgs, {
     env: {
       ...process.env,
       PYTHONUNBUFFERED: '1',
-      FASTAPI_ENV: app.isPackaged ? 'production' : 'development'
-    }
+      FASTAPI_ENV: app.isPackaged ? 'production' : 'development',
+      DATABASE_URL: process.env.DATABASE_URL || `sqlite+aiosqlite:///${dbPath.replace(/\\/g, '/')}`,
+      // Set working directory to parent so uvicorn can find server_fastapi module
+      PWD: parentDir,
+      // Add bundled Python to PATH if using bundled runtime
+      ...(app.isPackaged && pythonPath.includes('python-runtime') ? {
+        PATH: `${path.dirname(pythonPath)}${path.delimiter}${process.env.PATH}`
+      } : {}),
+      // Add Python path for imports (parent directory so uvicorn can find server_fastapi)
+      PYTHONPATH: parentDir
+    },
+    cwd: parentDir, // Change working directory to parent so uvicorn can find server_fastapi
+    stdio: ['pipe', 'pipe', 'pipe'] // Explicitly set stdio
   });
 
   // Handle process output
@@ -438,16 +496,6 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
-});
-
-// Handle app ready to start services
-app.whenReady().then(() => {
-  // Start FastAPI server first
-  startFastAPIServer();
-
-  createWindow();
-  createTray();
-  setupAutoUpdater();
 });
 
 // Handle app being reopened on macOS

@@ -1,5 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PortfolioCard } from "@/components/PortfolioCard";
+import { TradingJournal } from "@/components/TradingJournal";
+import { PortfolioPieChart } from "@/components/PortfolioPieChart";
+import { ProfitCalendar } from "@/components/ProfitCalendar";
+import { PerformanceAttribution } from "@/components/PerformanceAttribution";
 import {
   LineChart,
   Line,
@@ -15,6 +19,7 @@ import {
   Cell,
 } from "recharts";
 import { TrendingUp, Target, Percent, Activity } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Analytics() {
   const performanceData = [
@@ -42,6 +47,17 @@ export default function Analytics() {
           Track your trading performance and insights
         </p>
       </div>
+
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="attribution">Performance Attribution</TabsTrigger>
+          <TabsTrigger value="journal">Trading Journal</TabsTrigger>
+          <TabsTrigger value="calendar">Profit Calendar</TabsTrigger>
+          <TabsTrigger value="allocation">Portfolio Allocation</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <PortfolioCard
@@ -173,6 +189,24 @@ export default function Analytics() {
           </ResponsiveContainer>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="attribution">
+          <PerformanceAttribution />
+        </TabsContent>
+
+        <TabsContent value="journal">
+          <TradingJournal />
+        </TabsContent>
+
+        <TabsContent value="calendar">
+          <ProfitCalendar />
+        </TabsContent>
+
+        <TabsContent value="allocation">
+          <PortfolioPieChart />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

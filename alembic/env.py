@@ -14,11 +14,24 @@ import sys
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-# Import your models
+# Import your models - this ensures all models are registered with Base.metadata
 try:
     from server_fastapi.models import Base
+    # Import all models to ensure they're registered with Base.metadata
+    from server_fastapi.models import (
+        User, Bot, RiskAlert, RiskLimit, Portfolio, Trade,
+        Candle, ExchangeAPIKey
+    )
 except ImportError:
-    from models import Base
+    try:
+        from models import Base
+        # Import all models to ensure they're registered with Base.metadata
+        from models import (
+            User, Bot, RiskAlert, RiskLimit, Portfolio, Trade,
+            Candle, ExchangeAPIKey
+        )
+    except ImportError:
+        pass  # Models may not all exist yet
 
 # this is the Alembic Config object
 config = context.config
@@ -46,6 +59,13 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
+    # Get database URL and convert async to sync if needed
+    url = config.get_main_option("sqlalchemy.url")
+    if url and "aiosqlite" in url:
+        # Convert async SQLite URL to sync
+        url = url.replace("sqlite+aiosqlite://", "sqlite://")
+        config.set_main_option("sqlalchemy.url", url)
+    
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

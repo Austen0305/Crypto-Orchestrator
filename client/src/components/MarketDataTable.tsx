@@ -18,9 +18,10 @@ interface Market {
 
 interface MarketDataTableProps {
   markets: Market[];
+  onPairSelect?: (pair: string) => void;
 }
 
-export function MarketDataTable({ markets }: MarketDataTableProps) {
+export function MarketDataTable({ markets, onPairSelect }: MarketDataTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const { toast } = useToast();
@@ -90,8 +91,9 @@ export function MarketDataTable({ markets }: MarketDataTableProps) {
                 return (
                   <tr
                     key={market.pair}
-                    className="border-b hover-elevate"
+                    className="border-b hover-elevate cursor-pointer"
                     data-testid={`row-market-${market.pair}`}
+                    onClick={() => onPairSelect?.(market.pair)}
                   >
                     <td className="p-3">
                       <div className="flex items-center gap-2">
@@ -99,7 +101,10 @@ export function MarketDataTable({ markets }: MarketDataTableProps) {
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6"
-                          onClick={() => toggleFavorite(market.pair)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(market.pair);
+                          }}
                           data-testid={`button-favorite-${market.pair}`}
                         >
                           <Star

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { botApi, tradeApi, portfolioApi, marketApi, feeApi, statusApi, integrationsApi, runRiskScenario } from "@/lib/api";
 import type { BotConfig } from "../../../shared/schema";
 import { useAuth } from "@/hooks/useAuth";
+import { usePortfolioWebSocket } from "@/hooks/usePortfolioWebSocket";
 
 // Bot hooks
 export const useBots = () => {
@@ -92,11 +93,13 @@ export const useBotPerformance = (id: string) => {
 };
 
 // Trade hooks
-export const useTrades = (botId?: string, mode?: "paper" | "live") => {
+export const useTrades = (botId?: string, mode?: "paper" | "real" | "live") => {
   const { isAuthenticated } = useAuth();
+  // Normalize "live" to "real" for backend compatibility
+  const normalizedMode = mode === "live" ? "real" : mode;
   return useQuery({
-    queryKey: ["trades", botId, mode],
-    queryFn: () => tradeApi.getTrades(botId, mode),
+    queryKey: ["trades", botId, normalizedMode],
+    queryFn: () => tradeApi.getTrades(botId, normalizedMode),
     enabled: isAuthenticated,
     refetchInterval: isAuthenticated ? 5000 : false, // reduce polling and only when authenticated
   });
@@ -114,14 +117,29 @@ export const useCreateTrade = () => {
 };
 
 // Portfolio hooks
-export const usePortfolio = (mode: "paper" | "live" = "paper") => {
+export const usePortfolio = (mode: "paper" | "real" | "live" = "paper") => {
   const { isAuthenticated } = useAuth();
-  return useQuery({
-    queryKey: ["portfolio", mode],
-    queryFn: () => portfolioApi.getPortfolio(mode),
+  // Normalize "live" to "real" for backward compatibility
+  const normalizedMode = mode === "live" ? "real" : mode;
+  
+  // Use WebSocket for real-time updates if available
+  const { portfolio: wsPortfolio, isConnected: wsConnected } = usePortfolioWebSocket(normalizedMode);
+  
+  const query = useQuery({
+    queryKey: ["portfolio", normalizedMode],
+    queryFn: () => portfolioApi.getPortfolio(normalizedMode),
     enabled: isAuthenticated,
-    refetchInterval: isAuthenticated ? 10000 : false, // poll slower and only when authenticated
+    refetchInterval: isAuthenticated && !wsConnected ? 10000 : false, // Poll only if WebSocket not connected
   });
+
+  // Merge WebSocket data with query data (WebSocket takes precedence for real-time updates)
+  const mergedPortfolio = wsPortfolio || query.data;
+
+  return {
+    ...query,
+    data: mergedPortfolio,
+    isRealTime: wsConnected,
+  };
 };
 
 // Market hooks

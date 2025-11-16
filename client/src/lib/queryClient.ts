@@ -8,26 +8,34 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(
-  method: string,
+export async function apiRequest<T = any>(
   url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
+  options?: {
+    method?: string;
+    body?: string | object;
+    headers?: Record<string, string>;
+  },
+): Promise<T> {
   const baseUrl = (globalThis as any).VITE_API_URL || "http://localhost:8000";
   const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
+  const method = options?.method || 'GET';
+  const body = options?.body;
+  const customHeaders = options?.headers || {};
 
-  console.log(`[API Request] ${method} ${fullUrl}`, data);
+  console.log(`[API Request] ${method} ${fullUrl}`, body);
 
   // Attach Authorization header if token exists (proper fix: use login flow)
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    ...customHeaders,
+  };
   const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  if (data) headers['Content-Type'] = 'application/json';
+  if (body) headers['Content-Type'] = 'application/json';
 
   const res = await fetch(fullUrl, {
     method,
     headers,
-    body: data ? JSON.stringify(data) : undefined,
+    body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
     credentials: "include",
   });
 
@@ -55,7 +63,7 @@ export async function apiRequest(
   }
 
   await throwIfResNotOk(res);
-  return res;
+  return await res.json();
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

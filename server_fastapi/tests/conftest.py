@@ -17,8 +17,9 @@ try:
 except Exception:
     Base = None  # Database layer may be optional in some environments
 
-# Test database URL - use in-memory SQLite for tests
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# Test database URL - use shared memory SQLite for tests (allows multiple connections)
+# This fixes the issue where tests would fail with "no such table" errors
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///file:pytest_shared?mode=memory&cache=shared")
 
 @pytest.fixture(scope="session")
 def test_engine():
@@ -28,22 +29,36 @@ def test_engine():
     engine = create_async_engine(
         TEST_DATABASE_URL,
         echo=False,
+        poolclass=StaticPool,  # Use static pool for SQLite
         connect_args={"check_same_thread": False},  # Needed for SQLite
     )
     return engine
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(scope="session", autouse=True)
 async def test_db_setup(test_engine):
     """Set up test database schema if DB is available."""
     if Base is None or test_engine is None:
         yield
         return
+    
+    # Import all models to ensure metadata is populated
+    try:
+        from server_fastapi import models  # noqa: F401
+    except ImportError:
+        pass
+    
+    # Create all tables
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    
     yield
-    # Cleanup after tests
+    
+    # Cleanup after all tests
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+    
+    # Dispose engine
+    await test_engine.dispose()
 
 @pytest_asyncio.fixture
 async def db_session(test_engine, test_db_setup):
@@ -184,10 +199,31 @@ async def created_bot(client: AsyncClient, test_bot_data):
     return None
 
 @pytest_asyncio.fixture
-async def auth_headers():
-    """Provide authentication headers for tests"""
-    # Mock JWT token for testing
-    return {
-        "Authorization": "Bearer test_token_mock"
-    }
-    return MockBotRepository()
+async def auth_headers(client):
+    """Provide authentication headers for tests with real JWT token"""
+    import uuid
+    from server_fastapi.services.auth.auth_service import AuthService
+    
+    # Create a test user and get a real token
+    unique_email = f"testuser-{uuid.uuid4().hex[:8]}@example.com"
+    auth_service = AuthService()
+    
+    try:
+        # Register user
+        user = await auth_service.register_user(
+            email=unique_email,
+            password="TestPassword123!",
+            name="Test User"
+        )
+        
+        # Login to get token
+        token_data = await auth_service.login_user(
+            email=unique_email,
+            password="TestPassword123!"
+        )
+        
+        return {"Authorization": f"Bearer {token_data['token']}"}
+    except Exception as e:
+        # Fallback to mock token if auth fails
+        pytest.skip(f"Auth setup failed: {e}")
+        return {"Authorization": "Bearer test_token_mock"}

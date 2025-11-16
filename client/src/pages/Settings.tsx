@@ -7,9 +7,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@/components/ThemeProvider";
-import { Save, Bell, Shield, Palette, Globe } from "lucide-react";
+import { Save, Bell, Shield, Palette, Globe, Key, FileText } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import ExchangeKeys from "./ExchangeKeys";
+import { AuditLogViewer } from "@/components/AuditLogViewer";
 
 export default function Settings() {
   const { i18n } = useTranslation();
@@ -38,8 +40,16 @@ export default function Settings() {
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="trading">Trading</TabsTrigger>
+          <TabsTrigger value="exchange-keys">
+            <Key className="h-4 w-4 mr-2" />
+            Exchange Keys
+          </TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="audit-logs">
+            <FileText className="h-4 w-4 mr-2" />
+            Audit Logs
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-4">
@@ -175,6 +185,10 @@ export default function Settings() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="exchange-keys">
+          <ExchangeKeys />
+        </TabsContent>
+
         <TabsContent value="notifications" className="space-y-4">
           <Card>
             <CardHeader>
@@ -283,6 +297,10 @@ export default function Settings() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="audit-logs">
+          <AuditLogViewer />
         </TabsContent>
       </Tabs>
 

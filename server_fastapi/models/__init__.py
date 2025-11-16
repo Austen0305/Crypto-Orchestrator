@@ -15,6 +15,12 @@ try:
 except Exception:
     Candle = None  # noqa: N816
 
+# Optional exchange_api_key model import guarded
+try:
+    from .exchange_api_key import ExchangeAPIKey  # type: ignore
+except Exception:
+    ExchangeAPIKey = None  # noqa: N816
+
 __all__ = [
     'Base',
     'BaseModel',
@@ -26,5 +32,6 @@ __all__ = [
     'RiskLimit',
     'Portfolio',
     'Trade',
-    'Candle'
+    'Candle',
+    'ExchangeAPIKey'
 ]

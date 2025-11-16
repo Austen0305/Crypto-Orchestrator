@@ -10,6 +10,7 @@ from datetime import datetime
 from ...services.ml.enhanced_ml_engine import EnhancedMLEngine, MLPrediction
 from ...services.ml.ensemble_engine import EnsembleEngine, EnsemblePrediction
 from ...services.ml.neural_network_engine import NeuralNetworkEngine
+from ...services.ml.adaptive_learning import adaptive_learning_service
 from ...services.advanced_risk_manager import AdvancedRiskManager, RiskProfile
 from .bot_control_service import BotControlService
 from .bot_monitoring_service import BotMonitoringService
@@ -88,6 +89,18 @@ class BotTradingService:
 
             # Record trade result
             await safe_system.record_trade_result(trade_details, trade_result.get('pnl', 0.0))
+
+            # Adaptive Learning: Learn from trade
+            try:
+                trade_record = {
+                    "id": trade_result.get('trade_id', f"{bot_id}_{int(datetime.now().timestamp())}"),
+                    "pnl": trade_result.get('pnl', 0.0),
+                    "symbol": bot_config.get('tradingPair', 'UNKNOWN'),
+                }
+                adaptive_learning_service.analyze_trade_pattern(trade_record, market_data)
+                logger.info(f"Bot {bot_id} trade pattern analyzed for adaptive learning")
+            except Exception as learn_error:
+                logger.warning(f"Error in adaptive learning for bot {bot_id}: {learn_error}")
 
             logger.info(f"Bot {bot_id} executed {signal['action']} trade")
             return {

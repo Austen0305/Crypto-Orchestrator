@@ -5,6 +5,13 @@ import { OrderEntryPanel } from "@/components/OrderEntryPanel";
 import { OrderBook } from "@/components/OrderBook";
 import { TradeHistory } from "@/components/TradeHistory";
 import { TradingRecommendations } from "@/components/TradingRecommendations";
+import { TradingJournal } from "@/components/TradingJournal";
+import { PortfolioPieChart } from "@/components/PortfolioPieChart";
+import { AITradingAssistant } from "@/components/AITradingAssistant";
+import { ProfitCalendar } from "@/components/ProfitCalendar";
+import { PriceAlerts } from "@/components/PriceAlerts";
+import { SentimentAnalysis } from "@/components/SentimentAnalysis";
+import { ArbitrageDashboard } from "@/components/ArbitrageDashboard";
 import React, { Suspense } from 'react';
 const RiskSummary = React.lazy(() => import('@/components/RiskSummary').then(m => ({ default: m.RiskSummary })));
 const RiskScenarioPanel = React.lazy(() => import('@/components/RiskScenarioPanel').then(m => ({ default: m.RiskScenarioPanel })));
@@ -14,11 +21,14 @@ import { useBotStatus } from "@/hooks/useBotStatus";
 import { useState } from 'react';
 import { generateOhlcv } from '@/lib/ohlcv';
 import { useAuth } from '@/hooks/useAuth';
+import { useTradingMode } from "@/contexts/TradingModeContext";
+import { TradingModeSwitcher } from "@/components/TradingModeSwitcher";
 import { Wallet, TrendingUp, Activity, DollarSign, Loader2 } from "lucide-react";
 
 export default function Dashboard() {
-  const { data: portfolio, isLoading: portfolioLoading } = usePortfolio("paper");
-  const { data: trades, isLoading: tradesLoading } = useTrades();
+  const { mode, isRealMoney, isPaperTrading } = useTradingMode();
+  const { data: portfolio, isLoading: portfolioLoading, isRealTime } = usePortfolio(mode);
+  const { data: trades, isLoading: tradesLoading } = useTrades(undefined, mode);
   const { data: status } = useStatus();
   const { runningBots } = useBotStatus();
 
@@ -59,6 +69,14 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-4">
+      {/* Real-time indicator */}
+      {isRealTime && (
+        <div className="flex items-center gap-2 text-sm text-green-500 bg-green-500/10 px-3 py-2 rounded-md">
+          <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span>Live portfolio updates enabled</span>
+        </div>
+      )}
+      
       {/* Portfolio Summary Cards - Grid layout that adapts to screen size */}
       <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
         <PortfolioCard
@@ -89,6 +107,11 @@ export default function Dashboard() {
           icon={DollarSign}
           className="min-w-[140px]"
         />
+      </div>
+
+      {/* Exchange Status Indicator */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ExchangeStatusIndicator />
       </div>
 
       {/* Main Trading Interface - Responsive layout */}
@@ -147,6 +170,37 @@ export default function Dashboard() {
       {/* Trade History - Always full width */}
       <div className="rounded-lg border bg-card overflow-hidden">
         <TradeHistory trades={trades || []} />
+      </div>
+
+      {/* New Features Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+        {/* Trading Journal */}
+        <TradingJournal />
+        
+        {/* Portfolio Pie Chart */}
+        <PortfolioPieChart />
+      </div>
+
+      {/* AI Assistant and Profit Calendar */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+        {/* AI Trading Assistant */}
+        <div className="h-[600px]">
+          <AITradingAssistant />
+        </div>
+        
+        {/* Profit Calendar */}
+        <ProfitCalendar />
+      </div>
+
+      {/* Price Alerts and Sentiment Analysis */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+        <PriceAlerts />
+        <SentimentAnalysis symbol="BTC" autoRefresh={true} />
+      </div>
+
+      {/* Arbitrage Dashboard */}
+      <div className="mt-4">
+        <ArbitrageDashboard />
       </div>
     </div>
   );

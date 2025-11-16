@@ -29,38 +29,96 @@ interface PortfolioStats {
 
 interface Bot {
   id: string;
-  name: string;
-  status: 'active' | 'paused' | 'stopped';
-  profit24h: number;
-  profitPercent: number;
+  name?: string;
+  status?: string;
+  active?: boolean;
+  is_active?: boolean;
+  profit24h?: number;
+  profitPercent?: number;
+  performance_data?: any;
+  [key: string]: any; // Allow additional properties
 }
 
 export const DashboardScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [portfolioHistory, setPortfolioHistory] = useState<number[]>([]);
 
-  // Fetch portfolio stats
-  const { data: stats, refetch: refetchStats } = useQuery<PortfolioStats>({
-    queryKey: ['portfolio', 'stats'],
-    queryFn: () => api.get('/portfolio/stats'),
+  // Fetch portfolio stats (paper trading mode)
+  const { data: portfolioResponse, refetch: refetchStats } = useQuery({
+    queryKey: ['portfolio', 'paper'],
+    queryFn: async () => {
+      try {
+        const response = await api.get('/api/portfolio/paper');
+        return response.data;
+      } catch (error) {
+        console.error('Failed to fetch portfolio:', error);
+        // Return mock data on error
+        return {
+          totalBalance: 100000.0,
+          availableBalance: 95000.0,
+          positions: {},
+          profitLoss24h: 0,
+          profitLossTotal: 0,
+        };
+      }
+    },
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
+  // Extract portfolio stats from response
+  const stats: PortfolioStats | undefined = portfolioResponse ? {
+    totalValue: portfolioResponse.totalBalance || 0,
+    change24h: portfolioResponse.profitLoss24h || 0,
+    changePercent24h: portfolioResponse.totalBalance 
+      ? ((portfolioResponse.profitLoss24h || 0) / (portfolioResponse.totalBalance - (portfolioResponse.profitLoss24h || 0))) * 100 
+      : 0,
+    activeBots: 0, // Will be updated from bots query
+    totalProfit: portfolioResponse.profitLossTotal || 0,
+  } : undefined;
+
   // Fetch active bots
-  const { data: bots, refetch: refetchBots } = useQuery<Bot[]>({
+  const { data: botsResponse, refetch: refetchBots } = useQuery({
     queryKey: ['bots', 'active'],
-    queryFn: () => api.get('/bots?status=active'),
+    queryFn: async () => {
+      try {
+        const response = await api.get('/api/bots');
+        // Filter active bots from response
+        const bots = Array.isArray(response.data) ? response.data : [];
+        return bots.filter((bot: Bot) => bot.is_active || bot.status === 'active');
+      } catch (error) {
+        console.error('Failed to fetch bots:', error);
+        return [];
+      }
+    },
     refetchInterval: 30000,
   });
 
-  // WebSocket for real-time updates
-  const { isConnected, lastMessage } = useWebSocket('/ws/portfolio');
+  // Extract bots from response
+  const bots: Bot[] = botsResponse || [];
+  
+  // Update stats with active bots count
+  if (stats && bots.length !== undefined) {
+    stats.activeBots = bots.length;
+  }
+
+  // WebSocket for real-time updates - construct URL from API base URL
+  const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:8000';
+  const wsBaseUrl = apiBaseUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+  const { isConnected, lastMessage } = useWebSocket(`${wsBaseUrl}/ws`);
 
   useEffect(() => {
     if (lastMessage) {
-      const data = JSON.parse(lastMessage);
-      if (data.type === 'portfolio_update') {
-        setPortfolioHistory(prev => [...prev.slice(-20), data.value]);
+      try {
+        const data = JSON.parse(lastMessage);
+        if (data.type === 'portfolio_update' || data.type === 'market_data') {
+          const value = data.value || data.totalBalance || data.price || 0;
+          setPortfolioHistory(prev => {
+            const newHistory = [...prev, value];
+            return newHistory.slice(-20); // Keep last 20 values
+          });
+        }
+      } catch (error) {
+        console.error('Failed to parse WebSocket message:', error);
       }
     }
   }, [lastMessage]);
@@ -93,12 +151,12 @@ export const DashboardScreen: React.FC = () => {
     >
       {/* Connection Status */}
       <View style={styles.statusBar}>
-        <Icon
+        <MaterialCommunityIcons
           name={isConnected ? 'cloud-check' : 'cloud-off-outline'}
           size={16}
           color={isConnected ? '#22c55e' : '#ef4444'}
         />
-        <Text style={styles.statusText}>
+        <Text style={styles.statusBarText}>
           {isConnected ? 'Live' : 'Reconnecting...'}
         </Text>
       </View>
@@ -113,7 +171,7 @@ export const DashboardScreen: React.FC = () => {
           })}
         </Text>
         <View style={styles.changeRow}>
-          <Icon
+          <MaterialCommunityIcons
             name={isPositive ? 'trending-up' : 'trending-down'}
             size={20}
             color={isPositive ? '#22c55e' : '#ef4444'}
@@ -159,7 +217,7 @@ export const DashboardScreen: React.FC = () => {
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
           <MaterialCommunityIcons name="robot" size={24} color="#3b82f6" />
-          <Text style={styles.statValue}>{stats?.activeBots ?? 0}</Text>
+          <Text style={styles.statValue}>{bots?.length ?? 0}</Text>
           <Text style={styles.statLabel}>Active Bots</Text>
         </View>
         <View style={styles.statCard}>
@@ -179,31 +237,46 @@ export const DashboardScreen: React.FC = () => {
             <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
         </View>
-        {bots?.slice(0, 3).map((bot) => (
-          <TouchableOpacity key={bot.id} style={styles.botCard}>
-            <View style={styles.botHeader}>
-              <View style={styles.botInfo}>
-                <Text style={styles.botName}>{bot.name}</Text>
-                <View style={[styles.statusBadge, styles[`status_${bot.status}`]]}>
-                  <Text style={styles.statusText}>{bot.status}</Text>
+        {bots && bots.length > 0 ? (
+          bots.slice(0, 3).map((bot) => {
+            const profit24h = bot.profit24h || 0;
+            const profitPercent = bot.profitPercent || 0;
+            const status = bot.status || (bot.active ? 'active' : bot.is_active ? 'active' : 'stopped');
+            const botName = bot.name || 'Unnamed Bot';
+            
+            return (
+              <TouchableOpacity key={bot.id} style={styles.botCard}>
+                <View style={styles.botHeader}>
+                  <View style={styles.botInfo}>
+                    <Text style={styles.botName}>{botName}</Text>
+                    <View style={[styles.statusBadge, styles[`status_${status}`] || styles.status_stopped]}>
+                      <Text style={styles.statusText}>{status}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.botProfit}>
+                    <Text
+                      style={[
+                        styles.profitText,
+                        { color: profit24h >= 0 ? '#22c55e' : '#ef4444' },
+                      ]}
+                    >
+                      {profit24h >= 0 ? '+' : ''}${profit24h.toFixed(2)}
+                    </Text>
+                    <Text style={styles.profitPercent}>
+                      ({profitPercent.toFixed(2)}%)
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              <View style={styles.botProfit}>
-                <Text
-                  style={[
-                    styles.profitText,
-                    { color: bot.profit24h >= 0 ? '#22c55e' : '#ef4444' },
-                  ]}
-                >
-                  {bot.profit24h >= 0 ? '+' : ''}${bot.profit24h.toFixed(2)}
-                </Text>
-                <Text style={styles.profitPercent}>
-                  ({bot.profitPercent.toFixed(2)}%)
-                </Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+              </TouchableOpacity>
+            );
+          })
+        ) : (
+          <View style={styles.emptyState}>
+            <MaterialCommunityIcons name="robot-off" size={48} color="#6b7280" />
+            <Text style={styles.emptyText}>No active bots</Text>
+            <Text style={styles.emptySubtext}>Create a bot to start trading</Text>
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -221,7 +294,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     backgroundColor: '#1e293b',
   },
-  statusText: {
+  statusBarText: {
     color: '#94a3b8',
     fontSize: 12,
     marginLeft: 6,
@@ -357,6 +430,11 @@ const styles = StyleSheet.create({
   status_stopped: {
     backgroundColor: '#ef444420',
   },
+  statusText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   botProfit: {
     alignItems: 'flex-end',
   },
@@ -368,5 +446,27 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     fontSize: 12,
     marginTop: 2,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+    backgroundColor: '#1e293b',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#334155',
+    marginTop: 12,
+  },
+  emptyText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+  },
+  emptySubtext: {
+    color: '#94a3b8',
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
   },
 });

@@ -238,43 +238,57 @@ if os.getenv("ENABLE_DISTRIBUTED_RATE_LIMIT", "false").lower() == "true":
     except Exception as e:
         logger.warning(f"Could not enable distributed rate limiting: {e}")
 
-# Security headers middleware
-class SecurityHeadersMiddleware:
-    def __init__(self, app):
-        self.app = app
-
-    async def __call__(self, scope, receive, send):
-        if scope["type"] != "http":
-            await self.app(scope, receive, send)
-            return
-
-        async def send_with_security_headers(message):
-            if message["type"] == "http.response.start":
-                headers = message.get("headers", [])
-                # Add security headers
-                headers.extend([
-                    [b"X-Frame-Options", b"DENY"],
-                    [b"X-Content-Type-Options", b"nosniff"],
-                    [b"X-XSS-Protection", b"1; mode=block"],
-                    [b"Strict-Transport-Security", b"max-age=31536000; includeSubDomains"],
-                    [b"Content-Security-Policy", b"default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' ws: wss:;"],
-                    [b"Referrer-Policy", b"strict-origin-when-cross-origin"],
-                ])
-                message["headers"] = headers
-            await send(message)
-
-        await self.app(scope, receive, send_with_security_headers)
+# Enhanced security headers middleware
+try:
+    from .middleware.enhanced_security_headers import SecurityHeadersMiddleware
+    app.add_middleware(SecurityHeadersMiddleware)
+    logger.info("Enhanced security headers middleware enabled")
+except ImportError:
+    # Fallback to basic security headers
+    logger.warning("Enhanced security headers not available, using basic headers")
+    @app.middleware("http")
+    async def add_basic_security_headers(request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
 
 # Add monitoring middleware
 if MonitoringMiddleware:
     app.add_middleware(MonitoringMiddleware)
 
+# Add performance monitoring middleware
+try:
+    from .middleware.performance_monitor import PerformanceMonitoringMiddleware, performance_monitor
+    app.add_middleware(PerformanceMonitoringMiddleware)
+    app.state.performance_monitor = performance_monitor
+    logger.info("Performance monitoring middleware enabled")
+except ImportError:
+    logger.warning("Performance monitoring middleware not available")
+
 # Add input validation middleware
 if InputValidationMiddleware:
     app.add_middleware(InputValidationMiddleware)
 
-# Add security headers middleware
-app.add_middleware(SecurityHeadersMiddleware)
+# Add audit logging middleware
+try:
+    from .middleware.audit_logger import AuditLoggerMiddleware
+    app.add_middleware(AuditLoggerMiddleware)
+    logger.info("Audit logging middleware enabled")
+except ImportError:
+    logger.warning("Audit logging middleware not available")
+
+# Add request ID middleware for request tracking
+try:
+    from .middleware.request_id import RequestIDMiddleware
+    app.add_middleware(RequestIDMiddleware)
+    logger.info("Request ID middleware enabled")
+except ImportError:
+    logger.warning("Request ID middleware not available")
+
+# Enhanced security headers middleware (already added above)
 
 # CORS middleware - optimized for desktop app usage with proper origin validation
 def validate_origin(origin: str) -> bool:
@@ -288,6 +302,10 @@ def validate_origin(origin: str) -> bool:
         "http://127.0.0.1:8000", # Alternative localhost
         "file://",               # Electron file protocol
         "null",                  # Electron null origin
+        # Mobile app origins (for physical devices)
+        "exp://",                # Expo dev server
+        "http://192.168.1.1:8000",  # Common local network
+        "http://10.0.2.2:8000",     # Android emulator
     ]
 
     # Additional production origins from environment
@@ -303,6 +321,10 @@ app.add_middleware(
         "http://localhost:3000",  # React dev server
         "http://localhost:5173",  # Vite dev server
         "http://localhost:8000",  # FastAPI server
+        "http://127.0.0.1:5173",  # Vite alternative
+        "http://127.0.0.1:8000",  # FastAPI alternative
+        "exp://",                 # Expo dev server
+        "http://10.0.2.2:8000",   # Android emulator
         "http://127.0.0.1:3000", # Alternative localhost
         "http://127.0.0.1:5173", # Alternative localhost
         "http://127.0.0.1:8000", # Alternative localhost
@@ -320,24 +342,45 @@ app.add_middleware(
 if os.getenv("NODE_ENV") == "production":
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1"])
 
-# Global exception handler - enhanced for desktop app
+# Register structured error handlers
+try:
+    from .middleware.error_handler import register_error_handlers
+    register_error_handlers(app)
+    logger.info("Structured error handlers registered")
+except ImportError:
+    logger.warning("Structured error handlers not available, using default")
+
+# Keep default exception handler as fallback
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    # This will be caught by structured error handler if available
     logger.error(f"Unhandled error: {exc}", exc_info=True)
     # Return more detailed error info in development
     if os.getenv("NODE_ENV") == "development":
         return JSONResponse(
             status_code=500,
             content={
-                "message": "Internal server error",
-                "error": str(exc),
-                "type": type(exc).__name__
+                "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Internal server error",
+                    "status_code": 500,
+                    "details": {
+                        "error": str(exc),
+                        "type": type(exc).__name__
+                    }
+                }
             }
         )
     else:
         return JSONResponse(
             status_code=500,
-            content={"message": "Internal server error"}
+            content={
+                "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Internal server error",
+                    "status_code": 500
+                }
+            }
         )
 
 # Health check endpoint with database status
@@ -381,9 +424,11 @@ logger.info("Loading routers with resilient strategy...")
 
 _safe_include("server_fastapi.routes.auth", "router", "/api/auth", ["Authentication"])
 _safe_include("server_fastapi.routes.bots", "router", "/api/bots", ["Bots"])
+_safe_include("server_fastapi.routes.bot_learning", "router", "", ["Bot Learning"])
 _safe_include("server_fastapi.routes.markets", "router", "/api/markets", ["Markets"])
 _safe_include("server_fastapi.routes.trades", "router", "/api/trades", ["Trades"])
 _safe_include("server_fastapi.routes.analytics", "router", "/api/analytics", ["Analytics"])
+_safe_include("server_fastapi.routes.web_vitals", "router", "", ["Web Vitals"])
 _safe_include("server_fastapi.routes.portfolio", "router", "/api/portfolio", ["Portfolio"])
 _safe_include("server_fastapi.routes.preferences", "router", "/api/preferences", ["Preferences"])
 _safe_include("server_fastapi.routes.notifications", "router", "/api/notifications", ["Notifications"])
@@ -406,6 +451,10 @@ except Exception as e:
     app.include_router(integrations_stub, prefix="/api/integrations", tags=["Integrations (stub)"])
 
 _safe_include("server_fastapi.routes.recommendations", "router", "/api/recommendations", ["Recommendations"])
+_safe_include("server_fastapi.routes.exchange_keys", "router", "/api/exchange-keys", ["Exchange Keys"])
+_safe_include("server_fastapi.routes.exchange_status", "router", "/api/exchange-status", ["Exchange Status"])
+_safe_include("server_fastapi.routes.trading_mode", "router", "/api/trading", ["Trading Mode"])
+_safe_include("server_fastapi.routes.audit_logs", "router", "/api/audit-logs", ["Audit Logs"])
 _safe_include("server_fastapi.routes.fees", "router", "/api/fees", ["Fees"])
 _safe_include("server_fastapi.routes.health", "router", "/api/health", ["Health"])
 _safe_include("server_fastapi.routes.status", "router", "/api/status", ["Status"])
@@ -419,6 +468,7 @@ _safe_include("server_fastapi.routes.portfolio_rebalance", "router", "", ["Portf
 _safe_include("server_fastapi.routes.backtesting_enhanced", "router", "", ["Enhanced Backtesting"])
 _safe_include("server_fastapi.routes.marketplace", "router", "", ["API Marketplace"])
 _safe_include("server_fastapi.routes.arbitrage", "router", "", ["Multi-Exchange Arbitrage"])
+_safe_include("server_fastapi.routes.performance", "router", "/api/performance", ["Performance"])
 
 try:
     from server_fastapi.routes.health_advanced import router as health_advanced_router

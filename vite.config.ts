@@ -45,15 +45,56 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist"),
     emptyOutDir: true,
+    sourcemap: mode === 'production' ? false : true, // Disable sourcemaps in production for smaller bundles
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: mode === 'production', // Remove console.log in production
+        drop_debugger: true,
+      },
+    },
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom'],
-          charts: ['recharts'],
-          ui: ['class-variance-authority', 'lucide-react']
-        }
-      }
-    }
+        manualChunks: (id) => {
+          // React and React DOM
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'react-vendor';
+          }
+          // React Query
+          if (id.includes('node_modules/@tanstack/react-query')) {
+            return 'react-query';
+          }
+          // Charts
+          if (id.includes('node_modules/recharts') || id.includes('node_modules/lightweight-charts')) {
+            return 'charts';
+          }
+          // UI Components (Radix UI)
+          if (id.includes('node_modules/@radix-ui')) {
+            return 'radix-ui';
+          }
+          // Icons
+          if (id.includes('node_modules/lucide-react')) {
+            return 'icons';
+          }
+          // TensorFlow (ML)
+          if (id.includes('node_modules/@tensorflow')) {
+            return 'tensorflow';
+          }
+          // Large libraries
+          if (id.includes('node_modules/framer-motion')) {
+            return 'animations';
+          }
+          // All other node_modules
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
+      },
+    },
+    chunkSizeWarningLimit: 1000, // Warn if chunk exceeds 1MB
   },
   server: {
     fs: {

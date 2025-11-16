@@ -3,84 +3,98 @@ import type { BotConfig, InsertBotConfig } from "../../../shared/schema";
 
 // Bot API functions
 export const botApi = {
-  getBots: () => apiRequest("GET", "/api/bots").then((res) => res.json()),
+  getBots: () => apiRequest("/api/bots", { method: "GET" }).then((res) => res),
   getBot: (id: string) =>
-    apiRequest("GET", `/api/bots/${id}`).then((res) => res.json()),
+    apiRequest(`/api/bots/${id}`, { method: "GET" }).then((res) => res),
   createBot: (bot: InsertBotConfig) =>
-    apiRequest("POST", "/api/bots", bot).then((res) => res.json()),
+    apiRequest("/api/bots", { method: "POST", body: bot }).then((res) => res),
   updateBot: (id: string, updates: Partial<BotConfig>) =>
-    apiRequest("PATCH", `/api/bots/${id}`, updates).then((res) => res.json()),
+    apiRequest(`/api/bots/${id}`, { method: "PATCH", body: updates }).then((res) => res),
   deleteBot: (id: string) =>
-    apiRequest("DELETE", `/api/bots/${id}`).then((res) => res.json()),
+    apiRequest(`/api/bots/${id}`, { method: "DELETE" }).then((res) => res),
   startBot: (id: string) =>
-    apiRequest("POST", `/api/bots/${id}/start`).then((res) => res.json()),
+    apiRequest(`/api/bots/${id}/start`, { method: "POST" }).then((res) => res),
   stopBot: (id: string) =>
-    apiRequest("POST", `/api/bots/${id}/stop`).then((res) => res.json()),
+    apiRequest(`/api/bots/${id}/stop`, { method: "POST" }).then((res) => res),
   getBotModel: (id: string) =>
-    apiRequest("GET", `/api/bots/${id}/model`).then((res) => res.json()),
+    apiRequest(`/api/bots/${id}/model`, { method: "GET" }).then((res) => res),
   getBotPerformance: (id: string) =>
-    apiRequest("GET", `/api/bots/${id}/performance`).then((res) => res.json()),
+    apiRequest(`/api/bots/${id}/performance`, { method: "GET" }).then((res) => res),
 };
 
 // Trade API functions
 export const tradeApi = {
-  getTrades: (botId?: string, mode?: "paper" | "live") => {
+  getTrades: (botId?: string, mode?: "paper" | "real" | "live") => {
     const params = new URLSearchParams();
     if (botId) params.append("botId", botId);
-    if (mode) params.append("mode", mode);
+    if (mode) {
+      // Normalize "live" to "real" for backend compatibility
+      const normalizedMode = mode === "live" ? "real" : mode;
+      params.append("mode", normalizedMode);
+    }
     const query = params.toString() ? `?${params.toString()}` : "";
-    return apiRequest("GET", `/api/trades${query}`).then((res) => res.json());
+    return apiRequest(`/api/trades${query}`, {
+      method: "GET",
+    }).then((res) => res);
   },
   createTrade: (trade: any) =>
-    apiRequest("POST", "/api/trades", trade).then((res) => res.json()),
+    apiRequest("/api/trades", {
+      method: "POST",
+      body: trade,
+    }).then((res) => res),
 };
 
 // Portfolio API functions
 export const portfolioApi = {
-  getPortfolio: (mode: "paper" | "live") =>
-    apiRequest("GET", `/api/portfolio/${mode}`).then((res) => res.json()),
+  getPortfolio: (mode: "paper" | "real" | "live") => {
+    // Normalize "live" to "real" for backend compatibility
+    const normalizedMode = mode === "live" ? "real" : mode;
+    return apiRequest(`/api/portfolio/${normalizedMode}`, {
+      method: "GET",
+    }).then((res) => res);
+  },
 };
 
 // Market API functions
 export const marketApi = {
   getMarkets: () =>
-    apiRequest("GET", "/api/markets").then((res) => res.json()),
+    apiRequest("/api/markets", { method: "GET" }).then((res) => res),
   getOHLCV: (pair: string, timeframe = "1h", limit = 100) =>
-    apiRequest("GET", `/api/markets/${pair}/ohlcv?timeframe=${timeframe}&limit=${limit}`).then((res) => res.json()),
+    apiRequest(`/api/markets/${pair}/ohlcv?timeframe=${timeframe}&limit=${limit}`, { method: "GET" }).then((res) => res),
   getOrderBook: (pair: string) =>
-    apiRequest("GET", `/api/markets/${pair}/orderbook`).then((res) => res.json()),
+    apiRequest(`/api/markets/${pair}/orderbook`, { method: "GET" }).then((res) => res),
 };
 
 // Fee API functions
 export const feeApi = {
   getFees: (volumeUSD = 0) =>
-    apiRequest("GET", `/api/fees?volumeUSD=${volumeUSD}`).then((res) => res.json()),
+    apiRequest(`/api/fees?volumeUSD=${volumeUSD}`, { method: "GET" }).then((res) => res),
   calculateFees: (data: { amount: number; price: number; side: "buy" | "sell"; isMaker?: boolean; volumeUSD?: number }) =>
-    apiRequest("POST", "/api/fees/calculate", data).then((res) => res.json()),
+    apiRequest("/api/fees/calculate", { method: "POST", body: data }).then((res) => res),
 };
 
 // Status API functions
 export const statusApi = {
   getStatus: () =>
-    apiRequest("GET", "/api/status").then((res) => res.json()),
+    apiRequest("/api/status", { method: "GET" }).then((res) => res),
 };
 
 // Integrations API
 export const integrationsApi = {
-  status: () => apiRequest('GET', '/api/integrations/status').then((r) => r.json()),
-  predict: (payload: any) => apiRequest('POST', '/api/integrations/predict', payload).then((r) => r.json()),
-  backtest: (payload: any) => apiRequest('POST', '/api/integrations/backtest', payload).then((r) => r.json()),
-  ping: () => apiRequest('GET', '/api/integrations/ping').then((r) => r.json()),
-  startAll: () => apiRequest('POST', '/api/integrations/start').then((r) => r.json()),
-  stopAll: () => apiRequest('POST', '/api/integrations/stop').then((r) => r.json()),
+  status: () => apiRequest('/api/integrations/status', { method: 'GET' }).then((r) => r),
+  predict: (payload: any) => apiRequest('/api/integrations/predict', { method: 'POST', body: payload }).then((r) => r),
+  backtest: (payload: any) => apiRequest('/api/integrations/backtest', { method: 'POST', body: payload }).then((r) => r),
+  ping: () => apiRequest('/api/integrations/ping', { method: 'GET' }).then((r) => r),
+  startAll: () => apiRequest('/api/integrations/start', { method: 'POST' }).then((r) => r),
+  stopAll: () => apiRequest('/api/integrations/stop', { method: 'POST' }).then((r) => r),
 };
 
 // Preferences API (mounted at /api/preferences)
 export const preferencesApi = {
-  get: () => apiRequest('GET', '/api/preferences/').then(r => r.json()),
-  update: (updates: any) => apiRequest('PUT', '/api/preferences/', updates).then(r => r.json()),
-  reset: () => apiRequest('POST', '/api/preferences/reset').then(r => r.json()),
-  updateTheme: (theme: string) => apiRequest('PATCH', '/api/preferences/theme', theme).then(r => r.json()),
+  get: () => apiRequest('/api/preferences/', { method: 'GET' }).then(r => r),
+  update: (updates: any) => apiRequest('/api/preferences/', { method: 'PUT', body: updates }).then(r => r),
+  reset: () => apiRequest('/api/preferences/reset', { method: 'POST' }).then(r => r),
+  updateTheme: (theme: string) => apiRequest('/api/preferences/theme', { method: 'PATCH', body: theme }).then(r => r),
 };
 
 // Notifications API (mounted at /api/notifications)
@@ -91,18 +105,18 @@ export const notificationsApi = {
     if (params.offset) qs.append('offset', String(params.offset));
     if (params.unread_only) qs.append('unread_only', 'true');
     const query = qs.toString() ? `?${qs.toString()}` : '';
-    return apiRequest('GET', `/api/notifications/${query}`).then(r => r.json());
+    return apiRequest(`/api/notifications/${query}`, { method: 'GET' }).then(r => r);
   },
-  markRead: (id: number) => apiRequest('PATCH', `/api/notifications/${id}/read`).then(r => r.json()),
-  markAllRead: () => apiRequest('PATCH', '/api/notifications/read-all').then(r => r.json()),
-  delete: (id: number) => apiRequest('DELETE', `/api/notifications/${id}`).then(r => r.json()),
-  stats: () => apiRequest('GET', '/api/notifications/stats').then(r => r.json()),
-  unreadCount: () => apiRequest('GET', '/api/notifications/unread-count').then(r => r.json()),
+  markRead: (id: number) => apiRequest(`/api/notifications/${id}/read`, { method: 'PATCH' }).then(r => r),
+  markAllRead: () => apiRequest('/api/notifications/read-all', { method: 'PATCH' }).then(r => r),
+  delete: (id: number) => apiRequest(`/api/notifications/${id}`, { method: 'DELETE' }).then(r => r),
+  stats: () => apiRequest('/api/notifications/stats', { method: 'GET' }).then(r => r),
+  unreadCount: () => apiRequest('/api/notifications/unread-count', { method: 'GET' }).then(r => r),
 };
 
 // Recommendations API (mounted at /api/recommendations)
 export const recommendationsApi = {
-  get: () => apiRequest('GET', '/api/recommendations/').then(r => r.json()),
+  get: () => apiRequest('/api/recommendations/', { method: 'GET' }).then(r => r),
 };
 
 // Risk Scenarios
@@ -128,6 +142,6 @@ export interface ScenarioResponse {
 }
 
 export async function runRiskScenario(body: ScenarioRequest): Promise<ScenarioResponse> {
-  return apiRequest('POST', `/api/risk-scenarios/simulate`, body).then(r => r.json());
+  return apiRequest('/api/risk-scenarios/simulate', { method: 'POST', body }).then(r => r);
 }
 

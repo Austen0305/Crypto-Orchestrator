@@ -1,0 +1,508 @@
+import React, { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon, Plus, Search, Download, Filter, FileText, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { format } from "date-fns";
+import { useTrades } from "@/hooks/useApi";
+import { cn } from "@/lib/utils";
+import { formatCurrency, formatPercentage } from "@/lib/formatters";
+
+interface TradeEntry {
+  id: string;
+  date: Date;
+  symbol: string;
+  side: "buy" | "sell";
+  entryPrice: number;
+  exitPrice?: number;
+  quantity: number;
+  fees: number;
+  pnl?: number;
+  pnlPercent?: number;
+  strategy: string;
+  notes: string;
+  screenshot?: string;
+  tags: string[];
+}
+
+export function TradingJournal() {
+  const { data: trades, isLoading } = useTrades();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [filterStrategy, setFilterStrategy] = useState<string>("all");
+  const [filterSide, setFilterSide] = useState<string>("all");
+  const [selectedTrade, setSelectedTrade] = useState<TradeEntry | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Mock trades data - in production, this would come from the API
+  const mockTrades: TradeEntry[] = [
+    {
+      id: "1",
+      date: new Date(2025, 10, 13, 10, 30),
+      symbol: "BTC/USD",
+      side: "buy",
+      entryPrice: 45000,
+      exitPrice: 47350,
+      quantity: 0.1,
+      fees: 4.5,
+      pnl: 235,
+      pnlPercent: 5.22,
+      strategy: "ML Enhanced",
+      notes: "Entered on RSI oversold signal. Strong momentum confirmation.",
+      tags: ["momentum", "oversold"]
+    },
+    {
+      id: "2",
+      date: new Date(2025, 10, 12, 14, 20),
+      symbol: "ETH/USD",
+      side: "buy",
+      entryPrice: 2850,
+      exitPrice: 2920,
+      quantity: 1.5,
+      fees: 4.28,
+      pnl: 105,
+      pnlPercent: 2.46,
+      strategy: "Simple MA",
+      notes: "Golden cross on 4h timeframe",
+      tags: ["trend", "ma-cross"]
+    },
+    {
+      id: "3",
+      date: new Date(2025, 10, 11, 9, 15),
+      symbol: "BTC/USD",
+      side: "sell",
+      entryPrice: 47200,
+      exitPrice: 46800,
+      quantity: 0.05,
+      fees: 2.35,
+      pnl: -20,
+      pnlPercent: -0.85,
+      strategy: "ML Enhanced",
+      notes: "Stop loss triggered. Unexpected volatility.",
+      tags: ["stop-loss", "volatility"]
+    }
+  ];
+
+  const filteredTrades = mockTrades.filter(trade => {
+    const matchesSearch = trade.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      trade.notes.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      trade.strategy.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStrategy = filterStrategy === "all" || trade.strategy === filterStrategy;
+    const matchesSide = filterSide === "all" || trade.side === filterSide;
+    const matchesDate = !selectedDate || format(trade.date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd");
+
+    return matchesSearch && matchesStrategy && matchesSide && matchesDate;
+  });
+
+  const totalPnL = filteredTrades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
+  const totalTrades = filteredTrades.length;
+  const winningTrades = filteredTrades.filter(t => (t.pnl || 0) > 0).length;
+  const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
+
+  const strategies = Array.from(new Set(mockTrades.map(t => t.strategy)));
+
+  const handleExportPDF = () => {
+    // In production, this would generate and download a PDF
+    alert("PDF export functionality will be implemented with PDF generation library");
+  };
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Trading Journal
+            </CardTitle>
+            <CardDescription>
+              Track and analyze all your trades with notes and screenshots
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export PDF
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Export Trading Journal</DialogTitle>
+                  <DialogDescription>
+                    Export your trading journal to PDF for record keeping and analysis.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Date Range</label>
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      <Input type="date" placeholder="Start Date" />
+                      <Input type="date" placeholder="End Date" />
+                    </div>
+                  </div>
+                  <Button onClick={handleExportPDF} className="w-full">
+                    <Download className="h-4 w-4 mr-2" />
+                    Generate PDF
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Button size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Trade
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="trades" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="trades">Trades</TabsTrigger>
+            <TabsTrigger value="stats">Statistics</TabsTrigger>
+            <TabsTrigger value="notes">Notes</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="trades" className="space-y-4">
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search trades..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+              <Select value={filterStrategy} onValueChange={setFilterStrategy}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Strategy" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Strategies</SelectItem>
+                  {strategies.map(strategy => (
+                    <SelectItem key={strategy} value={strategy}>{strategy}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterSide} onValueChange={setFilterSide}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Side" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="buy">Buy</SelectItem>
+                  <SelectItem value="sell">Sell</SelectItem>
+                </SelectContent>
+              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, "PPP") : "Filter by date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Summary Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="text-sm font-medium text-muted-foreground">Total Trades</div>
+                  <div className="text-2xl font-bold">{totalTrades}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="text-sm font-medium text-muted-foreground">Total P&L</div>
+                  <div className={cn("text-2xl font-bold", totalPnL >= 0 ? "text-green-500" : "text-red-500")}>
+                    {formatCurrency(totalPnL)}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="text-sm font-medium text-muted-foreground">Win Rate</div>
+                  <div className="text-2xl font-bold">{formatPercentage(winRate)}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="text-sm font-medium text-muted-foreground">Winning Trades</div>
+                  <div className="text-2xl font-bold text-green-500">{winningTrades}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Trades Table */}
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Symbol</TableHead>
+                    <TableHead>Side</TableHead>
+                    <TableHead>Entry</TableHead>
+                    <TableHead>Exit</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>P&L</TableHead>
+                    <TableHead>Strategy</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                        Loading trades...
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredTrades.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                        No trades found. Start trading to see your journal entries.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredTrades.map((trade) => (
+                      <TableRow key={trade.id} className="cursor-pointer hover:bg-muted/50" onClick={() => {
+                        setSelectedTrade(trade);
+                        setIsDialogOpen(true);
+                      }}>
+                        <TableCell>{format(trade.date, "MMM dd, yyyy HH:mm")}</TableCell>
+                        <TableCell className="font-medium">{trade.symbol}</TableCell>
+                        <TableCell>
+                          <Badge variant={trade.side === "buy" ? "default" : "destructive"}>
+                            {trade.side.toUpperCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{formatCurrency(trade.entryPrice)}</TableCell>
+                        <TableCell>{trade.exitPrice ? formatCurrency(trade.exitPrice) : "-"}</TableCell>
+                        <TableCell>{trade.quantity}</TableCell>
+                        <TableCell>
+                          <div className={cn("font-medium", trade.pnl && trade.pnl >= 0 ? "text-green-500" : "text-red-500")}>
+                            {trade.pnl ? (
+                              <>
+                                {formatCurrency(trade.pnl)} ({formatPercentage(trade.pnlPercent || 0)})
+                              </>
+                            ) : (
+                              "-"
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{trade.strategy}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm">View</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="stats" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Performance by Strategy</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {strategies.map(strategy => {
+                      const strategyTrades = filteredTrades.filter(t => t.strategy === strategy);
+                      const strategyPnL = strategyTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+                      const strategyWinRate = strategyTrades.length > 0
+                        ? (strategyTrades.filter(t => (t.pnl || 0) > 0).length / strategyTrades.length) * 100
+                        : 0;
+                      return (
+                        <div key={strategy} className="flex items-center justify-between p-2 rounded border">
+                          <div>
+                            <div className="font-medium">{strategy}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {strategyTrades.length} trades
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className={cn("font-bold", strategyPnL >= 0 ? "text-green-500" : "text-red-500")}>
+                              {formatCurrency(strategyPnL)}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {formatPercentage(strategyWinRate)} win rate
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Monthly Performance</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 text-muted-foreground">
+                    Monthly performance chart coming soon...
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="notes" className="space-y-4">
+            <div className="grid gap-4">
+              {filteredTrades.filter(t => t.notes).map(trade => (
+                <Card key={trade.id}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{trade.symbol}</CardTitle>
+                        <CardDescription>
+                          {format(trade.date, "PPP")} • {trade.strategy}
+                        </CardDescription>
+                      </div>
+                      <Badge variant={trade.pnl && trade.pnl >= 0 ? "default" : "destructive"}>
+                        {trade.pnl ? formatCurrency(trade.pnl) : "Open"}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm whitespace-pre-wrap">{trade.notes}</p>
+                    {trade.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-3">
+                        {trade.tags.map(tag => (
+                          <Badge key={tag} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+              {filteredTrades.filter(t => t.notes).length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No notes yet. Add notes to your trades to track insights and learnings.
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Trade Detail Dialog */}
+        {selectedTrade && (
+          <Dialog open={isDialogOpen && selectedTrade !== null} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) setSelectedTrade(null);
+          }}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{selectedTrade.symbol} Trade Details</DialogTitle>
+                <DialogDescription>
+                  {format(selectedTrade.date, "PPP 'at' p")}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Side</label>
+                    <div className="mt-1">
+                      <Badge variant={selectedTrade.side === "buy" ? "default" : "destructive"}>
+                        {selectedTrade.side.toUpperCase()}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Strategy</label>
+                    <div className="mt-1">
+                      <Badge variant="outline">{selectedTrade.strategy}</Badge>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Entry Price</label>
+                    <div className="mt-1 font-medium">{formatCurrency(selectedTrade.entryPrice)}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Exit Price</label>
+                    <div className="mt-1 font-medium">
+                      {selectedTrade.exitPrice ? formatCurrency(selectedTrade.exitPrice) : "Open"}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Quantity</label>
+                    <div className="mt-1 font-medium">{selectedTrade.quantity}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Fees</label>
+                    <div className="mt-1 font-medium">{formatCurrency(selectedTrade.fees)}</div>
+                  </div>
+                  {selectedTrade.pnl !== undefined && (
+                    <>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Profit & Loss</label>
+                        <div className={cn("mt-1 font-bold text-lg", selectedTrade.pnl >= 0 ? "text-green-500" : "text-red-500")}>
+                          {formatCurrency(selectedTrade.pnl)}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">P&L Percentage</label>
+                        <div className={cn("mt-1 font-bold text-lg", selectedTrade.pnl >= 0 ? "text-green-500" : "text-red-500")}>
+                          {formatPercentage(selectedTrade.pnlPercent || 0)}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+                {selectedTrade.notes && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Notes</label>
+                    <div className="mt-1 p-3 rounded-md bg-muted whitespace-pre-wrap">
+                      {selectedTrade.notes}
+                    </div>
+                  </div>
+                )}
+                {selectedTrade.tags.length > 0 && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Tags</label>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedTrade.tags.map(tag => (
+                        <Badge key={tag} variant="secondary">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+

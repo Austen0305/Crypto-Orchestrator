@@ -17,8 +17,10 @@ import {
   BarChart3,
   Zap
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 
 interface BotIntelligenceProps {
   botId: string;
@@ -69,16 +71,24 @@ interface OptimizedParams {
 
 export function BotIntelligence({ botId }: BotIntelligenceProps) {
   const [activeTab, setActiveTab] = useState("analysis");
+  const { isAuthenticated } = useAuth();
+  const [isOptimizing, setIsOptimizing] = useState(false);
 
-  const { data: analysis, isLoading: analysisLoading, refetch: refetchAnalysis } = useQuery<{
+  const { data: analysis, isLoading: analysisLoading, refetch: refetchAnalysis, error: analysisError } = useQuery<{
     analysis: MarketAnalysis;
     market_condition: string;
   }>({
-    queryKey: [`/api/bots/${botId}/analysis`],
+    queryKey: ["bots", botId, "analysis"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/bots/${botId}/analysis`);
+      return response.json();
+    },
+    enabled: isAuthenticated && !!botId,
     refetchInterval: 30000, // Refresh every 30 seconds
+    retry: 2,
   });
 
-  const { data: riskMetrics, isLoading: riskLoading, refetch: refetchRisk } = useQuery<{
+  const { data: riskMetrics, isLoading: riskLoading, refetch: refetchRisk, error: riskError } = useQuery<{
     risk_metrics: RiskMetrics;
     recommendations: {
       suggested_position_size: string;
@@ -86,15 +96,29 @@ export function BotIntelligence({ botId }: BotIntelligenceProps) {
       warnings: (string | null)[];
     };
   }>({
-    queryKey: [`/api/bots/${botId}/risk-metrics`],
+    queryKey: ["bots", botId, "risk-metrics"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/bots/${botId}/risk-metrics`);
+      return response.json();
+    },
+    enabled: isAuthenticated && !!botId,
     refetchInterval: 60000, // Refresh every minute
+    retry: 2,
   });
 
-  const { data: optimized, refetch: refetchOptimized } = useQuery<{
+  const optimizeMutation = useMutation<{
     optimized_parameters: OptimizedParams;
   }>({
-    queryKey: [`/api/bots/${botId}/optimize`],
-    enabled: false, // Only fetch when user clicks optimize
+    mutationFn: async () => {
+      const response = await apiRequest("POST", `/api/bots/${botId}/optimize`);
+      return response.json();
+    },
+    onMutate: () => {
+      setIsOptimizing(true);
+    },
+    onSettled: () => {
+      setIsOptimizing(false);
+    },
   });
 
   const getActionIcon = (action: string) => {
@@ -154,8 +178,14 @@ export function BotIntelligence({ botId }: BotIntelligenceProps) {
 
           {/* Analysis Tab */}
           <TabsContent value="analysis" className="space-y-4 mt-4">
+            {analysisError && (
+              <div className="rounded-md border border-red-500/50 bg-red-500/10 p-4 text-sm text-red-500">
+                Failed to load analysis. Please try again.
+              </div>
+            )}
             {analysisLoading ? (
               <div className="text-center py-8 text-muted-foreground">
+                <RefreshCw className="h-8 w-8 mx-auto mb-2 animate-spin" />
                 Loading analysis...
               </div>
             ) : analysis?.analysis ? (
@@ -268,8 +298,14 @@ export function BotIntelligence({ botId }: BotIntelligenceProps) {
 
           {/* Risk Tab */}
           <TabsContent value="risk" className="space-y-4 mt-4">
+            {riskError && (
+              <div className="rounded-md border border-red-500/50 bg-red-500/10 p-4 text-sm text-red-500">
+                Failed to load risk metrics. Please try again.
+              </div>
+            )}
             {riskLoading ? (
               <div className="text-center py-8 text-muted-foreground">
+                <RefreshCw className="h-8 w-8 mx-auto mb-2 animate-spin" />
                 Loading risk metrics...
               </div>
             ) : riskMetrics?.risk_metrics ? (
@@ -355,15 +391,32 @@ export function BotIntelligence({ botId }: BotIntelligenceProps) {
           <TabsContent value="optimize" className="space-y-4 mt-4">
             <div className="text-center space-y-4">
               <p className="text-sm text-muted-foreground">
-                Optimize bot parameters based on current market conditions
+                Optimize bot parameters based on current market conditions and historical performance
               </p>
-              <Button onClick={() => refetchOptimized()} disabled={!optimized}>
-                <Zap className="h-4 w-4 mr-2" />
-                Run Optimization
+              <Button 
+                onClick={() => optimizeMutation.mutate()} 
+                disabled={isOptimizing || optimizeMutation.isPending || !isAuthenticated}
+              >
+                {isOptimizing || optimizeMutation.isPending ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Optimizing...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-4 w-4 mr-2" />
+                    Run Optimization
+                  </>
+                )}
               </Button>
+              {optimizeMutation.error && (
+                <div className="rounded-md border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-500">
+                  Optimization failed. Please try again.
+                </div>
+              )}
             </div>
 
-            {optimized?.optimized_parameters && (
+            {optimizeMutation.data?.optimized_parameters && (
               <div className="space-y-4 mt-4">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
@@ -373,34 +426,34 @@ export function BotIntelligence({ botId }: BotIntelligenceProps) {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-muted/30 p-3 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">Market Regime</p>
-                    <p className="text-sm font-medium capitalize">{optimized.optimized_parameters.market_regime}</p>
+                    <p className="text-sm font-medium capitalize">{optimizeMutation.data.optimized_parameters.market_regime}</p>
                   </div>
                   <div className="bg-muted/30 p-3 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">Confidence Threshold</p>
-                    <p className="text-sm font-medium">{(optimized.optimized_parameters.confidence_threshold * 100).toFixed(0)}%</p>
+                    <p className="text-sm font-medium">{(optimizeMutation.data.optimized_parameters.confidence_threshold * 100).toFixed(0)}%</p>
                   </div>
                   <div className="bg-muted/30 p-3 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">Position Multiplier</p>
-                    <p className="text-sm font-medium">{optimized.optimized_parameters.position_multiplier.toFixed(2)}x</p>
+                    <p className="text-sm font-medium">{optimizeMutation.data.optimized_parameters.position_multiplier.toFixed(2)}x</p>
                   </div>
                   <div className="bg-muted/30 p-3 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">Risk Per Trade</p>
-                    <p className="text-sm font-medium">{(optimized.optimized_parameters.risk_per_trade * 100).toFixed(1)}%</p>
+                    <p className="text-sm font-medium">{(optimizeMutation.data.optimized_parameters.risk_per_trade * 100).toFixed(1)}%</p>
                   </div>
                   <div className="bg-muted/30 p-3 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">Stop Loss</p>
-                    <p className="text-sm font-medium">{(optimized.optimized_parameters.stop_loss_pct * 100).toFixed(1)}%</p>
+                    <p className="text-sm font-medium">{(optimizeMutation.data.optimized_parameters.stop_loss_pct * 100).toFixed(1)}%</p>
                   </div>
                   <div className="bg-muted/30 p-3 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">Take Profit</p>
-                    <p className="text-sm font-medium">{(optimized.optimized_parameters.take_profit_pct * 100).toFixed(1)}%</p>
+                    <p className="text-sm font-medium">{(optimizeMutation.data.optimized_parameters.take_profit_pct * 100).toFixed(1)}%</p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Adaptive Reasoning</p>
                   <div className="space-y-1.5">
-                    {optimized.optimized_parameters.adaptive_reasoning.map((reason, idx) => (
+                    {optimizeMutation.data.optimized_parameters.adaptive_reasoning.map((reason, idx) => (
                       <div key={idx} className="flex items-start gap-2 text-sm bg-muted/50 p-2 rounded">
                         <span className="text-muted-foreground mt-0.5">•</span>
                         <span>{reason}</span>

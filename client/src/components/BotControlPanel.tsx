@@ -11,6 +11,7 @@ import { useIntegrationsStatus, useStartIntegrations, useStopIntegrations } from
 import { toast } from "@/hooks/use-toast";
 import type { BotConfig } from "../../../shared/schema";
 import { BotIntelligence } from "./BotIntelligence";
+import { BotLearning } from "./BotLearning";
 
 interface BotControlPanelProps {
   bots: BotConfig[];
@@ -175,15 +176,16 @@ export function BotControlPanel({ bots }: BotControlPanelProps) {
                   >
                     <TrendingUp className="h-4 w-4 mr-1" />
                     Performance
-
-              {isExpanded && (
-                <div className="pt-4 border-t">
-                  <BotIntelligence botId={bot.id} />
-                </div>
-              )}
                   </Button>
                 </div>
               </div>
+
+              {isExpanded && (
+                <div className="pt-4 border-t mt-4 space-y-4">
+                  <BotIntelligence botId={bot.id} />
+                  <BotLearning botId={bot.id} />
+                </div>
+              )}
             </CardContent>
           </Card>
         );

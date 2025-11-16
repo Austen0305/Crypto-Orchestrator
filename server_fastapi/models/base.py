@@ -3,10 +3,13 @@ Base database models and common functionality.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, TYPE_CHECKING
 from sqlalchemy import Column, Integer, DateTime, String, Text, Boolean
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ..database import Base
+
+if TYPE_CHECKING:
+    from .exchange_api_key import ExchangeAPIKey
 
 class TimestampMixin:
     """
@@ -89,6 +92,11 @@ class User(BaseModel):
     locale: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
     timezone: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
     preferences_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON blob for user preferences
+
+    # Relationship with ExchangeAPIKey
+    exchange_api_keys: Mapped[List["ExchangeAPIKey"]] = relationship(
+        "ExchangeAPIKey", back_populates="user", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"

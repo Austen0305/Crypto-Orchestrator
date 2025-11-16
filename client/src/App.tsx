@@ -1,11 +1,14 @@
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AccessibilityProvider } from "@/components/AccessibilityProvider";
+import { TradingModeProvider } from "@/contexts/TradingModeContext";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TradingHeader } from "@/components/TradingHeader";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -15,30 +18,46 @@ const PerformanceMonitor = React.lazy(() => import('@/components/PerformanceMoni
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { usePortfolio } from "@/hooks/useApi";
 import { useExchangeStatus } from "@/hooks/useExchange";
-import NotFound from "@/pages/not-found";
-import Dashboard from "@/pages/Dashboard";
-import Bots from "@/pages/Bots";
-import Markets from "@/pages/Markets";
-import Analytics from "@/pages/Analytics";
-import RiskManagement from "@/pages/RiskManagement";
-import Settings from "@/pages/Settings";
 import { useTranslation } from "react-i18next";
 import { OfflineBanner } from "@/components/OfflineBanner";
+
+// Lazy load all pages for better performance
+const Dashboard = React.lazy(() => import("@/pages/Dashboard"));
+const Bots = React.lazy(() => import("@/pages/Bots"));
+const Markets = React.lazy(() => import("@/pages/Markets"));
+const Analytics = React.lazy(() => import("@/pages/Analytics"));
+const RiskManagement = React.lazy(() => import("@/pages/RiskManagement"));
+const Settings = React.lazy(() => import("@/pages/Settings"));
+const NotFound = React.lazy(() => import("@/pages/not-found"));
+
+// Loading component for lazy-loaded routes
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center gap-2">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 function Router() {
   // Initialize WebSocket connection
   useWebSocket();
 
   return (
-    <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/bots" component={Bots} />
-      <Route path="/markets" component={Markets} />
-      <Route path="/analytics" component={Analytics} />
-      <Route path="/risk" component={RiskManagement} />
-      <Route path="/settings" component={Settings} />
-      <Route component={NotFound} />
-    </Switch>
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/bots" component={Bots} />
+        <Route path="/markets" component={Markets} />
+        <Route path="/analytics" component={Analytics} />
+        <Route path="/risk" component={RiskManagement} />
+        <Route path="/settings" component={Settings} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
@@ -112,19 +131,25 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-        <TooltipProvider>
-          <ThemeProvider defaultTheme="dark">
-            <SidebarProvider className={sidebarClass}>
-              <AppContent />
-               <CommandPalette />
-               <Suspense fallback={<div className="text-xs px-2 py-1">Loading perf…</div>}>
-                 <PerformanceMonitor />
-               </Suspense>
-            </SidebarProvider>
-            <Toaster />
-          </ThemeProvider>
-        </TooltipProvider>
+        <AccessibilityProvider>
+          <TradingModeProvider>
+            <TooltipProvider>
+              <ThemeProvider attribute="class" defaultTheme="dark">
+                <SidebarProvider className={sidebarClass}>
+                  <AppContent />
+                  <CommandPalette />
+                  <Suspense fallback={<div className="text-xs px-2 py-1">Loading perf…</div>}>
+                    <PerformanceMonitor />
+                  </Suspense>
+                </SidebarProvider>
+                <Toaster />
+              </ThemeProvider>
+            </TooltipProvider>
+          </TradingModeProvider>
+        </AccessibilityProvider>
       </ErrorBoundary>
+      {/* React Query DevTools - Only in development */}
+      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />}
     </QueryClientProvider>
   );
 }

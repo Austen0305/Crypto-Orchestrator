@@ -49,49 +49,130 @@ class Portfolio(BaseModel):
 
 @router.get("/{mode}")
 async def get_portfolio(mode: str, current_user: dict = Depends(get_current_user)) -> Portfolio:
-    """Get portfolio for paper or live trading mode"""
+    """Get portfolio for paper or real trading mode"""
     try:
-        if mode not in ["paper", "live"]:
-            raise HTTPException(status_code=400, detail="Mode must be 'paper' or 'live'")
+        # Normalize mode: "live" -> "real"
+        if mode == "live":
+            mode = "real"
+        
+        if mode not in ["paper", "real"]:
+            raise HTTPException(status_code=400, detail="Mode must be 'paper' or 'real'")
 
         user_id = current_user.get("user_id", 1)
 
-        if mode == "live":
-            # Get real portfolio data from exchange
+        if mode == "real":
+            # Get real portfolio data from exchange using user's API keys
             try:
-                balance = await default_exchange.get_balance()
+                from ..services.auth.exchange_key_service import exchange_key_service
+                import ccxt
+                
+                # Get user's validated API keys
+                user_id_str = str(user_id)
+                api_keys = await exchange_key_service.list_api_keys(user_id_str)
+                validated_keys = [k for k in api_keys if k.get("is_validated", False)]
+                
+                if not validated_keys:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="No validated API keys found. Please add and validate an exchange API key in Settings."
+                    )
+                
+                # Use first validated exchange (or allow user to specify)
+                exchange_key_data = validated_keys[0]
+                exchange_name = exchange_key_data["exchange"]
+                
+                # Get decrypted API keys
+                api_key_data = await exchange_key_service.get_api_key(
+                    user_id_str, exchange_name, include_secrets=True
+                )
+                if not api_key_data:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Failed to retrieve API key for {exchange_name}"
+                    )
+                
+                # Create exchange instance with user's API keys
+                exchange_class = getattr(ccxt, exchange_name, None)
+                if not exchange_class:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Exchange {exchange_name} not supported"
+                    )
+                
+                exchange_config = {
+                    "apiKey": api_key_data["api_key"],
+                    "secret": api_key_data["api_secret"],
+                    "enableRateLimit": True,
+                    "options": {
+                        "testnet": api_key_data.get("is_testnet", False),
+                    },
+                }
+                
+                if api_key_data.get("passphrase"):
+                    exchange_config["passphrase"] = api_key_data["passphrase"]
+                
+                exchange_instance = exchange_class(exchange_config)
+                await exchange_instance.load_markets()
+                
+                # Fetch real balance from exchange
+                balance_data = await exchange_instance.fetch_balance()
+                balance = balance_data.get("total", {})
+                
                 positions = {}
-
                 total_balance = 0.0
                 available_balance = 0.0
 
                 for asset, amount in balance.items():
                     if amount > 0:
                         # Get current price for each asset
-                        if asset == "USD" or asset == "USDT" or asset == "USDC":
+                        if asset in ["USD", "USDT", "USDC", "BUSD", "DAI"]:
                             # Stablecoins - value is 1:1
                             current_price = 1.0
                             total_value = amount
+                            if asset in ["USD", "USDT", "USDC"]:
+                                available_balance += amount
                         else:
                             # Get price from exchange for crypto assets
-                            pair = f"{asset}/USD"
-                            current_price = await default_exchange.get_market_price(pair)
+                            # Try multiple pair formats
+                            pairs_to_try = [
+                                f"{asset}/USD",
+                                f"{asset}/USDT",
+                                f"{asset}/BTC",
+                                f"{asset}/ETH",
+                            ]
+                            
+                            current_price = None
+                            for pair in pairs_to_try:
+                                try:
+                                    ticker = await exchange_instance.fetch_ticker(pair)
+                                    current_price = ticker.get("last")
+                                    if current_price:
+                                        # If pair is not USD, convert to USD via USDT
+                                        if not pair.endswith("/USD") and not pair.endswith("/USDT"):
+                                            # For BTC/ETH pairs, need to get USD price
+                                            usdt_pair = f"{pair.split('/')[1]}/USDT"
+                                            try:
+                                                usdt_ticker = await exchange_instance.fetch_ticker(usdt_pair)
+                                                usdt_price = usdt_ticker.get("last", 1.0)
+                                                current_price = current_price * usdt_price
+                                            except:
+                                                pass
+                                        break
+                                except:
+                                    continue
+                            
                             if current_price is None:
                                 current_price = 0.0
+                            
                             total_value = amount * current_price
+                            total_balance += total_value
 
-                        total_balance += total_value
-
-                        # For now, assume available balance is the USD amount
-                        if asset == "USD":
-                            available_balance = amount
-
-                        # Create position if it's a trading asset (not USD)
-                        if asset != "USD" and asset != "USDT" and asset != "USDC":
-                            # Mock average price and P&L calculation
-                            average_price = current_price * 0.95  # Assume bought at 5% lower price
-                            profit_loss = (current_price - average_price) * amount
-                            profit_loss_percent = (profit_loss / (average_price * amount)) * 100
+                            # Create position for crypto assets
+                            # Note: Average price and P&L would come from trade history
+                            # For now, use current price as approximation
+                            average_price = current_price  # TODO: Calculate from trade history
+                            profit_loss = 0.0  # TODO: Calculate from trade history
+                            profit_loss_percent = 0.0  # TODO: Calculate from trade history
 
                             positions[asset] = Position(
                                 asset=asset,
@@ -119,9 +200,9 @@ async def get_portfolio(mode: str, current_user: dict = Depends(get_current_user
                     logger.warning(f"Failed to get analytics data: {e}")
                     successful_trades = failed_trades = total_trades = win_rate = average_win = average_loss = 0
 
-                # Calculate 24h P&L (mock for now)
-                profit_loss_24h = total_balance * 0.02  # Assume 2% 24h change
-                profit_loss_total = total_balance - 100000  # Assume started with $100k
+                # Calculate 24h P&L (TODO: Calculate from trade history)
+                profit_loss_24h = 0.0  # TODO: Calculate from 24h trade history
+                profit_loss_total = 0.0  # TODO: Calculate from all trade history
 
                 return Portfolio(
                     totalBalance=total_balance,

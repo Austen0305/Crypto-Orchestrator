@@ -10,13 +10,16 @@ import uuid
 
 logger = logging.getLogger(__name__)
 
-# Import circuit breaker for resilience
+# Import circuit breaker and retry policy for resilience
 try:
     from ..middleware.circuit_breaker import CircuitBreaker, CircuitBreakerOpenError
+    from ..middleware.retry_policy import RetryPolicy, exchange_retry_policy
     circuit_breaker_available = True
+    retry_policy_available = True
 except ImportError:
     circuit_breaker_available = False
-    logger.warning("Circuit breaker not available")
+    retry_policy_available = False
+    logger.warning("Circuit breaker or retry policy not available")
 
 class IntegrationConfig(BaseModel):
     name: str

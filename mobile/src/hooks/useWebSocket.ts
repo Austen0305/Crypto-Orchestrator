@@ -3,27 +3,27 @@
  */
 import { useEffect, useRef, useState } from 'react';
 
-interface WebSocketMessage {
-  type: string;
-  data: any;
-}
-
 interface UseWebSocketResult {
   isConnected: boolean;
-  lastMessage: WebSocketMessage | null;
+  lastMessage: string | null;
   sendMessage: (message: any) => void;
 }
 
 export const useWebSocket = (url?: string): UseWebSocketResult => {
   const [isConnected, setIsConnected] = useState(false);
-  const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
+  const [lastMessage, setLastMessage] = useState<string | null>(null);
   const ws = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     if (!url) return;
 
     try {
-      ws.current = new WebSocket(url);
+      // Construct full WebSocket URL
+      const wsUrl = url.startsWith('ws://') || url.startsWith('wss://') 
+        ? url 
+        : `ws://localhost:8000${url.startsWith('/') ? url : '/' + url}`;
+      
+      ws.current = new WebSocket(wsUrl);
 
       ws.current.onopen = () => {
         console.log('WebSocket connected');
@@ -32,10 +32,10 @@ export const useWebSocket = (url?: string): UseWebSocketResult => {
 
       ws.current.onmessage = (event) => {
         try {
-          const message = JSON.parse(event.data);
-          setLastMessage(message);
+          // Store raw message string for parsing in components
+          setLastMessage(event.data);
         } catch (error) {
-          console.error('Failed to parse WebSocket message:', error);
+          console.error('Failed to handle WebSocket message:', error);
         }
       };
 

@@ -582,9 +582,11 @@ async def optimize_bot_parameters(
     current_user: dict = Depends(get_current_user),
     bot_trading_service = Depends(get_bot_trading_service)
 ):
-    """Optimize bot parameters based on current market conditions"""
+    """Optimize bot parameters based on current market conditions and learning history"""
     try:
+        import numpy as np
         from ..services.trading.smart_bot_engine import SmartBotEngine
+        from ..services.ml.adaptive_learning import adaptive_learning_service
         
         bot_service = get_bot_service()
         bot_status = await bot_service.get_bot_status(bot_id, current_user['id'])
@@ -596,9 +598,55 @@ async def optimize_bot_parameters(
         market_data = await bot_trading_service._get_market_data(bot_status)
         smart_data = bot_trading_service._prepare_smart_market_data(market_data, bot_status)
         
-        # Get adaptive parameters
+        # Get adaptive parameters from smart engine
         smart_engine = SmartBotEngine()
-        adaptive_params = await smart_engine.get_adaptive_parameters(smart_data)
+        
+        # Detect market regime from candles
+        candles = smart_data.get('candles', [])
+        if candles:
+            closes = np.array([c['close'] for c in candles[-20:]]) if len(candles) >= 20 else np.array([c['close'] for c in candles])
+            
+            # Simple market regime detection
+            returns = np.diff(closes) / closes[:-1] if len(closes) > 1 else np.array([0])
+            volatility = np.std(returns) if len(returns) > 1 else 0
+            trend = (closes[-1] - closes[0]) / closes[0] if closes[0] != 0 and len(closes) > 0 else 0
+            
+            if volatility > 0.03:
+                market_regime = "volatile"
+            elif trend > 0.05:
+                market_regime = "bull"
+            elif trend < -0.05:
+                market_regime = "bear"
+            else:
+                market_regime = "ranging"
+        else:
+            market_regime = "unknown"
+        
+        # Get historical performance for adaptive learning
+        # In production, fetch actual historical trades for this bot from database
+        historical_performance = []  # Placeholder - would fetch from database
+        
+        # Get adaptive parameters from learning service
+        adaptive_params = adaptive_learning_service.adapt_strategy_parameters(
+            market_regime, historical_performance
+        )
+        
+        # Combine with smart engine parameters if available
+        try:
+            smart_params = await smart_engine.get_adaptive_parameters(market_regime)
+            adaptive_params.update(smart_params)
+        except Exception as e:
+            logger.warning(f"Could not get smart engine adaptive parameters: {e}")
+        
+        # Add market regime and reasoning
+        adaptive_params['market_regime'] = market_regime
+        metrics = adaptive_learning_service.get_learning_metrics()
+        adaptive_params['adaptive_reasoning'] = [
+            f"Adapted for {market_regime} market conditions",
+            f"Based on {metrics['total_trades_analyzed']} analyzed trades",
+            f"Learning accuracy: {metrics['learning_accuracy']:.1f}%",
+            f"Confidence improvement: +{metrics['confidence_improvement']:.1f}%",
+        ]
         
         logger.info(f"Optimized parameters for bot {bot_id}: {adaptive_params}")
         

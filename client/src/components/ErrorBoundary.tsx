@@ -33,8 +33,8 @@ export class ErrorBoundary extends Component<Props, State> {
     });
 
     // If Sentry is configured, report to it
-    if (window.Sentry) {
-      window.Sentry.captureException(error, {
+    if (typeof window !== 'undefined' && (window as any).Sentry) {
+      (window as any).Sentry.captureException(error, {
         contexts: {
           react: {
             componentStack: errorInfo.componentStack,

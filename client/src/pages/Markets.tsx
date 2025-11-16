@@ -1,6 +1,13 @@
 import { MarketDataTable } from "@/components/MarketDataTable";
+import { MarketWatch } from "@/components/MarketWatch";
+import { Watchlist } from "@/components/Watchlist";
+import { AdvancedMarketAnalysis } from "@/components/AdvancedMarketAnalysis";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
 
 export default function Markets() {
+  const [selectedPair, setSelectedPair] = useState<string>("BTC/USD");
+  
   const mockMarkets = [
     { pair: "BTC/USD", price: 47350, change24h: 4.76, volume24h: 2400000000 },
     { pair: "ETH/USD", price: 2580, change24h: -1.23, volume24h: 1200000000 },
@@ -21,7 +28,33 @@ export default function Markets() {
         </p>
       </div>
 
-      <MarketDataTable markets={mockMarkets} />
+      <Tabs defaultValue="watch" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="watch">Market Watch</TabsTrigger>
+          <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
+          <TabsTrigger value="all">All Markets</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="watch">
+          <MarketWatch />
+        </TabsContent>
+
+        <TabsContent value="watchlist">
+          <Watchlist />
+        </TabsContent>
+
+        <TabsContent value="all">
+          <MarketDataTable 
+            markets={mockMarkets}
+            onPairSelect={(pair) => setSelectedPair(pair)}
+          />
+        </TabsContent>
+      </Tabs>
+
+      {/* Advanced Market Analysis */}
+      <div className="mt-6">
+        <AdvancedMarketAnalysis pair={selectedPair} />
+      </div>
     </div>
   );
 }
