@@ -45,7 +45,7 @@ jobs:
         pytest server_fastapi/tests/ -v --cov=server_fastapi --cov-report=xml --cov-report=term-missing --cov-fail-under=80
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
       continue-on-error: true
       with:
