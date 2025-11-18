@@ -19,15 +19,28 @@ from .automl_service import (
     SearchStrategy,
     automl_service
 )
-from .reinforcement_learning import (
-    RLService,
-    QLearningAgent,
-    PPOAgent,
-    RLConfig,
-    Action,
-    TradingState,
-    rl_service
-)
+try:
+    from .reinforcement_learning import (
+        RLService,
+        QLearningAgent,
+        PPOAgent,
+        RLConfig,
+        Action,
+        TradingState,
+        rl_service
+    )
+except (ImportError, RuntimeError, Exception) as e:
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Failed to import reinforcement_learning: {e}. RL features will be disabled.")
+    # Create dummy classes to prevent import errors
+    RLService = None
+    QLearningAgent = None
+    PPOAgent = None
+    RLConfig = None
+    Action = None
+    TradingState = None
+    rl_service = None
 from .sentiment_ai import (
     SentimentAIService,
     SentimentScore,

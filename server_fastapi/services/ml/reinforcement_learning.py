@@ -23,9 +23,14 @@ try:
     from stable_baselines3.common.env_util import make_vec_env
     from stable_baselines3.common.callbacks import BaseCallback
     STABLE_BASELINES_AVAILABLE = True
-except ImportError:
+except (ImportError, RuntimeError, Exception) as e:
     STABLE_BASELINES_AVAILABLE = False
-    logger.warning("stable-baselines3 not available; PPO agent will be limited.")
+    logger.warning(f"stable-baselines3 not available: {e}. PPO agent will be limited.")
+    # Create dummy classes to prevent import errors
+    PPO = None
+    DQN = None
+    make_vec_env = None
+    BaseCallback = None
 
 
 class Action(str, Enum):
