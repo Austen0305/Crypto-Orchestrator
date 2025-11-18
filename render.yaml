@@ -4,7 +4,7 @@
 
 services:
   # PostgreSQL Database
-  - type: pspg
+  - type: pg
     name: crypto-orchestrator-db
     databaseName: cryptoorchestrator
     user: crypto_user
@@ -49,9 +49,8 @@ services:
         value: production
 
   # React Frontend (Static Site)
-  - type: web
+  - type: static_site
     name: crypto-orchestrator-frontend
-    env: static
     plan: free
     region: oregon
     buildCommand: cd client && npm install --legacy-peer-deps && npm run build
