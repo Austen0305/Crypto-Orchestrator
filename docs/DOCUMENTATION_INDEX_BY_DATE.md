@@ -39,6 +39,7 @@ Generated on 2025-11-12. This index lists all repository markdown files (excludi
 | FINANCIAL_COMPLIANCE.md | Financial regulations |
 | AUDIT_TRAILS.md | Audit logging |
 | IMPROVEMENTS.md | Completed improvements |
+| TECHNOLOGY_ASSESSMENT.md | Technology stack evaluation |
 | DOCUMENTATION_INDEX_BY_DATE.md | This file |
 | troubleshooting/common_issues.md | Common problems |
 | troubleshooting/faq.md | Frequently asked questions |
