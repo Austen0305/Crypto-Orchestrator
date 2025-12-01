@@ -33,7 +33,7 @@ httpx==0.25.2  # For GitHub API and HTTP requests
 email-validator==2.2.0
 
 # Payment processing
-stripe==7.8.0
+stripe==14.0.1
 
 # Redis for caching
 aioredis==2.0.1
