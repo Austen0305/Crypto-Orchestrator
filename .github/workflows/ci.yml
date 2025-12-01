@@ -59,7 +59,7 @@ jobs:
         TEST_DATABASE_URL: sqlite+aiosqlite:///file:pytest_shared?mode=memory&cache=shared
     
     - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       if: matrix.python-version == '3.10'
       with:
         files: ./coverage.xml
