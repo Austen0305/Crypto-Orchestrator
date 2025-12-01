@@ -51,7 +51,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
       if (activeTab === 'login') {
         const success = await login(formData.email, formData.password);
-        if (success && !user?.mfaEnabled) {
+        if (success && !user?.mfa_enabled) {
           setShowMFASetup(true);
         } else if (success) {
           onClose();

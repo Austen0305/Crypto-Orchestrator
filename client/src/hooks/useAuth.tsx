@@ -10,8 +10,7 @@ interface User {
   is_email_verified: boolean;
   first_name?: string;
   last_name?: string;
-  mfaEnabled?: boolean;
-  mfa_enabled?: boolean;
+  mfa_enabled?: boolean;  // Backend uses snake_case
 }
 
 interface AuthContextType {

@@ -13,13 +13,11 @@ import { EmptyState } from "@/components/EmptyState";
 
 export function Leaderboard() {
   const { mode } = useTradingMode();
-  // Map trading mode: "real" is used in context, but we just use it directly
-  const normalizedMode = mode;
   const [metric, setMetric] = useState("total_pnl");
   const [period, setPeriod] = useState("all_time");
   
-  const { data, isLoading, error, refetch } = useLeaderboard(metric, period, normalizedMode);
-  const { data: myRank, isLoading: myRankLoading, error: myRankError } = useMyRank(metric, period, normalizedMode);
+  const { data, isLoading, error, refetch } = useLeaderboard(metric, period, mode);
+  const { data: myRank, isLoading: myRankLoading, error: myRankError } = useMyRank(metric, period, mode);
   
   const getRankColor = (rank: number) => {
     if (rank === 1) return "text-yellow-500";
