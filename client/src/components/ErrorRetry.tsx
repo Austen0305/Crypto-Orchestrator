@@ -9,11 +9,12 @@ import { AlertCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ErrorRetryProps {
-  error: Error | string;
+  error?: Error | string | null;
+  message?: string;
   onRetry?: () => void;
   title?: string;
   className?: string;
-  variant?: "default" | "destructive" | "warning";
+  variant?: "default" | "destructive";
 }
 
 // Helper function to make error messages more user-friendly
@@ -60,12 +61,14 @@ function getUserFriendlyErrorMessage(error: Error | string): string {
 
 export function ErrorRetry({
   error,
+  message,
   onRetry,
   title = "Something went wrong",
   className,
   variant = "destructive",
 }: ErrorRetryProps) {
-  const errorMessage = getUserFriendlyErrorMessage(error);
+  // Use provided message, or derive from error
+  const errorMessage = message || (error ? getUserFriendlyErrorMessage(error) : "An unexpected error occurred.");
 
   return (
     <Alert variant={variant} className={cn("my-4", className)}>

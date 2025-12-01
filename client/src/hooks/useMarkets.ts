@@ -2,6 +2,45 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 
+// Type definitions for market data
+export interface MarketAnalysisData {
+  recommendation: string;
+  confidence: number;
+  current_price: number;
+  signals: {
+    bullish: number;
+    bearish: number;
+    neutral: number;
+  };
+  summary: string;
+  historical_data: Array<{
+    date: string;
+    rsi?: number;
+    macd?: number;
+    bollinger_upper?: number;
+    bollinger_lower?: number;
+    bollinger_middle?: number;
+  }>;
+  indicators: {
+    rsi: number;
+    macd: {
+      macd: number;
+      signal: number;
+      histogram: number;
+    };
+    bollinger: {
+      upper: number;
+      middle: number;
+      lower: number;
+      width: number;
+    };
+    sma_20: number;
+    sma_50: number;
+  };
+  support_levels: Array<{ level: number; strength: string }>;
+  resistance_levels: Array<{ level: number; strength: string }>;
+}
+
 // Extended market hooks
 
 export const useWatchlist = () => {
@@ -28,7 +67,7 @@ export const useFavorites = () => {
 
 export const useAdvancedMarketAnalysis = (pair: string, indicators: string[] = ["rsi", "macd", "bollinger"]) => {
   const { isAuthenticated } = useAuth();
-  return useQuery({
+  return useQuery<MarketAnalysisData>({
     queryKey: ["markets", "advanced", pair, indicators],
     queryFn: async () => {
       const indicatorsQuery = indicators.join(",");

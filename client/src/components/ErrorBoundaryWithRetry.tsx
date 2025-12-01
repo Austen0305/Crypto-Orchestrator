@@ -21,14 +21,14 @@ interface State {
 }
 
 export class ErrorBoundaryWithRetry extends Component<Props, State> {
-  public state: State = {
+  public override state: State = {
     hasError: false,
     error: null,
     errorInfo: null,
     retryCount: 0,
   };
 
-  public static override getDerivedStateFromError(error: Error): Partial<State> {
+  public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
@@ -37,7 +37,7 @@ export class ErrorBoundaryWithRetry extends Component<Props, State> {
     logger.error('React Error Boundary caught an error', {
       error: error.toString(),
       errorInfo,
-      componentStack: errorInfo.componentStack,
+      componentStack: errorInfo.componentStack ?? undefined,
       retryCount: this.state.retryCount,
     });
 
@@ -52,7 +52,7 @@ export class ErrorBoundaryWithRetry extends Component<Props, State> {
       windowWithSentry.Sentry.captureException(error, {
         contexts: {
           react: {
-            componentStack: errorInfo.componentStack,
+            componentStack: errorInfo.componentStack ?? undefined,
           },
         },
       });

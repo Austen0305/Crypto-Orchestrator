@@ -22,6 +22,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
+import { ErrorRetry } from "@/components/ErrorRetry";
 
 interface BotIntelligenceProps {
   botId: string;

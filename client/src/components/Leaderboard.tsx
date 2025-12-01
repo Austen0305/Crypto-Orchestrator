@@ -13,7 +13,8 @@ import { EmptyState } from "@/components/EmptyState";
 
 export function Leaderboard() {
   const { mode } = useTradingMode();
-  const normalizedMode = mode === "live" ? "real" : mode;
+  // Map trading mode: "real" is used in context, but we just use it directly
+  const normalizedMode = mode;
   const [metric, setMetric] = useState("total_pnl");
   const [period, setPeriod] = useState("all_time");
   
