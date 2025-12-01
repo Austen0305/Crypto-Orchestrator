@@ -54,20 +54,21 @@ optuna==3.4.0  # Hyperparameter optimization framework
 stable-baselines3==2.2.0  # Reinforcement learning (PPO, DQN)
 gymnasium==0.29.1  # RL environment
 transformers==4.35.2  # For sentiment analysis
-torch==2.1.2  # PyTorch for RL and transformers
+torch>=2.2.0  # PyTorch for RL and transformers (>=2.2.0 required for Python 3.12)
 
 # Sentiment Analysis
 vaderSentiment==3.3.2  # VADER sentiment analyzer
 textblob==0.17.1  # Text processing and sentiment
 
 # OpenTelemetry for observability
-opentelemetry-api==1.21.0
-opentelemetry-sdk==1.21.0
-opentelemetry-instrumentation-fastapi==0.42b0
-opentelemetry-instrumentation-sqlalchemy==0.42b0
-opentelemetry-instrumentation-requests==0.42b0
-opentelemetry-exporter-otlp-proto-grpc==1.21.0
-opentelemetry-exporter-prometheus==1.12.0rc1
+# OpenTelemetry for observability (updated for protobuf >=5 compatibility with TensorFlow)
+opentelemetry-api>=1.27.0
+opentelemetry-sdk>=1.27.0
+opentelemetry-instrumentation-fastapi>=0.48b0
+opentelemetry-instrumentation-sqlalchemy>=0.48b0
+opentelemetry-instrumentation-requests>=0.48b0
+opentelemetry-exporter-otlp-proto-grpc>=1.27.0
+opentelemetry-exporter-prometheus>=0.48b0
 
 # SMS notifications
 twilio==9.2.3  # For SMS notifications via Twilio
