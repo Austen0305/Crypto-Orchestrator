@@ -52,7 +52,7 @@ safety==2.3.5  # For dependency vulnerability scanning
 scikit-optimize==0.9.0  # Bayesian optimization
 optuna==3.4.0  # Hyperparameter optimization framework
 stable-baselines3==2.2.0  # Reinforcement learning (PPO, DQN)
-gymnasium==0.29.1  # RL environment
+gymnasium==1.2.2  # RL environment
 transformers==4.35.2  # For sentiment analysis
 torch==2.1.2  # PyTorch for RL and transformers
 
