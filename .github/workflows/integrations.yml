@@ -25,7 +25,7 @@ jobs:
           python -m pip install --upgrade pip
           python smoke_test.py
       - name: Use Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 18
       - name: Install Node deps
