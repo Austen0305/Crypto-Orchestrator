@@ -12,6 +12,7 @@ from .follow import Follow, CopiedTrade
 from .order import Order, OrderType, OrderStatus
 from .wallet import Wallet, WalletTransaction, WalletType, TransactionType, TransactionStatus
 from .idempotency import IdempotencyKey
+from .subscription import Subscription
 
 # New competitive bot models
 try:
@@ -84,6 +85,7 @@ __all__ = [
     'IdempotencyKey',
     'Strategy',
     'StrategyVersion',
+    'Subscription',
     # New competitive bot models
     'GridBot',
     'DCABot',
