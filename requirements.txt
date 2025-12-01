@@ -1,11 +1,11 @@
 setuptools>=65.0.0
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-pydantic==2.5.0
-pydantic-settings==2.1.0
-python-multipart==0.0.6
+fastapi==0.123.0
+uvicorn[standard]==0.38.0
+pydantic==2.12.5
+pydantic-settings==2.12.0
+python-multipart==0.0.20
 websockets==12.0
-ccxt==4.2.48
+ccxt==4.5.22
 tensorflow>=2.20.0
 numpy>=1.24.3,<2.0.0  # Pin to NumPy 1.x for compatibility with torch/tensorflow
 pandas>=2.2.0
@@ -14,23 +14,23 @@ xgboost>=2.1.0
 redis==5.0.1
 slowapi==0.1.9
 bcrypt==4.1.2
-pyjwt==2.8.0
-python-dotenv==1.0.0
+pyjwt==2.10.1
+python-dotenv==1.2.1
 speakeasy==2.0.0
 qrcode==7.4.2
-bleach==6.1.0
-sqlalchemy[asyncio]==2.0.23
-asyncpg==0.29.0
-aiosqlite==0.19.0
-alembic==1.13.0
-celery==5.3.4
+bleach==6.3.0
+sqlalchemy[asyncio]==2.0.44
+asyncpg==0.31.0
+aiosqlite==0.21.0
+alembic==1.17.2
+celery==5.6.0
 pytest==7.4.3
 pytest-asyncio==0.21.1
 pytest-cov==4.1.0
 psutil==5.9.6
-prometheus-client==0.19.0
-httpx==0.25.2  # For GitHub API and HTTP requests
-email-validator==2.2.0
+prometheus-client==0.23.1
+httpx==0.28.1  # For GitHub API and HTTP requests
+email-validator==2.3.0
 
 # Payment processing
 stripe==7.8.0
@@ -42,35 +42,35 @@ aioredis==2.0.1
 structlog==24.1.0
 
 # MCP Integration Dependencies
-boto3==1.34.0  # For AWS Secrets Manager (optional)
+boto3==1.41.5  # For AWS Secrets Manager (optional)
 hvac==1.2.1  # For HashiCorp Vault (optional)
 sentry-sdk[fastapi]>=2.10.0  # For error tracking
-bandit==1.7.6  # For security scanning
+bandit==1.9.2  # For security scanning
 safety==2.3.5  # For dependency vulnerability scanning
 
 # ML V2 - AutoML and Reinforcement Learning
-scikit-optimize==0.9.0  # Bayesian optimization
+scikit-optimize==0.10.2  # Bayesian optimization
 optuna==3.4.0  # Hyperparameter optimization framework
-stable-baselines3==2.2.0  # Reinforcement learning (PPO, DQN)
+stable-baselines3==2.7.0  # Reinforcement learning (PPO, DQN)
 gymnasium==0.29.1  # RL environment
-transformers==4.35.2  # For sentiment analysis
-torch==2.1.2  # PyTorch for RL and transformers
+transformers==4.57.3  # For sentiment analysis
+torch==2.9.1  # PyTorch for RL and transformers
 
 # Sentiment Analysis
 vaderSentiment==3.3.2  # VADER sentiment analyzer
-textblob==0.17.1  # Text processing and sentiment
+textblob==0.19.0  # Text processing and sentiment
 
 # OpenTelemetry for observability
-opentelemetry-api==1.21.0
-opentelemetry-sdk==1.21.0
-opentelemetry-instrumentation-fastapi==0.42b0
-opentelemetry-instrumentation-sqlalchemy==0.42b0
-opentelemetry-instrumentation-requests==0.42b0
-opentelemetry-exporter-otlp-proto-grpc==1.21.0
+opentelemetry-api==1.38.0
+opentelemetry-sdk==1.38.0
+opentelemetry-instrumentation-fastapi==0.59b0
+opentelemetry-instrumentation-sqlalchemy==0.59b0
+opentelemetry-instrumentation-requests==0.59b0
+opentelemetry-exporter-otlp-proto-grpc==1.38.0
 opentelemetry-exporter-prometheus==1.12.0rc1
 
 # SMS notifications
-twilio==9.2.3  # For SMS notifications via Twilio
+twilio==9.8.7  # For SMS notifications via Twilio
 
 # Backup and encryption
 cryptography==41.0.7  # For backup encryption (if using GPG)
