@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TrendingUp, TrendingDown, Activity, RefreshCw, Search, Star } from "lucide-react";
-import { useMarketTickers, useMarketSummary, useMarkets } from "@/hooks/useMarkets";
+import { useMarketTickers, useMarketSummary } from "@/hooks/useMarkets";
 import { cn } from "@/lib/utils";
 import { formatCurrency, formatPercentage, formatLargeNumber } from "@/lib/formatters";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -43,7 +43,6 @@ interface ApiTicker {
 export function MarketWatch() {
   const { data: tickers, isLoading: tickersLoading, error: tickersError, refetch: refetchTickers } = useMarketTickers();
   const { data: summary } = useMarketSummary();
-  const { data: markets } = useMarkets();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [sortBy, setSortBy] = useState<"price" | "change" | "volume">("volume");

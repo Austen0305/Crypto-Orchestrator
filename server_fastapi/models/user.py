@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from .infinity_grid import InfinityGrid
     from .trailing_bot import TrailingBot
     from .futures_position import FuturesPosition
+    from .idempotency_key import IdempotencyKey
 
 
 class User(BaseModel):
@@ -42,6 +43,7 @@ class User(BaseModel):
     
     # User status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     role: Mapped[str] = mapped_column(String(20), default="user", nullable=False)  # user, admin
     
     # Profile fields
@@ -56,6 +58,16 @@ class User(BaseModel):
     # Preferences
     timezone: Mapped[Optional[str]] = mapped_column(String(40), nullable=True, default="UTC")
     locale: Mapped[Optional[str]] = mapped_column(String(10), nullable=True, default="en")
+    preferences_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON blob for user preferences
+    
+    # MFA & profile extensions
+    mfa_method: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)  # 'email' | 'sms' | 'totp'
+    mfa_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    mfa_secret: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    mfa_recovery_codes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON list
+    mfa_code: Mapped[Optional[str]] = mapped_column(String(6), nullable=True)
+    mfa_code_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    phone_number: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     
     # Relationships
     subscription: Mapped[Optional["Subscription"]] = relationship(
@@ -85,7 +97,19 @@ class User(BaseModel):
     futures_positions: Mapped[List["FuturesPosition"]] = relationship(
         "FuturesPosition", back_populates="user", cascade="all, delete-orphan"
     )
+    idempotency_keys: Mapped[List["IdempotencyKey"]] = relationship(
+        "IdempotencyKey", back_populates="user", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
+
+    # Compatibility alias: tests and some callers expect `hashed_password`
+    @property
+    def hashed_password(self) -> str:
+        return self.password_hash
+
+    @hashed_password.setter
+    def hashed_password(self, value: str) -> None:
+        self.password_hash = value
 

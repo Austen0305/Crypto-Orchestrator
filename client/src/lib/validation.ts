@@ -195,3 +195,85 @@ export function formatValidationErrors(errors: z.ZodError): Record<string, strin
   });
   return formatted;
 }
+
+/**
+ * Deposit schema for wallet deposits
+ */
+export const depositSchema = z.object({
+  amount: z.number().positive('Amount must be positive').min(0.01, 'Minimum deposit is $0.01'),
+  currency: z.string().min(1, 'Currency is required'),
+  payment_method: z.string().optional(),
+});
+
+/**
+ * Withdraw schema for wallet withdrawals
+ */
+export const withdrawSchema = z.object({
+  amount: z.number().positive('Amount must be positive').min(0.01, 'Minimum withdrawal is $0.01'),
+  currency: z.string().min(1, 'Currency is required'),
+  address: z.string().optional(),
+});
+
+/**
+ * Stake schema for staking operations
+ */
+export const stakeSchema = z.object({
+  amount: z.number().positive('Amount must be positive').min(0.01, 'Minimum stake is 0.01'),
+  currency: z.string().min(1, 'Currency is required'),
+  duration: z.number().int().positive().optional(),
+});
+
+/**
+ * Unstake schema for unstaking operations
+ */
+export const unstakeSchema = z.object({
+  amount: z.number().positive('Amount must be positive').min(0.01, 'Minimum unstake is 0.01'),
+  currency: z.string().min(1, 'Currency is required'),
+  stake_id: z.string().optional(),
+});
+
+/**
+ * Validate amount within min/max bounds
+ */
+export function validateAmount(
+  amount: string | number,
+  min: number = 0.01,
+  max: number = 1000000
+): { valid: boolean; error?: string; value?: number } {
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  
+  if (isNaN(numAmount)) {
+    return { valid: false, error: 'Invalid amount' };
+  }
+  
+  if (numAmount < min) {
+    return { valid: false, error: `Minimum amount is ${min}` };
+  }
+  
+  if (numAmount > max) {
+    return { valid: false, error: `Maximum amount is ${max}` };
+  }
+  
+  return { valid: true, value: numAmount };
+}
+
+/**
+ * Format currency input for display
+ */
+export function formatCurrencyInput(value: string): string {
+  // Remove non-numeric characters except decimal point
+  const cleaned = value.replace(/[^\d.]/g, '');
+  
+  // Ensure only one decimal point
+  const parts = cleaned.split('.');
+  if (parts.length > 2) {
+    return parts[0] + '.' + parts.slice(1).join('');
+  }
+  
+  // Limit decimal places to 2
+  if (parts.length === 2 && parts[1].length > 2) {
+    return parts[0] + '.' + parts[1].substring(0, 2);
+  }
+  
+  return cleaned;
+}

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Star, StarOff, Search, TrendingUp, TrendingDown, Plus, X } from "lucide-react";
-import { useWatchlist, useMarkets, useAddToWatchlist, useRemoveFromWatchlist, useSearchTradingPairs } from "@/hooks/useMarkets";
+import { useWatchlist, useAddToWatchlist, useRemoveFromWatchlist, useSearchTradingPairs } from "@/hooks/useMarkets";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,6 @@ import type { TradingPair } from "@shared/schema";
 export function Watchlist() {
   const { isAuthenticated } = useAuth();
   const { data: watchlist, isLoading: watchlistLoading, error: watchlistError, refetch: refetchWatchlist } = useWatchlist();
-  const { data: markets } = useMarkets();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300); // Debounce search input
   const { data: searchResults, error: searchError } = useSearchTradingPairs(debouncedSearchQuery);
