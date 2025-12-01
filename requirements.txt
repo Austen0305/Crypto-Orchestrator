@@ -46,7 +46,7 @@ boto3==1.34.0  # For AWS Secrets Manager (optional)
 hvac==1.2.1  # For HashiCorp Vault (optional)
 sentry-sdk[fastapi]>=2.10.0  # For error tracking
 bandit==1.7.6  # For security scanning
-safety==2.3.5  # For dependency vulnerability scanning
+safety==3.7.0  # For dependency vulnerability scanning
 
 # ML V2 - AutoML and Reinforcement Learning
 scikit-optimize==0.9.0  # Bayesian optimization
