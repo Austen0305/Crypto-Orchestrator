@@ -106,7 +106,7 @@
     "cmdk": "^1.1.1",
     "compression": "^1.8.1",
     "connect-redis": "^9.0.0",
-    "date-fns": "^3.6.0",
+    "date-fns": "^4.1.0",
     "electron-updater": "^6.1.7",
     "embla-carousel-react": "^8.6.0",
     "express": "^4.21.2",
