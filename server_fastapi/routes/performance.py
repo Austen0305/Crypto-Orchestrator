@@ -279,10 +279,16 @@ async def get_advanced_metrics(
             downside_returns = [r for r in returns if r < 0]
             if downside_returns and len(downside_returns) > 1:
                 avg_return = sum(returns) / len(returns)
+                daily_risk_free = RISK_FREE_RATE / TRADING_DAYS_PER_YEAR
+                excess_return = avg_return - daily_risk_free
                 downside_std = math.sqrt(sum(r ** 2 for r in downside_returns) / len(downside_returns))
-                sortino_ratio = (avg_return / downside_std * math.sqrt(252)) if downside_std > 0 else 0.0
+                sortino_ratio = (excess_return / downside_std * math.sqrt(TRADING_DAYS_PER_YEAR)) if downside_std > 0 else 0.0
+            elif returns:
+                # If no downside returns, use 0 (indicates all trades were profitable)
+                # Note: A positive Sharpe but no downside volatility suggests all trades were winners
+                sortino_ratio = 0.0 if sharpe_ratio <= 0 else sharpe_ratio * 1.5  # Higher than Sharpe when no losses
             else:
-                sortino_ratio = sharpe_ratio * 1.2 if sharpe_ratio > 0 else 0.0  # Estimate if no losses
+                sortino_ratio = 0.0
             
             # Maximum Drawdown
             peak_equity = initial_capital
