@@ -25,11 +25,22 @@ class BotService:
         self.trading = BotTradingService(session=db_session)
 
     # Creation operations
-    async def create_bot(self, user_id: int, name: str, symbol: str, strategy: str, parameters: Dict[str, Any]) -> Optional[str]:
+    async def create_bot(
+        self,
+        user_id: int,
+        name: str,
+        symbol: str,
+        strategy: str,
+        parameters: Dict[str, Any],
+    ) -> Optional[str]:
         """Create a new bot"""
-        return await self.creation.create_bot(user_id, name, symbol, strategy, parameters)
+        return await self.creation.create_bot(
+            user_id, name, symbol, strategy, parameters
+        )
 
-    async def update_bot(self, bot_id: str, user_id: int, updates: Dict[str, Any]) -> bool:
+    async def update_bot(
+        self, bot_id: str, user_id: int, updates: Dict[str, Any]
+    ) -> bool:
         """Update an existing bot"""
         return await self.creation.update_bot(bot_id, user_id, updates)
 
@@ -37,7 +48,9 @@ class BotService:
         """Delete a bot"""
         return await self.creation.delete_bot(bot_id, user_id)
 
-    async def get_bot_config(self, bot_id: str, user_id: int) -> Optional[Dict[str, Any]]:
+    async def get_bot_config(
+        self, bot_id: str, user_id: int
+    ) -> Optional[Dict[str, Any]]:
         """Get bot configuration"""
         return await self.creation.get_bot_config(bot_id, user_id)
 
@@ -58,7 +71,9 @@ class BotService:
         """Stop a trading bot"""
         return await self.control.stop_bot(bot_id, user_id)
 
-    async def get_bot_status(self, bot_id: str, user_id: int) -> Optional[Dict[str, Any]]:
+    async def get_bot_status(
+        self, bot_id: str, user_id: int
+    ) -> Optional[Dict[str, Any]]:
         """Get bot status"""
         return await self.control.get_bot_status(bot_id, user_id)
 
@@ -83,7 +98,9 @@ class BotService:
         """Get bot alerts"""
         return await self.monitoring.get_bot_alerts(bot_id, user_id)
 
-    async def validate_bot_start_conditions(self, bot_id: str, user_id: int) -> Dict[str, Any]:
+    async def validate_bot_start_conditions(
+        self, bot_id: str, user_id: int
+    ) -> Dict[str, Any]:
         """Validate start conditions"""
         return await self.monitoring.validate_bot_start_conditions(bot_id, user_id)
 
@@ -91,11 +108,15 @@ class BotService:
         """Monitor active bots"""
         return await self.monitoring.monitor_active_bots(user_id)
 
-    async def emergency_stop_bot(self, bot_id: str, user_id: int, reason: str = "manual_emergency") -> bool:
+    async def emergency_stop_bot(
+        self, bot_id: str, user_id: int, reason: str = "manual_emergency"
+    ) -> bool:
         """Emergency stop bot"""
         return await self.monitoring.emergency_stop_bot(bot_id, user_id, reason)
 
-    async def emergency_stop_all_user_bots(self, user_id: int, reason: str = "system_emergency") -> int:
+    async def emergency_stop_all_user_bots(
+        self, user_id: int, reason: str = "system_emergency"
+    ) -> int:
         """Emergency stop all user bots"""
         return await self.monitoring.emergency_stop_all_user_bots(user_id, reason)
 
@@ -119,21 +140,29 @@ def get_bot_service(db_session: Optional[AsyncSession] = None) -> BotService:
     return BotService(db_session=db_session)
 
 
-def get_bot_creation_service(db_session: Optional[AsyncSession] = None) -> BotCreationService:
+def get_bot_creation_service(
+    db_session: Optional[AsyncSession] = None,
+) -> BotCreationService:
     """Get bot creation service instance"""
     return BotCreationService(session=db_session)
 
 
-def get_bot_control_service(db_session: Optional[AsyncSession] = None) -> BotControlService:
+def get_bot_control_service(
+    db_session: Optional[AsyncSession] = None,
+) -> BotControlService:
     """Get bot control service instance"""
     return BotControlService(session=db_session)
 
 
-def get_bot_monitoring_service(db_session: Optional[AsyncSession] = None) -> BotMonitoringService:
+def get_bot_monitoring_service(
+    db_session: Optional[AsyncSession] = None,
+) -> BotMonitoringService:
     """Get bot monitoring service instance"""
     return BotMonitoringService(session=db_session)
 
 
-def get_bot_trading_service(db_session: Optional[AsyncSession] = None) -> BotTradingService:
+def get_bot_trading_service(
+    db_session: Optional[AsyncSession] = None,
+) -> BotTradingService:
     """Get bot trading service instance"""
     return BotTradingService(session=db_session)

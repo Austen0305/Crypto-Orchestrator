@@ -1,6 +1,7 @@
 """
 Payments Routes - Stripe payment processing and subscriptions
 """
+
 from fastapi import APIRouter, HTTPException, Depends, Request, Header
 from pydantic import BaseModel, EmailStr
 from typing import Optional, Dict, Any
@@ -18,6 +19,7 @@ router = APIRouter(prefix="/api/payments", tags=["Payments"])
 # Request/Response models
 class CreateSubscriptionRequest(BaseModel):
     """Create subscription request"""
+
     tier: str
     payment_method_id: Optional[str] = None
     email: EmailStr
@@ -25,11 +27,13 @@ class CreateSubscriptionRequest(BaseModel):
 
 class UpdateSubscriptionRequest(BaseModel):
     """Update subscription request"""
+
     new_tier: str
 
 
 class PaymentIntentRequest(BaseModel):
     """Payment intent request"""
+
     amount: int
     currency: str = "usd"
     payment_method_type: str = "card"  # 'card', 'ach', 'bank_transfer'
@@ -40,19 +44,17 @@ class PaymentIntentRequest(BaseModel):
 async def create_customer(
     email: EmailStr,
     name: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Create a Stripe customer"""
     try:
         customer = stripe_service.create_customer(
-            email=email,
-            name=name,
-            metadata={'user_id': str(current_user['id'])}
+            email=email, name=name, metadata={"user_id": str(current_user["id"])}
         )
-        
+
         if not customer:
             raise HTTPException(status_code=500, detail="Failed to create customer")
-        
+
         return customer
     except Exception as e:
         logger.error(f"Error creating customer: {e}")
@@ -61,30 +63,28 @@ async def create_customer(
 
 @router.post("/subscriptions", response_model=Dict)
 async def create_subscription(
-    request: CreateSubscriptionRequest,
-    current_user: dict = Depends(get_current_user)
+    request: CreateSubscriptionRequest, current_user: dict = Depends(get_current_user)
 ):
     """Create a subscription"""
     try:
         # Create customer if doesn't exist
         customer = stripe_service.create_customer(
-            email=request.email,
-            metadata={'user_id': str(current_user['id'])}
+            email=request.email, metadata={"user_id": str(current_user["id"])}
         )
-        
+
         if not customer:
             raise HTTPException(status_code=500, detail="Failed to create customer")
-        
+
         # Create subscription
         subscription = stripe_service.create_subscription(
-            customer_id=customer['id'],
+            customer_id=customer["id"],
             tier=request.tier,
-            payment_method_id=request.payment_method_id
+            payment_method_id=request.payment_method_id,
         )
-        
+
         if not subscription:
             raise HTTPException(status_code=500, detail="Failed to create subscription")
-        
+
         return subscription
     except HTTPException:
         raise
@@ -95,16 +95,15 @@ async def create_subscription(
 
 @router.get("/subscriptions/{subscription_id}", response_model=Dict)
 async def get_subscription(
-    subscription_id: str,
-    current_user: dict = Depends(get_current_user)
+    subscription_id: str, current_user: dict = Depends(get_current_user)
 ):
     """Get subscription details"""
     try:
         subscription = stripe_service.get_subscription(subscription_id)
-        
+
         if not subscription:
             raise HTTPException(status_code=404, detail="Subscription not found")
-        
+
         return subscription
     except HTTPException:
         raise
@@ -117,18 +116,17 @@ async def get_subscription(
 async def update_subscription(
     subscription_id: str,
     request: UpdateSubscriptionRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Update subscription tier"""
     try:
         subscription = stripe_service.update_subscription(
-            subscription_id=subscription_id,
-            new_tier=request.new_tier
+            subscription_id=subscription_id, new_tier=request.new_tier
         )
-        
+
         if not subscription:
             raise HTTPException(status_code=500, detail="Failed to update subscription")
-        
+
         return subscription
     except HTTPException:
         raise
@@ -141,18 +139,17 @@ async def update_subscription(
 async def cancel_subscription(
     subscription_id: str,
     cancel_immediately: bool = False,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Cancel a subscription"""
     try:
         subscription = stripe_service.cancel_subscription(
-            subscription_id=subscription_id,
-            cancel_at_period_end=not cancel_immediately
+            subscription_id=subscription_id, cancel_at_period_end=not cancel_immediately
         )
-        
+
         if not subscription:
             raise HTTPException(status_code=500, detail="Failed to cancel subscription")
-        
+
         return subscription
     except HTTPException:
         raise
@@ -163,8 +160,7 @@ async def cancel_subscription(
 
 @router.post("/payment-intents", response_model=Dict)
 async def create_payment_intent(
-    request: PaymentIntentRequest,
-    current_user: dict = Depends(get_current_user)
+    request: PaymentIntentRequest, current_user: dict = Depends(get_current_user)
 ):
     """Create a payment intent for one-time payments"""
     try:
@@ -172,12 +168,14 @@ async def create_payment_intent(
             amount=request.amount,
             currency=request.currency,
             payment_method_type=request.payment_method_type,
-            metadata={**(request.metadata or {}), 'user_id': str(current_user['id'])}
+            metadata={**(request.metadata or {}), "user_id": str(current_user["id"])},
         )
-        
+
         if not intent:
-            raise HTTPException(status_code=500, detail="Failed to create payment intent")
-        
+            raise HTTPException(
+                status_code=500, detail="Failed to create payment intent"
+            )
+
         return intent
     except HTTPException:
         raise
@@ -189,26 +187,29 @@ async def create_payment_intent(
 @router.post("/webhooks")
 async def handle_stripe_webhook(
     request: Request,
-    stripe_signature: Optional[str] = Header(None, alias="Stripe-Signature")
+    stripe_signature: Optional[str] = Header(None, alias="Stripe-Signature"),
 ):
     """Handle Stripe webhook events"""
     try:
         payload = await request.body()
-        
+
         if not stripe_signature:
             raise HTTPException(status_code=400, detail="Missing Stripe signature")
-        
+
         event = stripe_service.handle_webhook(payload, stripe_signature)
-        
+
         if not event:
             raise HTTPException(status_code=400, detail="Invalid webhook")
-        
+
         # Process webhook event
-        event_type = event.get('event')
-        event_data = event.get('data', {})
-        
+        event_type = event.get("event")
+        event_data = event.get("data", {})
+
         # Handle payment events for wallet deposits
-        if event_type == "payment_intent.succeeded" or event_type == "payment.succeeded":
+        if (
+            event_type == "payment_intent.succeeded"
+            or event_type == "payment.succeeded"
+        ):
             payment_intent_id = event_data.get("id") or event_data.get("payment_intent")
             if payment_intent_id:
                 try:
@@ -217,7 +218,7 @@ async def handle_stripe_webhook(
                     from ..models.wallet import WalletTransaction
                     from ..database import get_db_context
                     from decimal import Decimal
-                    
+
                     async with get_db_context() as db:
                         # Find transaction by payment intent ID
                         stmt = select(WalletTransaction).where(
@@ -225,20 +226,22 @@ async def handle_stripe_webhook(
                         )
                         result = await db.execute(stmt)
                         transaction = result.scalar_one_or_none()
-                        
+
                         if transaction:
                             # Use safe deposit processing to ensure no money is lost
                             # This verifies payment, prevents duplicates, and ensures atomic operations
                             amount_decimal = Decimal(str(transaction.amount))
-                            
-                            success, processed_txn_id, error_msg = await deposit_safety_service.process_deposit_safely(
-                                user_id=transaction.user_id,
-                                amount=amount_decimal,
-                                currency=transaction.currency,
-                                payment_intent_id=payment_intent_id,
-                                db=db
+
+                            success, processed_txn_id, error_msg = (
+                                await deposit_safety_service.process_deposit_safely(
+                                    user_id=transaction.user_id,
+                                    amount=amount_decimal,
+                                    currency=transaction.currency,
+                                    payment_intent_id=payment_intent_id,
+                                    db=db,
+                                )
                             )
-                            
+
                             if success:
                                 logger.info(
                                     f"✅ Deposit confirmed safely via webhook: payment_intent {payment_intent_id}, "
@@ -255,12 +258,14 @@ async def handle_stripe_webhook(
                                 f"This may be a new deposit that needs to be created first."
                             )
                 except Exception as e:
-                    logger.error(f"Error processing payment webhook: {e}", exc_info=True)
-        
+                    logger.error(
+                        f"Error processing payment webhook: {e}", exc_info=True
+                    )
+
         logger.info(f"Processed Stripe webhook: {event_type}")
-        
-        return {'received': True, 'event': event_type}
-    
+
+        return {"received": True, "event": event_type}
+
     except HTTPException:
         raise
     except Exception as e:
@@ -275,14 +280,14 @@ async def get_pricing():
         pricing = {}
         for tier, config in stripe_service.PRICE_CONFIGS.items():
             pricing[tier] = {
-                'tier': config.tier,
-                'amount': config.amount,
-                'amount_display': f"${config.amount / 100:.2f}",
-                'currency': config.currency,
-                'interval': config.interval,
-                'features': config.features
+                "tier": config.tier,
+                "amount": config.amount,
+                "amount_display": f"${config.amount / 100:.2f}",
+                "currency": config.currency,
+                "interval": config.interval,
+                "features": config.features,
             }
-        return {'pricing': pricing}
+        return {"pricing": pricing}
     except Exception as e:
         logger.error(f"Error getting pricing: {e}")
         raise HTTPException(status_code=500, detail="Failed to get pricing")

@@ -28,12 +28,16 @@ class AuthService:
         # In a real implementation, this would connect to a database
         # For now, using environment-based mock storage
         self._users = self._load_mock_users()
-        self._next_id = max((u.get("id", 0) for u in self._users.values()), default=0) + 1
+        self._next_id = (
+            max((u.get("id", 0) for u in self._users.values()), default=0) + 1
+        )
 
     def _load_mock_users(self) -> Dict[str, Dict[str, Any]]:
         """Load mock users for development - replace with database in production"""
         # Default test user
-        hashed_password = bcrypt.hashpw("password123".encode(), bcrypt.gensalt()).decode()
+        hashed_password = bcrypt.hashpw(
+            "password123".encode(), bcrypt.gensalt()
+        ).decode()
         return {
             "testuser": {
                 "id": 1,
@@ -41,7 +45,7 @@ class AuthService:
                 "email": "test@example.com",
                 "password_hash": hashed_password,
                 "active": True,
-                "created_at": datetime.now(timezone.utc).isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat(),
             }
         }
 
@@ -84,7 +88,9 @@ class AuthService:
 
             # Check expiration
             exp = payload.get("exp")
-            if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
+            if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(
+                timezone.utc
+            ):
                 logger.warning("Token expired")
                 return None
 
@@ -95,7 +101,9 @@ class AuthService:
             # Find user by ID or username
             user = None
             if user_id:
-                user = next((u for u in self._users.values() if u["id"] == user_id), None)
+                user = next(
+                    (u for u in self._users.values() if u["id"] == user_id), None
+                )
             elif username:
                 user = self._users.get(username)
 
@@ -107,7 +115,7 @@ class AuthService:
             user_data = {
                 "id": user["id"],
                 "username": user["username"],
-                "email": user["email"]
+                "email": user["email"],
             }
 
             logger.debug(f"Token validation successful for user: {user['username']}")
@@ -130,7 +138,7 @@ class AuthService:
             "username": user["username"],
             "email": user["email"],
             "iat": datetime.now(timezone.utc),
-            "exp": datetime.now(timezone.utc) + timedelta(hours=1)  # 1 hour expiration
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1),  # 1 hour expiration
         }
 
         return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
@@ -189,7 +197,9 @@ class AuthService:
             },
         }
 
-    def verifyEmail(self, token: str) -> Dict[str, Any]:  # noqa: N802 (match existing route usage)
+    def verifyEmail(
+        self, token: str
+    ) -> Dict[str, Any]:  # noqa: N802 (match existing route usage)
         """Verify email using a JWT token produced by the route.
 
         Token payload must contain: id, type='email_verification'.
@@ -204,7 +214,11 @@ class AuthService:
             if user.get("emailVerified"):
                 return {"success": False, "message": "Email already verified"}
             user["emailVerified"] = True
-            return {"success": True, "message": "Email verified successfully", "user_id": user["id"]}
+            return {
+                "success": True,
+                "message": "Email verified successfully",
+                "user_id": user["id"],
+            }
         except jwt.ExpiredSignatureError:
             return {"success": False, "message": "Verification token expired"}
         except jwt.InvalidTokenError:

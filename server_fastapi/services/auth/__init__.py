@@ -8,5 +8,5 @@ __all__ = [
     "UserCredentials",
     "APIKeyService",
     "APIKey",
-    "APIKeyCreateRequest"
+    "APIKeyCreateRequest",
 ]

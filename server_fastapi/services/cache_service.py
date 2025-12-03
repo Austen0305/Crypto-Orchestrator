@@ -7,6 +7,7 @@ import logging
 
 try:
     import redis.asyncio as redis
+
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
@@ -16,41 +17,43 @@ logger = logging.getLogger(__name__)
 
 # Cache configuration
 CACHE_CONFIG = {
-    'default_ttl': 300,  # 5 minutes
-    'market_data': 60,   # 1 minute
-    'order_book': 30,    # 30 seconds
-    'trading_pairs': 600,  # 10 minutes
-    'user_info': 1800,   # 30 minutes
-    'bot_status': 120,   # 2 minutes
-    'portfolio': 300,    # 5 minutes
-    'api_keys': 3600,    # 1 hour
-    'max_memory_entries': 10000,
-    'key_prefix': 'co:',  # CryptoOrchestrator
+    "default_ttl": 300,  # 5 minutes
+    "market_data": 60,  # 1 minute
+    "order_book": 30,  # 30 seconds
+    "trading_pairs": 600,  # 10 minutes
+    "user_info": 1800,  # 30 minutes
+    "bot_status": 120,  # 2 minutes
+    "portfolio": 300,  # 5 minutes
+    "api_keys": 3600,  # 1 hour
+    "max_memory_entries": 10000,
+    "key_prefix": "co:",  # CryptoOrchestrator
 }
+
 
 class MemoryCache:
     """In-memory cache with TTL support as Redis fallback"""
 
-    def __init__(self, max_size: int = CACHE_CONFIG['max_memory_entries']):
+    def __init__(self, max_size: int = CACHE_CONFIG["max_memory_entries"]):
         self.cache: Dict[str, Dict[str, Any]] = {}
         self.max_size = max_size
 
-    def set(self, key: str, value: Any, ttl: int = CACHE_CONFIG['default_ttl']):
+    def set(self, key: str, value: Any, ttl: int = CACHE_CONFIG["default_ttl"]):
         """Set cache entry with TTL"""
         if len(self.cache) >= self.max_size:
             # Remove oldest entry
-            oldest_key = min(self.cache.keys(),
-                           key=lambda k: self.cache[k]['expires_at'])
+            oldest_key = min(
+                self.cache.keys(), key=lambda k: self.cache[k]["expires_at"]
+            )
             del self.cache[oldest_key]
 
         expires_at = time.time() + ttl
-        self.cache[key] = {'value': value, 'expires_at': expires_at}
+        self.cache[key] = {"value": value, "expires_at": expires_at}
 
     def get(self, key: str) -> Optional[Any]:
         """Get cache entry if not expired"""
         entry = self.cache.get(key)
-        if entry and time.time() < entry['expires_at']:
-            return entry['value']
+        if entry and time.time() < entry["expires_at"]:
+            return entry["value"]
         elif entry:
             del self.cache[key]  # Remove expired entry
         return None
@@ -62,7 +65,7 @@ class MemoryCache:
     def exists(self, key: str) -> bool:
         """Check if key exists and not expired"""
         entry = self.cache.get(key)
-        return entry is not None and time.time() < entry['expires_at']
+        return entry is not None and time.time() < entry["expires_at"]
 
     def clear(self):
         """Clear all cache entries"""
@@ -71,10 +74,12 @@ class MemoryCache:
     def cleanup(self):
         """Remove expired entries"""
         current_time = time.time()
-        expired_keys = [k for k, v in self.cache.items()
-                       if current_time >= v['expires_at']]
+        expired_keys = [
+            k for k, v in self.cache.items() if current_time >= v["expires_at"]
+        ]
         for key in expired_keys:
             del self.cache[key]
+
 
 class CacheKeyBuilder:
     """Cache key builder utility"""
@@ -116,6 +121,7 @@ class CacheKeyBuilder:
     def backtest_results(bot_id: str) -> str:
         return f"{CACHE_CONFIG['key_prefix']}backtest:{bot_id}"
 
+
 class CacheService:
     """Advanced cache service with Redis and memory fallback"""
 
@@ -131,7 +137,7 @@ class CacheService:
             logger.info("Redis library not available, using memory cache")
             return
 
-        redis_url = os.getenv('REDIS_URL')
+        redis_url = os.getenv("REDIS_URL")
         if not redis_url:
             logger.info("Redis URL not configured, using memory cache")
             return
@@ -206,53 +212,48 @@ class CacheService:
 
     def _get_ttl_for_key(self, key: str) -> int:
         """Get appropriate TTL for key type"""
-        if 'market:' in key:
-            return CACHE_CONFIG['market_data']
-        elif 'orderbook:' in key:
-            return CACHE_CONFIG['order_book']
-        elif 'trading_pairs' in key:
-            return CACHE_CONFIG['trading_pairs']
-        elif 'user:' in key:
-            return CACHE_CONFIG['user_info']
-        elif 'bot:' in key and ':status' in key:
-            return CACHE_CONFIG['bot_status']
-        elif 'portfolio:' in key:
-            return CACHE_CONFIG['portfolio']
-        elif 'api_keys:' in key:
-            return CACHE_CONFIG['api_keys']
-        return CACHE_CONFIG['default_ttl']
+        if "market:" in key:
+            return CACHE_CONFIG["market_data"]
+        elif "orderbook:" in key:
+            return CACHE_CONFIG["order_book"]
+        elif "trading_pairs" in key:
+            return CACHE_CONFIG["trading_pairs"]
+        elif "user:" in key:
+            return CACHE_CONFIG["user_info"]
+        elif "bot:" in key and ":status" in key:
+            return CACHE_CONFIG["bot_status"]
+        elif "portfolio:" in key:
+            return CACHE_CONFIG["portfolio"]
+        elif "api_keys:" in key:
+            return CACHE_CONFIG["api_keys"]
+        return CACHE_CONFIG["default_ttl"]
 
     async def get_stats(self) -> Dict[str, Any]:
         """Get cache statistics"""
         memory_stats = {
-            'size': len(self.memory_cache.cache),
-            'max_size': self.memory_cache.max_size
+            "size": len(self.memory_cache.cache),
+            "max_size": self.memory_cache.max_size,
         }
 
-        redis_stats = {'connected': False}
+        redis_stats = {"connected": False}
         if self.redis_available and self.redis:
             try:
-                info = await self.redis.info('memory')
-                redis_stats = {
-                    'connected': True,
-                    'memory': info
-                }
+                info = await self.redis.info("memory")
+                redis_stats = {"connected": True, "memory": info}
             except Exception as e:
-                redis_stats = {
-                    'connected': False,
-                    'error': str(e)
-                }
+                redis_stats = {"connected": False, "error": str(e)}
 
         return {
-            'memory': memory_stats,
-            'redis': redis_stats,
-            'redis_available': self.redis_available
+            "memory": memory_stats,
+            "redis": redis_stats,
+            "redis_available": self.redis_available,
         }
 
     async def close(self) -> None:
         """Close Redis connection"""
         if self.redis:
             await self.redis.close()
+
 
 # Export singleton instance
 cache_service = CacheService()

@@ -10,7 +10,13 @@ from .portfolio import Portfolio
 from .trade import Trade
 from .follow import Follow, CopiedTrade
 from .order import Order, OrderType, OrderStatus
-from .wallet import Wallet, WalletTransaction, WalletType, TransactionType, TransactionStatus
+from .wallet import (
+    Wallet,
+    WalletTransaction,
+    WalletType,
+    TransactionType,
+    TransactionStatus,
+)
 from .idempotency import IdempotencyKey
 
 # New competitive bot models
@@ -59,35 +65,35 @@ except Exception:
     ExchangeAPIKey = None  # noqa: N816
 
 __all__ = [
-    'Base',
-    'BaseModel',
-    'TimestampMixin',
-    'SoftDeleteMixin',
-    'User',
-    'Bot',
-    'RiskAlert',
-    'RiskLimit',
-    'Portfolio',
-    'Trade',
-    'Candle',
-    'ExchangeAPIKey',
-    'Follow',
-    'CopiedTrade',
-    'Order',
-    'OrderType',
-    'OrderStatus',
-    'Wallet',
-    'WalletTransaction',
-    'WalletType',
-    'TransactionType',
-    'TransactionStatus',
-    'IdempotencyKey',
-    'Strategy',
-    'StrategyVersion',
+    "Base",
+    "BaseModel",
+    "TimestampMixin",
+    "SoftDeleteMixin",
+    "User",
+    "Bot",
+    "RiskAlert",
+    "RiskLimit",
+    "Portfolio",
+    "Trade",
+    "Candle",
+    "ExchangeAPIKey",
+    "Follow",
+    "CopiedTrade",
+    "Order",
+    "OrderType",
+    "OrderStatus",
+    "Wallet",
+    "WalletTransaction",
+    "WalletType",
+    "TransactionType",
+    "TransactionStatus",
+    "IdempotencyKey",
+    "Strategy",
+    "StrategyVersion",
     # New competitive bot models
-    'GridBot',
-    'DCABot',
-    'InfinityGrid',
-    'TrailingBot',
-    'FuturesPosition'
+    "GridBot",
+    "DCABot",
+    "InfinityGrid",
+    "TrailingBot",
+    "FuturesPosition",
 ]

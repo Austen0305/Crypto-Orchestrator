@@ -2,6 +2,7 @@
 Query Optimization Routes
 API endpoints for database query optimization and monitoring
 """
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from typing import Dict, List, Optional
@@ -19,15 +20,14 @@ router = APIRouter(prefix="/api/query-optimization", tags=["Query Optimization"]
 
 class OptimizeQueryRequest(BaseModel):
     """Request to optimize a query"""
+
     query: str
     use_index: bool = True
     explain: bool = False
 
 
 @router.get("/statistics")
-async def get_query_statistics(
-    current_user: dict = Depends(get_current_user)
-) -> Dict:
+async def get_query_statistics(current_user: dict = Depends(get_current_user)) -> Dict:
     """Get overall query performance statistics"""
     try:
         stats = await query_optimizer.get_query_statistics()
@@ -41,13 +41,12 @@ async def get_query_statistics(
 async def get_slow_queries(
     limit: int = Query(10, ge=1, le=50),
     min_executions: int = Query(5, ge=1),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ) -> List[Dict]:
     """Get slow query analysis"""
     try:
         slow_queries = await query_optimizer.analyze_slow_queries(
-            limit=limit,
-            min_executions=min_executions
+            limit=limit, min_executions=min_executions
         )
         return slow_queries
     except Exception as e:
@@ -59,7 +58,7 @@ async def get_slow_queries(
 async def optimize_query(
     request: OptimizeQueryRequest,
     current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ) -> Dict:
     """Analyze and optimize a SQL query"""
     try:
@@ -67,7 +66,7 @@ async def optimize_query(
             db=db,
             query=request.query,
             use_index=request.use_index,
-            explain=request.explain
+            explain=request.explain,
         )
         return result
     except Exception as e:
@@ -78,7 +77,7 @@ async def optimize_query(
 @router.get("/pool-stats")
 async def get_pool_stats(
     current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ) -> Dict:
     """Get database connection pool statistics"""
     try:
@@ -87,4 +86,3 @@ async def get_pool_stats(
     except Exception as e:
         logger.error(f"Error getting pool stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get pool statistics")
-

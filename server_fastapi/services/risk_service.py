@@ -64,7 +64,9 @@ class RiskService:
     }
     LIMIT_TYPE_TO_FIELD = {value: key for key, value in FIELD_TO_LIMIT_TYPE.items()}
 
-    def __init__(self, db_session: Optional[AsyncSession] = None, ttl_seconds: int = 10):
+    def __init__(
+        self, db_session: Optional[AsyncSession] = None, ttl_seconds: int = 10
+    ):
         self.db = db_session
         self._default_limits: RiskLimits = RiskLimits()
         self._alerts: Dict[str, RiskAlert] = {}
@@ -84,16 +86,21 @@ class RiskService:
         )
 
     async def create_alert_db(
-        self, user_id: str, alert_type: str, severity: str, message: str,
-        current_value: Optional[float] = None, threshold_value: Optional[float] = None
+        self,
+        user_id: str,
+        alert_type: str,
+        severity: str,
+        message: str,
+        current_value: Optional[float] = None,
+        threshold_value: Optional[float] = None,
     ):
         """Persist risk alert to database"""
         if not self.db:
             logger.warning("Database session not available for alert persistence")
             return None
-        
+
         from ..models.risk_alert import RiskAlert as RiskAlertModel
-        
+
         alert = RiskAlertModel(
             user_id=user_id,
             alert_type=alert_type,
@@ -107,88 +114,83 @@ class RiskService:
         await self.db.refresh(alert)
         logger.info(f"Risk alert created: {alert.id} for user {user_id}")
         return alert
-    
-    async def get_user_alerts_db(self, user_id: str, limit: int = 50, unresolved_only: bool = False):
+
+    async def get_user_alerts_db(
+        self, user_id: str, limit: int = 50, unresolved_only: bool = False
+    ):
         """Retrieve user's risk alerts from database"""
         if not self.db:
             logger.warning("Database session not available")
             return []
-        
+
         from ..models.risk_alert import RiskAlert as RiskAlertModel
-        
+
         stmt = select(RiskAlertModel).where(RiskAlertModel.user_id == user_id)
-        
+
         if unresolved_only:
             stmt = stmt.where(RiskAlertModel.resolved == False)
-        
+
         stmt = stmt.order_by(RiskAlertModel.created_at.desc()).limit(limit)
-        
+
         result = await self.db.execute(stmt)
         return result.scalars().all()
-    
+
     async def acknowledge_alert_db(self, alert_id: int):
         """Acknowledge a database alert"""
         if not self.db:
             logger.warning("Database session not available")
             return None
-        
+
         from ..models.risk_alert import RiskAlert as RiskAlertModel
-        
-        stmt = update(RiskAlertModel).where(
-            RiskAlertModel.id == alert_id
-        ).values(
-            acknowledged=True,
-            acknowledged_at=datetime.utcnow()
+
+        stmt = (
+            update(RiskAlertModel)
+            .where(RiskAlertModel.id == alert_id)
+            .values(acknowledged=True, acknowledged_at=datetime.utcnow())
         )
-        
+
         await self.db.execute(stmt)
         await self.db.commit()
         logger.info(f"Alert {alert_id} acknowledged")
         return True
-    
+
     async def set_risk_limit_db(self, user_id: str, limit_type: str, value: float):
         """Set or update risk limit in database"""
         if not self.db:
             logger.warning("Database session not available")
             return None
-        
+
         from ..models.risk_limit import RiskLimit as RiskLimitModel
-        
+
         # Check if limit exists
         stmt = select(RiskLimitModel).where(
-            RiskLimitModel.user_id == user_id,
-            RiskLimitModel.limit_type == limit_type
+            RiskLimitModel.user_id == user_id, RiskLimitModel.limit_type == limit_type
         )
         result = await self.db.execute(stmt)
         limit = result.scalar_one_or_none()
-        
+
         if limit:
             limit.value = value
             limit.updated_at = datetime.utcnow()
         else:
-            limit = RiskLimitModel(
-                user_id=user_id,
-                limit_type=limit_type,
-                value=value
-            )
+            limit = RiskLimitModel(user_id=user_id, limit_type=limit_type, value=value)
             self.db.add(limit)
-        
+
         await self.db.commit()
         await self.db.refresh(limit)
         logger.info(f"Risk limit set: {limit_type}={value} for user {user_id}")
         return limit
-    
+
     async def get_user_limits_db(self, user_id: str):
         """Get all risk limits for a user"""
         if not self.db:
             logger.warning("Database session not available")
             return []
-        
+
         from ..models.risk_limit import RiskLimit as RiskLimitModel
-        
+
         stmt = select(RiskLimitModel).where(
-            RiskLimitModel.user_id == user_id,
-            RiskLimitModel.enabled == True
+            RiskLimitModel.user_id == user_id, RiskLimitModel.enabled == True
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
@@ -218,7 +220,9 @@ class RiskService:
             acknowledged=bool(alert_model.acknowledged),
         )
 
-    async def get_user_alerts(self, user_id: str, unresolved_only: bool = False) -> List[RiskAlert]:
+    async def get_user_alerts(
+        self, user_id: str, unresolved_only: bool = False
+    ) -> List[RiskAlert]:
         if not self.db:
             return list(self._alerts.values())
         alerts = await self.get_user_alerts_db(user_id, unresolved_only=unresolved_only)
@@ -235,7 +239,9 @@ class RiskService:
                 base[field] = limit.value
         return RiskLimits(**base)
 
-    async def update_user_limits(self, user_id: str, updates: Dict[str, float]) -> RiskLimits:
+    async def update_user_limits(
+        self, user_id: str, updates: Dict[str, float]
+    ) -> RiskLimits:
         if not updates:
             return await self.get_user_limits(user_id)
 
@@ -289,5 +295,3 @@ class RiskService:
         self._metrics_cache = metrics
         self._metrics_cached_at = now
         return metrics
-
-

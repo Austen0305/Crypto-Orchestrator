@@ -4,6 +4,7 @@ from typing import Dict, Any, Callable
 
 logger = logging.getLogger(__name__)
 
+
 class RiskScenarioService:
     """Service for portfolio risk scenario analysis (shock VaR, multi-horizon scaling).
 
@@ -11,13 +12,15 @@ class RiskScenarioService:
     return distributions from a repository layer or historical price service.
     """
 
-    async def compute_scenario(self,
-                               portfolio_value: float,
-                               current_var: float,
-                               shock_percent: float,
-                               horizon_days: int = 1,
-                               correlation_factor: float = 1.0,
-                               notify: Callable[[Dict[str, Any]], Any] | None = None) -> Dict[str, Any]:
+    async def compute_scenario(
+        self,
+        portfolio_value: float,
+        current_var: float,
+        shock_percent: float,
+        horizon_days: int = 1,
+        correlation_factor: float = 1.0,
+        notify: Callable[[Dict[str, Any]], Any] | None = None,
+    ) -> Dict[str, Any]:
         """Compute a shocked Value-at-Risk scenario.
 
         Args:
@@ -34,7 +37,9 @@ class RiskScenarioService:
             shocked_move_abs = abs(portfolio_value * shock_percent)
             shocked_var = current_var + shocked_move_abs * correlation_factor
             projected_var = shocked_var * horizon_scale
-            stress_loss = abs(portfolio_value * min(0, shock_percent) * correlation_factor)
+            stress_loss = abs(
+                portfolio_value * min(0, shock_percent) * correlation_factor
+            )
             result = {
                 "portfolio_value": portfolio_value,
                 "baseline_var": current_var,
@@ -48,23 +53,26 @@ class RiskScenarioService:
                 "explanation": (
                     "Shock VaR = baseline_var + |portfolio_value * shock_percent| * correlation_factor; "
                     "Projected VaR scales by sqrt(horizon_days)."
-                )
+                ),
             }
             # Optional real-time notification hook
             if notify:
                 try:
-                    await notify({
-                        "type": "risk_scenario",
-                        "category": "risk",
-                        "level": "info",
-                        "message": "Scenario computed",
-                        "data": result
-                    })
+                    await notify(
+                        {
+                            "type": "risk_scenario",
+                            "category": "risk",
+                            "level": "info",
+                            "message": "Scenario computed",
+                            "data": result,
+                        }
+                    )
                 except Exception as cb_e:
                     logger.warning(f"Risk scenario notify callback failed: {cb_e}")
             return result
         except Exception as e:
             logger.error("Scenario computation failed: %s", e)
             raise
+
 
 risk_scenario_service = RiskScenarioService()

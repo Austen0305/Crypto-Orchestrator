@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
 class PairAnalysis(BaseModel):
     symbol: str
     baseAsset: str
@@ -25,16 +26,19 @@ class PairAnalysis(BaseModel):
     confidence: float
     reasoning: List[str]
 
+
 class OptimalRiskSettings(BaseModel):
     conservative: Dict[str, float]
     moderate: Dict[str, float]
     aggressive: Dict[str, float]
+
 
 class TradingRecommendations(BaseModel):
     topPairs: List[PairAnalysis]
     optimalRiskSettings: OptimalRiskSettings
     marketSentiment: str
     lastUpdated: int
+
 
 @router.get("/", response_model=TradingRecommendations)
 async def get_trading_recommendations(current_user: dict = Depends(get_current_user)):
@@ -61,8 +65,8 @@ async def get_trading_recommendations(current_user: dict = Depends(get_current_u
                     "Strong upward momentum in BTC price action",
                     "High volume confirming bullish trend",
                     "Low volatility compared to altcoins",
-                    "Historical profitability shows 68% win rate"
-                ]
+                    "Historical profitability shows 68% win rate",
+                ],
             },
             {
                 "symbol": "ETH/USDT",
@@ -81,8 +85,8 @@ async def get_trading_recommendations(current_user: dict = Depends(get_current_u
                     "ETH showing positive momentum with BTC correlation",
                     "Growing DeFi ecosystem adoption",
                     "Recent network upgrades improving fundamentals",
-                    "Volume increasing as institutional interest rises"
-                ]
+                    "Volume increasing as institutional interest rises",
+                ],
             },
             {
                 "symbol": "SOL/USDT",
@@ -101,8 +105,8 @@ async def get_trading_recommendations(current_user: dict = Depends(get_current_u
                     "Strong momentum in Solana ecosystem growth",
                     "High volatility signals opportunity for scalping",
                     "Increasing developer activity and TVL",
-                    "Positive correlation with overall market sentiment"
-                ]
+                    "Positive correlation with overall market sentiment",
+                ],
             },
             {
                 "symbol": "ADA/USDT",
@@ -121,8 +125,8 @@ async def get_trading_recommendations(current_user: dict = Depends(get_current_u
                     "Cardano showing consolidation after recent pullback",
                     "Smart contract platform with strong fundamentals",
                     "Lower risk entry point with solid support levels",
-                    "Long-term potential despite short-term weakness"
-                ]
+                    "Long-term potential despite short-term weakness",
+                ],
             },
             {
                 "symbol": "DOT/USDT",
@@ -141,15 +145,15 @@ async def get_trading_recommendations(current_user: dict = Depends(get_current_u
                     "Polkadot parachain auctions driving interest",
                     "Interoperability features gaining traction",
                     "Balanced risk-reward profile",
-                    "Growing ecosystem adoption"
-                ]
-            }
+                    "Growing ecosystem adoption",
+                ],
+            },
         ]
 
         # Add some randomization to make data more realistic
         for pair in mock_pairs:
             # Slight price variations
-            pair["currentPrice"] *= (1 + random.uniform(-0.02, 0.02))
+            pair["currentPrice"] *= 1 + random.uniform(-0.02, 0.02)
             # Slight score variations
             pair["confidence"] += random.uniform(-0.05, 0.05)
             pair["confidence"] = max(0.5, min(0.95, pair["confidence"]))
@@ -166,32 +170,46 @@ async def get_trading_recommendations(current_user: dict = Depends(get_current_u
         # Optimal risk settings based on market conditions
         if market_sentiment == "bullish":
             optimal_risk = {
-                "conservative": {"riskPerTrade": 0.5, "stopLoss": 1.0, "takeProfit": 2.0},
+                "conservative": {
+                    "riskPerTrade": 0.5,
+                    "stopLoss": 1.0,
+                    "takeProfit": 2.0,
+                },
                 "moderate": {"riskPerTrade": 1.0, "stopLoss": 2.0, "takeProfit": 4.0},
-                "aggressive": {"riskPerTrade": 2.0, "stopLoss": 3.0, "takeProfit": 6.0}
+                "aggressive": {"riskPerTrade": 2.0, "stopLoss": 3.0, "takeProfit": 6.0},
             }
         elif market_sentiment == "bearish":
             optimal_risk = {
-                "conservative": {"riskPerTrade": 0.3, "stopLoss": 0.5, "takeProfit": 1.0},
+                "conservative": {
+                    "riskPerTrade": 0.3,
+                    "stopLoss": 0.5,
+                    "takeProfit": 1.0,
+                },
                 "moderate": {"riskPerTrade": 0.7, "stopLoss": 1.5, "takeProfit": 3.0},
-                "aggressive": {"riskPerTrade": 1.5, "stopLoss": 2.5, "takeProfit": 5.0}
+                "aggressive": {"riskPerTrade": 1.5, "stopLoss": 2.5, "takeProfit": 5.0},
             }
         else:
             optimal_risk = {
-                "conservative": {"riskPerTrade": 0.5, "stopLoss": 1.0, "takeProfit": 2.0},
+                "conservative": {
+                    "riskPerTrade": 0.5,
+                    "stopLoss": 1.0,
+                    "takeProfit": 2.0,
+                },
                 "moderate": {"riskPerTrade": 1.0, "stopLoss": 2.0, "takeProfit": 4.0},
-                "aggressive": {"riskPerTrade": 1.5, "stopLoss": 2.5, "takeProfit": 5.0}
+                "aggressive": {"riskPerTrade": 1.5, "stopLoss": 2.5, "takeProfit": 5.0},
             }
 
         response = TradingRecommendations(
             topPairs=[PairAnalysis(**pair) for pair in mock_pairs],
             optimalRiskSettings=OptimalRiskSettings(**optimal_risk),
             marketSentiment=market_sentiment,
-            lastUpdated=int(datetime.now().timestamp() * 1000)  # milliseconds
+            lastUpdated=int(datetime.now().timestamp() * 1000),  # milliseconds
         )
 
         return response
 
     except Exception as e:
         logger.error(f"Error generating trading recommendations: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate trading recommendations")
+        raise HTTPException(
+            status_code=500, detail="Failed to generate trading recommendations"
+        )

@@ -26,11 +26,15 @@ class ExchangeKeyCreate(BaseModel):
     exchange: str = Field(..., description="Exchange name (e.g., 'binance', 'kraken')")
     api_key: str = Field(..., description="Exchange API key")
     api_secret: str = Field(..., description="Exchange API secret")
-    passphrase: Optional[str] = Field(None, description="Exchange passphrase (for some exchanges)")
+    passphrase: Optional[str] = Field(
+        None, description="Exchange passphrase (for some exchanges)"
+    )
     label: Optional[str] = Field(None, description="User-friendly label")
     permissions: Optional[str] = Field(None, description="Comma-separated permissions")
     is_testnet: bool = Field(False, description="Whether this is a testnet key")
-    ip_whitelist: Optional[str] = Field(None, description="Comma-separated IP addresses")
+    ip_whitelist: Optional[str] = Field(
+        None, description="Comma-separated IP addresses"
+    )
 
 
 class ExchangeKeyResponse(BaseModel):
@@ -58,7 +62,9 @@ async def create_exchange_key(
             raise HTTPException(status_code=401, detail="User not authenticated")
 
         # Convert user_id to int for audit logging
-        user_id_int = int(user_id) if isinstance(user_id, str) and user_id.isdigit() else user_id
+        user_id_int = (
+            int(user_id) if isinstance(user_id, str) and user_id.isdigit() else user_id
+        )
         if not isinstance(user_id_int, int):
             user_id_int = int(user_id) if user_id else 1
 
@@ -73,10 +79,11 @@ async def create_exchange_key(
             is_testnet=key_data.is_testnet,
             ip_whitelist=key_data.ip_whitelist,
         )
-        
+
         # Log audit event
         try:
             from ..services.audit.audit_logger import audit_logger
+
             audit_logger.log_api_key_operation(
                 user_id=user_id_int,
                 operation="create",
@@ -109,9 +116,21 @@ async def create_exchange_key(
                 is_active=api_key_obj.is_active,
                 is_testnet=api_key_obj.is_testnet,
                 is_validated=api_key_obj.is_validated,
-                validated_at=api_key_obj.validated_at.isoformat() if api_key_obj.validated_at else None,
-                last_used_at=api_key_obj.last_used_at.isoformat() if api_key_obj.last_used_at else None,
-                created_at=api_key_obj.created_at.isoformat() if api_key_obj.created_at else None,
+                validated_at=(
+                    api_key_obj.validated_at.isoformat()
+                    if api_key_obj.validated_at
+                    else None
+                ),
+                last_used_at=(
+                    api_key_obj.last_used_at.isoformat()
+                    if api_key_obj.last_used_at
+                    else None
+                ),
+                created_at=(
+                    api_key_obj.created_at.isoformat()
+                    if api_key_obj.created_at
+                    else None
+                ),
             )
 
     except Exception as e:
@@ -162,7 +181,9 @@ async def get_exchange_key(
         if not user_id:
             raise HTTPException(status_code=401, detail="User not authenticated")
 
-        api_key = await exchange_key_service.get_api_key(user_id, exchange, include_secrets=False)
+        api_key = await exchange_key_service.get_api_key(
+            user_id, exchange, include_secrets=False
+        )
         if not api_key:
             raise HTTPException(status_code=404, detail="Exchange API key not found")
 
@@ -198,7 +219,9 @@ async def validate_exchange_key(
             raise HTTPException(status_code=401, detail="User not authenticated")
 
         # Convert user_id to int for audit logging
-        user_id_int = int(user_id) if isinstance(user_id, str) and user_id.isdigit() else user_id
+        user_id_int = (
+            int(user_id) if isinstance(user_id, str) and user_id.isdigit() else user_id
+        )
         if not isinstance(user_id_int, int):
             user_id_int = int(user_id) if user_id else 1
 
@@ -207,6 +230,7 @@ async def validate_exchange_key(
             # Log audit event for failed validation
             try:
                 from ..services.audit.audit_logger import audit_logger
+
                 audit_logger.log_api_key_operation(
                     user_id=user_id_int,
                     operation="validate",
@@ -221,6 +245,7 @@ async def validate_exchange_key(
         # Log audit event for successful validation
         try:
             from ..services.audit.audit_logger import audit_logger
+
             audit_logger.log_api_key_operation(
                 user_id=user_id_int,
                 operation="validate",
@@ -251,7 +276,9 @@ async def delete_exchange_key(
             raise HTTPException(status_code=401, detail="User not authenticated")
 
         # Convert user_id to int for audit logging
-        user_id_int = int(user_id) if isinstance(user_id, str) and user_id.isdigit() else user_id
+        user_id_int = (
+            int(user_id) if isinstance(user_id, str) and user_id.isdigit() else user_id
+        )
         if not isinstance(user_id_int, int):
             user_id_int = int(user_id) if user_id else 1
 
@@ -262,6 +289,7 @@ async def delete_exchange_key(
         # Log audit event
         try:
             from ..services.audit.audit_logger import audit_logger
+
             audit_logger.log_api_key_operation(
                 user_id=user_id_int,
                 operation="delete",
@@ -278,4 +306,3 @@ async def delete_exchange_key(
     except Exception as e:
         logger.error(f"Failed to delete exchange API key: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-

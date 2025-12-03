@@ -1,6 +1,7 @@
 """
 Strategy Routes - API endpoints for strategy management
 """
+
 from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
@@ -8,7 +9,11 @@ from datetime import datetime
 import logging
 import uuid
 
-from ..services.strategy.template_service import StrategyTemplateService, StrategyType, StrategyCategory
+from ..services.strategy.template_service import (
+    StrategyTemplateService,
+    StrategyType,
+    StrategyCategory,
+)
 from ..dependencies.auth import get_current_user
 
 logger = logging.getLogger(__name__)
@@ -28,11 +33,13 @@ class StrategyBase(BaseModel):
 
 class StrategyCreate(StrategyBase):
     """Create strategy request"""
+
     template_id: Optional[str] = None  # If creating from template
 
 
 class StrategyUpdate(BaseModel):
     """Update strategy request"""
+
     name: Optional[str] = None
     description: Optional[str] = None
     config: Optional[Dict[str, Any]] = None
@@ -41,6 +48,7 @@ class StrategyUpdate(BaseModel):
 
 class StrategyResponse(StrategyBase):
     """Strategy response"""
+
     id: str
     user_id: int
     version: str
@@ -65,6 +73,7 @@ class StrategyResponse(StrategyBase):
 
 class StrategyVersionResponse(BaseModel):
     """Strategy version response"""
+
     id: str
     strategy_id: str
     version: str
@@ -80,6 +89,7 @@ class StrategyVersionResponse(BaseModel):
 
 class BacktestRequest(BaseModel):
     """Backtest strategy request"""
+
     strategy_id: str
     start_date: str
     end_date: str
@@ -89,6 +99,7 @@ class BacktestRequest(BaseModel):
 
 class BacktestResponse(BaseModel):
     """Backtest results"""
+
     strategy_id: str
     sharpe_ratio: float
     win_rate: float
@@ -106,8 +117,7 @@ strategy_versions_db: Dict[str, List[StrategyVersionResponse]] = {}
 
 @router.get("/templates", response_model=List[Dict])
 async def get_templates(
-    category: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    category: Optional[str] = None, current_user: dict = Depends(get_current_user)
 ):
     """Get all strategy templates"""
     try:
@@ -123,8 +133,7 @@ async def get_templates(
 
 @router.get("/templates/{template_id}", response_model=Dict)
 async def get_template(
-    template_id: str,
-    current_user: dict = Depends(get_current_user)
+    template_id: str, current_user: dict = Depends(get_current_user)
 ):
     """Get a specific template"""
     try:
@@ -141,8 +150,7 @@ async def get_template(
 
 @router.post("", response_model=StrategyResponse, status_code=status.HTTP_201_CREATED)
 async def create_strategy(
-    strategy: StrategyCreate,
-    current_user: dict = Depends(get_current_user)
+    strategy: StrategyCreate, current_user: dict = Depends(get_current_user)
 ):
     """Create a new strategy"""
     try:
@@ -154,16 +162,18 @@ async def create_strategy(
             # Merge template config with user overrides
             strategy.config = {**template.config, **strategy.config}
             strategy.logic = strategy.logic or template.logic
-            strategy.strategy_type = strategy.strategy_type or template.strategy_type.value
+            strategy.strategy_type = (
+                strategy.strategy_type or template.strategy_type.value
+            )
             strategy.category = strategy.category or template.category.value
             if not strategy.name:
                 strategy.name = f"{template.name} (Custom)"
             if not strategy.description:
                 strategy.description = template.description
-        
+
         strategy_id = str(uuid.uuid4())
         now = datetime.utcnow()
-        
+
         new_strategy = StrategyResponse(
             id=strategy_id,
             user_id=current_user["id"],
@@ -175,9 +185,9 @@ async def create_strategy(
             logic=strategy.logic,
             version="1.0.0",
             created_at=now,
-            updated_at=now
+            updated_at=now,
         )
-        
+
         strategies_db[strategy_id] = new_strategy
         return new_strategy
     except HTTPException:
@@ -189,13 +199,13 @@ async def create_strategy(
 
 @router.get("", response_model=List[StrategyResponse])
 async def list_strategies(
-    current_user: dict = Depends(get_current_user),
-    include_public: bool = False
+    current_user: dict = Depends(get_current_user), include_public: bool = False
 ):
     """List user's strategies"""
     try:
         user_strategies = [
-            s for s in strategies_db.values()
+            s
+            for s in strategies_db.values()
             if s.user_id == current_user["id"] or (include_public and s.is_public)
         ]
         return user_strategies
@@ -206,19 +216,18 @@ async def list_strategies(
 
 @router.get("/{strategy_id}", response_model=StrategyResponse)
 async def get_strategy(
-    strategy_id: str,
-    current_user: dict = Depends(get_current_user)
+    strategy_id: str, current_user: dict = Depends(get_current_user)
 ):
     """Get a specific strategy"""
     try:
         strategy = strategies_db.get(strategy_id)
         if not strategy:
             raise HTTPException(status_code=404, detail="Strategy not found")
-        
+
         # Check access
         if strategy.user_id != current_user["id"] and not strategy.is_public:
             raise HTTPException(status_code=403, detail="Access denied")
-        
+
         return strategy
     except HTTPException:
         raise
@@ -231,17 +240,17 @@ async def get_strategy(
 async def update_strategy(
     strategy_id: str,
     updates: StrategyUpdate,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Update a strategy"""
     try:
         strategy = strategies_db.get(strategy_id)
         if not strategy:
             raise HTTPException(status_code=404, detail="Strategy not found")
-        
+
         if strategy.user_id != current_user["id"]:
             raise HTTPException(status_code=403, detail="Access denied")
-        
+
         # Create version snapshot before update
         version_id = str(uuid.uuid4())
         version = StrategyVersionResponse(
@@ -251,26 +260,26 @@ async def update_strategy(
             name=strategy.name,
             config=strategy.config,
             logic=strategy.logic,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
-        
+
         if strategy_id not in strategy_versions_db:
             strategy_versions_db[strategy_id] = []
         strategy_versions_db[strategy_id].append(version)
-        
+
         # Update strategy
         update_data = updates.dict(exclude_unset=True)
         for key, value in update_data.items():
             setattr(strategy, key, value)
-        
+
         # Increment version
         version_parts = strategy.version.split(".")
         if len(version_parts) == 3:
             patch_version = int(version_parts[2]) + 1
             strategy.version = f"{version_parts[0]}.{version_parts[1]}.{patch_version}"
-        
+
         strategy.updated_at = datetime.utcnow()
-        
+
         return strategy
     except HTTPException:
         raise
@@ -281,22 +290,21 @@ async def update_strategy(
 
 @router.delete("/{strategy_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_strategy(
-    strategy_id: str,
-    current_user: dict = Depends(get_current_user)
+    strategy_id: str, current_user: dict = Depends(get_current_user)
 ):
     """Delete a strategy"""
     try:
         strategy = strategies_db.get(strategy_id)
         if not strategy:
             raise HTTPException(status_code=404, detail="Strategy not found")
-        
+
         if strategy.user_id != current_user["id"]:
             raise HTTPException(status_code=403, detail="Access denied")
-        
+
         del strategies_db[strategy_id]
         if strategy_id in strategy_versions_db:
             del strategy_versions_db[strategy_id]
-        
+
         return None
     except HTTPException:
         raise
@@ -307,18 +315,17 @@ async def delete_strategy(
 
 @router.get("/{strategy_id}/versions", response_model=List[StrategyVersionResponse])
 async def get_strategy_versions(
-    strategy_id: str,
-    current_user: dict = Depends(get_current_user)
+    strategy_id: str, current_user: dict = Depends(get_current_user)
 ):
     """Get strategy version history"""
     try:
         strategy = strategies_db.get(strategy_id)
         if not strategy:
             raise HTTPException(status_code=404, detail="Strategy not found")
-        
+
         if strategy.user_id != current_user["id"] and not strategy.is_public:
             raise HTTPException(status_code=403, detail="Access denied")
-        
+
         versions = strategy_versions_db.get(strategy_id, [])
         return versions
     except HTTPException:
@@ -332,17 +339,17 @@ async def get_strategy_versions(
 async def backtest_strategy(
     strategy_id: str,
     backtest_request: BacktestRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Backtest a strategy"""
     try:
         strategy = strategies_db.get(strategy_id)
         if not strategy:
             raise HTTPException(status_code=404, detail="Strategy not found")
-        
+
         if strategy.user_id != current_user["id"] and not strategy.is_public:
             raise HTTPException(status_code=403, detail="Access denied")
-        
+
         # TODO: Integrate with actual backtesting engine
         # For now, return mock results
         mock_results = BacktestResponse(
@@ -353,9 +360,9 @@ async def backtest_strategy(
             max_drawdown=0.12,
             total_trades=150,
             winning_trades=98,
-            losing_trades=52
+            losing_trades=52,
         )
-        
+
         return mock_results
     except HTTPException:
         raise
@@ -366,22 +373,21 @@ async def backtest_strategy(
 
 @router.post("/{strategy_id}/publish", response_model=StrategyResponse)
 async def publish_strategy(
-    strategy_id: str,
-    current_user: dict = Depends(get_current_user)
+    strategy_id: str, current_user: dict = Depends(get_current_user)
 ):
     """Publish strategy to marketplace"""
     try:
         strategy = strategies_db.get(strategy_id)
         if not strategy:
             raise HTTPException(status_code=404, detail="Strategy not found")
-        
+
         if strategy.user_id != current_user["id"]:
             raise HTTPException(status_code=403, detail="Access denied")
-        
+
         strategy.is_public = True
         strategy.is_published = True
         strategy.published_at = datetime.utcnow()
-        
+
         return strategy
     except HTTPException:
         raise

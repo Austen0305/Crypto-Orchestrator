@@ -55,11 +55,11 @@ class DCATradingService:
         martingale_max_multiplier: float = 5.0,
         take_profit_percent: Optional[float] = None,
         stop_loss_percent: Optional[float] = None,
-        config: Optional[Dict[str, Any]] = None
+        config: Optional[Dict[str, Any]] = None,
     ) -> Optional[str]:
         """
         Create a new DCA trading bot.
-        
+
         Args:
             user_id: User ID
             name: Bot name
@@ -76,7 +76,7 @@ class DCATradingService:
             take_profit_percent: Take profit at this % gain
             stop_loss_percent: Stop loss at this % loss
             config: Additional configuration
-        
+
         Returns:
             Bot ID if successful, None otherwise
         """
@@ -121,7 +121,7 @@ class DCATradingService:
                     active=False,
                     status="stopped",
                     next_order_at=next_order_at,
-                    config=json.dumps(config or {})
+                    config=json.dumps(config or {}),
                 )
 
                 session.add(dca_bot)
@@ -132,7 +132,9 @@ class DCATradingService:
                 return bot_id
 
         except Exception as e:
-            logger.error(f"Error creating DCA bot for user {user_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error creating DCA bot for user {user_id}: {str(e)}", exc_info=True
+            )
             raise
 
     async def start_dca_bot(self, bot_id: str, user_id: int) -> bool:
@@ -151,19 +153,25 @@ class DCATradingService:
                 # Validate start conditions
                 validation = await self._validate_start_conditions(bot, session)
                 if not validation["can_start"]:
-                    logger.warning(f"Cannot start DCA bot {bot_id}: {validation['reason']}")
+                    logger.warning(
+                        f"Cannot start DCA bot {bot_id}: {validation['reason']}"
+                    )
                     return False
 
                 # Calculate next order time
-                next_order_at = datetime.utcnow() + timedelta(minutes=bot.interval_minutes)
+                next_order_at = datetime.utcnow() + timedelta(
+                    minutes=bot.interval_minutes
+                )
 
                 # Update bot status
                 updated_bot = await self.repository.update_bot_status(
                     session, bot_id, user_id, True, "running"
                 )
-                
+
                 if updated_bot:
-                    await self.repository.update_next_order_time(session, bot_id, user_id, next_order_at)
+                    await self.repository.update_next_order_time(
+                        session, bot_id, user_id, next_order_at
+                    )
                     logger.info(f"Started DCA bot {bot_id} for user {user_id}")
                     return True
                 else:
@@ -220,13 +228,17 @@ class DCATradingService:
 
                 # Check max orders limit
                 if bot.max_orders and bot.orders_executed >= bot.max_orders:
-                    await self.repository.update_bot_status(session, bot_id, user_id, False, "completed")
+                    await self.repository.update_bot_status(
+                        session, bot_id, user_id, False, "completed"
+                    )
                     return {"action": "completed", "reason": "max_orders_reached"}
 
                 # Check take profit / stop loss
                 tp_sl_check = await self._check_take_profit_stop_loss(bot, session)
                 if tp_sl_check["should_stop"]:
-                    await self.repository.update_bot_status(session, bot_id, user_id, False, tp_sl_check["status"])
+                    await self.repository.update_bot_status(
+                        session, bot_id, user_id, False, tp_sl_check["status"]
+                    )
                     return {"action": "stopped", "reason": tp_sl_check["reason"]}
 
                 # Calculate order amount (with martingale if enabled)
@@ -237,7 +249,9 @@ class DCATradingService:
                     # Adjust to remaining investment
                     order_amount = bot.total_investment - bot.total_invested
                     if order_amount <= 0:
-                        await self.repository.update_bot_status(session, bot_id, user_id, False, "completed")
+                        await self.repository.update_bot_status(
+                            session, bot_id, user_id, False, "completed"
+                        )
                         return {"action": "completed", "reason": "investment_exhausted"}
 
                 # Execute order
@@ -247,37 +261,59 @@ class DCATradingService:
                     # Update bot state
                     new_orders_executed = bot.orders_executed + 1
                     new_total_invested = bot.total_invested + order_amount
-                    new_average_price = await self._calculate_average_price(bot, order_result["price"], order_amount)
-                    
+                    new_average_price = await self._calculate_average_price(
+                        bot, order_result["price"], order_amount
+                    )
+
                     # Calculate current value and profit
-                    current_price = order_result["price"]  # Use execution price as current
-                    current_value = (new_total_invested / new_average_price) * current_price
+                    current_price = order_result[
+                        "price"
+                    ]  # Use execution price as current
+                    current_value = (
+                        new_total_invested / new_average_price
+                    ) * current_price
                     total_profit = current_value - new_total_invested
-                    profit_percent = (total_profit / new_total_invested * 100) if new_total_invested > 0 else 0.0
+                    profit_percent = (
+                        (total_profit / new_total_invested * 100)
+                        if new_total_invested > 0
+                        else 0.0
+                    )
 
                     # Update performance
                     await self.repository.update_performance(
-                        session, bot_id, user_id,
-                        new_orders_executed, new_total_invested, new_average_price,
-                        current_value, total_profit, profit_percent
+                        session,
+                        bot_id,
+                        user_id,
+                        new_orders_executed,
+                        new_total_invested,
+                        new_average_price,
+                        current_value,
+                        total_profit,
+                        profit_percent,
                     )
 
                     # Calculate next order time
-                    next_order_at = datetime.utcnow() + timedelta(minutes=bot.interval_minutes)
-                    await self.repository.update_next_order_time(session, bot_id, user_id, next_order_at)
+                    next_order_at = datetime.utcnow() + timedelta(
+                        minutes=bot.interval_minutes
+                    )
+                    await self.repository.update_next_order_time(
+                        session, bot_id, user_id, next_order_at
+                    )
 
                     return {
                         "action": "executed",
                         "order_amount": order_amount,
                         "price": order_result["price"],
                         "orders_executed": new_orders_executed,
-                        "total_invested": new_total_invested
+                        "total_invested": new_total_invested,
                     }
                 else:
                     return {"action": "failed", "error": order_result.get("error")}
 
         except Exception as e:
-            logger.error(f"Error executing DCA order for bot {bot_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error executing DCA order for bot {bot_id}: {str(e)}", exc_info=True
+            )
             return {"action": "error", "error": str(e)}
 
     async def process_all_due_orders(self) -> Dict[str, Any]:
@@ -285,12 +321,8 @@ class DCATradingService:
         try:
             async with self._get_session() as session:
                 bots = await self.repository.get_bots_ready_for_order(session)
-                
-                results = {
-                    "processed": 0,
-                    "skipped": 0,
-                    "errors": 0
-                }
+
+                results = {"processed": 0, "skipped": 0, "errors": 0}
 
                 for bot in bots:
                     try:
@@ -300,7 +332,9 @@ class DCATradingService:
                         else:
                             results["skipped"] += 1
                     except Exception as e:
-                        logger.error(f"Error processing DCA bot {bot.id}: {e}", exc_info=True)
+                        logger.error(
+                            f"Error processing DCA bot {bot.id}: {e}", exc_info=True
+                        )
                         results["errors"] += 1
 
                 return results
@@ -309,7 +343,9 @@ class DCATradingService:
             logger.error(f"Error processing due DCA orders: {str(e)}", exc_info=True)
             return {"processed": 0, "skipped": 0, "errors": 1}
 
-    async def _validate_start_conditions(self, bot: DCABot, session: AsyncSession) -> Dict[str, Any]:
+    async def _validate_start_conditions(
+        self, bot: DCABot, session: AsyncSession
+    ) -> Dict[str, Any]:
         """Validate that DCA bot can start."""
         # Check if exchange is configured
         # Check if user has sufficient balance
@@ -328,19 +364,13 @@ class DCATradingService:
         if bot.total_profit < 0:
             # Calculate multiplier based on consecutive losses
             # This is simplified - real implementation would track consecutive losses
-            multiplier = min(
-                bot.martingale_multiplier,
-                bot.martingale_max_multiplier
-            )
+            multiplier = min(bot.martingale_multiplier, bot.martingale_max_multiplier)
             return base_amount * multiplier
 
         return base_amount
 
     async def _place_dca_order(
-        self,
-        bot: DCABot,
-        amount: float,
-        session: AsyncSession
+        self, bot: DCABot, amount: float, session: AsyncSession
     ) -> Dict[str, Any]:
         """Place a DCA buy order."""
         try:
@@ -348,7 +378,7 @@ class DCATradingService:
                 # Paper trading - simulate order
                 exchange_service = ExchangeService(bot.exchange)
                 current_price = await exchange_service.get_market_price(bot.symbol)
-                
+
                 if not current_price:
                     return {"success": False, "error": "Could not get market price"}
 
@@ -356,24 +386,21 @@ class DCATradingService:
                     "success": True,
                     "order_id": f"paper-{uuid.uuid4().hex[:12]}",
                     "price": current_price,
-                    "amount": amount
+                    "amount": amount,
                 }
             else:
                 # Real trading - place actual order
                 exchange_service = ExchangeService(bot.exchange)
                 order = await exchange_service.place_order(
-                    pair=bot.symbol,
-                    side="buy",
-                    type_="market",
-                    amount=amount
+                    pair=bot.symbol, side="buy", type_="market", amount=amount
                 )
-                
+
                 if order:
                     return {
                         "success": True,
                         "order_id": order.get("id"),
                         "price": order.get("price", 0),
-                        "amount": amount
+                        "amount": amount,
                     }
                 else:
                     return {"success": False, "error": "Order placement failed"}
@@ -383,10 +410,7 @@ class DCATradingService:
             return {"success": False, "error": str(e)}
 
     async def _calculate_average_price(
-        self,
-        bot: DCABot,
-        new_price: float,
-        new_amount: float
+        self, bot: DCABot, new_price: float, new_amount: float
     ) -> float:
         """Calculate new average price after adding a new order."""
         if bot.orders_executed == 0:
@@ -394,7 +418,9 @@ class DCATradingService:
 
         # Weighted average: (old_total_value + new_value) / (old_total_quantity + new_quantity)
         old_total_value = bot.total_invested
-        old_quantity = old_total_value / bot.average_price if bot.average_price > 0 else 0
+        old_quantity = (
+            old_total_value / bot.average_price if bot.average_price > 0 else 0
+        )
         new_quantity = new_amount / new_price
 
         total_value = old_total_value + new_amount
@@ -403,9 +429,7 @@ class DCATradingService:
         return total_value / total_quantity if total_quantity > 0 else new_price
 
     async def _check_take_profit_stop_loss(
-        self,
-        bot: DCABot,
-        session: AsyncSession
+        self, bot: DCABot, session: AsyncSession
     ) -> Dict[str, Any]:
         """Check if take profit or stop loss conditions are met."""
         if bot.orders_executed == 0:
@@ -426,7 +450,7 @@ class DCATradingService:
             return {
                 "should_stop": True,
                 "status": "completed",
-                "reason": f"Take profit reached: {profit_percent:.2f}%"
+                "reason": f"Take profit reached: {profit_percent:.2f}%",
             }
 
         # Check stop loss
@@ -434,7 +458,7 @@ class DCATradingService:
             return {
                 "should_stop": True,
                 "status": "stopped",
-                "reason": f"Stop loss triggered: {profit_percent:.2f}%"
+                "reason": f"Stop loss triggered: {profit_percent:.2f}%",
             }
 
         return {"should_stop": False, "status": None, "reason": None}
@@ -446,21 +470,26 @@ class DCATradingService:
                 bot = await self.repository.get_by_user_and_id(session, bot_id, user_id)
                 if not bot:
                     return None
-                
+
                 return bot.to_dict()
 
         except Exception as e:
             logger.error(f"Error getting DCA bot {bot_id}: {str(e)}", exc_info=True)
             return None
 
-    async def list_user_dca_bots(self, user_id: int, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
+    async def list_user_dca_bots(
+        self, user_id: int, skip: int = 0, limit: int = 100
+    ) -> List[Dict[str, Any]]:
         """List all DCA bots for a user."""
         try:
             async with self._get_session() as session:
-                bots = await self.repository.get_user_dca_bots(session, user_id, skip, limit)
+                bots = await self.repository.get_user_dca_bots(
+                    session, user_id, skip, limit
+                )
                 return [bot.to_dict() for bot in bots]
 
         except Exception as e:
-            logger.error(f"Error listing DCA bots for user {user_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error listing DCA bots for user {user_id}: {str(e)}", exc_info=True
+            )
             return []
-

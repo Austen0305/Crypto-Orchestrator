@@ -51,7 +51,7 @@ class InfinityGridService:
         trading_mode: str = "paper",
         upper_adjustment_percent: float = 5.0,
         lower_adjustment_percent: float = 5.0,
-        config: Optional[Dict[str, Any]] = None
+        config: Optional[Dict[str, Any]] = None,
     ) -> Optional[str]:
         """Create a new infinity grid bot."""
         try:
@@ -69,12 +69,14 @@ class InfinityGridService:
                 # Get current market price to set initial bounds
                 exchange_service = ExchangeService(exchange)
                 current_price = await exchange_service.get_market_price(symbol)
-                
+
                 if not current_price:
                     raise ValueError(f"Could not get market price for {symbol}")
 
                 # Calculate initial bounds based on grid spacing
-                price_range = current_price * (grid_spacing_percent / 100) * (grid_count - 1)
+                price_range = (
+                    current_price * (grid_spacing_percent / 100) * (grid_count - 1)
+                )
                 initial_upper = current_price + (price_range / 2)
                 initial_lower = current_price - (price_range / 2)
 
@@ -96,12 +98,14 @@ class InfinityGridService:
                     lower_adjustment_percent=lower_adjustment_percent,
                     active=False,
                     status="stopped",
-                    grid_state=json.dumps({
-                        "orders": [],
-                        "filled_orders": [],
-                        "current_price": current_price
-                    }),
-                    config=json.dumps(config or {})
+                    grid_state=json.dumps(
+                        {
+                            "orders": [],
+                            "filled_orders": [],
+                            "current_price": current_price,
+                        }
+                    ),
+                    config=json.dumps(config or {}),
                 )
 
                 session.add(infinity_grid)
@@ -112,7 +116,10 @@ class InfinityGridService:
                 return bot_id
 
         except Exception as e:
-            logger.error(f"Error creating infinity grid for user {user_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error creating infinity grid for user {user_id}: {str(e)}",
+                exc_info=True,
+            )
             raise
 
     async def start_infinity_grid(self, bot_id: str, user_id: int) -> bool:
@@ -137,7 +144,9 @@ class InfinityGridService:
                 return updated_bot is not None
 
         except Exception as e:
-            logger.error(f"Error starting infinity grid {bot_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error starting infinity grid {bot_id}: {str(e)}", exc_info=True
+            )
             return False
 
     async def stop_infinity_grid(self, bot_id: str, user_id: int) -> bool:
@@ -159,10 +168,14 @@ class InfinityGridService:
                 return updated_bot is not None
 
         except Exception as e:
-            logger.error(f"Error stopping infinity grid {bot_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error stopping infinity grid {bot_id}: {str(e)}", exc_info=True
+            )
             return False
 
-    async def process_infinity_grid_cycle(self, bot_id: str, user_id: int) -> Dict[str, Any]:
+    async def process_infinity_grid_cycle(
+        self, bot_id: str, user_id: int
+    ) -> Dict[str, Any]:
         """Process one infinity grid cycle: check price and adjust bounds if needed."""
         try:
             async with self._get_session() as session:
@@ -178,38 +191,68 @@ class InfinityGridService:
                     return {"action": "skipped", "reason": "no_price_data"}
 
                 # Check if bounds need adjustment
-                adjustment_needed = await self._check_bound_adjustment(bot, current_price)
+                adjustment_needed = await self._check_bound_adjustment(
+                    bot, current_price
+                )
 
                 if adjustment_needed["adjust"]:
                     # Adjust grid bounds
-                    await self._adjust_grid_bounds(bot, current_price, adjustment_needed, session)
+                    await self._adjust_grid_bounds(
+                        bot, current_price, adjustment_needed, session
+                    )
 
                 # Check for filled orders and rebalance
-                grid_state = json.loads(bot.grid_state) if bot.grid_state else {"orders": [], "filled_orders": []}
-                filled_orders = await self._check_filled_orders(bot, grid_state, current_price, session)
+                grid_state = (
+                    json.loads(bot.grid_state)
+                    if bot.grid_state
+                    else {"orders": [], "filled_orders": []}
+                )
+                filled_orders = await self._check_filled_orders(
+                    bot, grid_state, current_price, session
+                )
 
                 if filled_orders:
-                    await self._rebalance_grid(bot, filled_orders, grid_state, current_price, session)
+                    await self._rebalance_grid(
+                        bot, filled_orders, grid_state, current_price, session
+                    )
 
                 return {"action": "processed", "current_price": current_price}
 
         except Exception as e:
-            logger.error(f"Error processing infinity grid cycle: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error processing infinity grid cycle: {str(e)}", exc_info=True
+            )
             return {"action": "error", "error": str(e)}
 
-    async def _check_bound_adjustment(self, bot: InfinityGrid, current_price: float) -> Dict[str, Any]:
+    async def _check_bound_adjustment(
+        self, bot: InfinityGrid, current_price: float
+    ) -> Dict[str, Any]:
         """Check if grid bounds need adjustment."""
-        upper_threshold = bot.current_upper_price * (1 - bot.upper_adjustment_percent / 100)
-        lower_threshold = bot.current_lower_price * (1 + bot.lower_adjustment_percent / 100)
+        upper_threshold = bot.current_upper_price * (
+            1 - bot.upper_adjustment_percent / 100
+        )
+        lower_threshold = bot.current_lower_price * (
+            1 + bot.lower_adjustment_percent / 100
+        )
 
         if current_price >= upper_threshold:
             # Price moved up significantly - adjust upper bound
             new_upper = current_price * (1 + bot.upper_adjustment_percent / 100)
-            return {"adjust": True, "direction": "up", "new_upper": new_upper, "new_lower": bot.current_lower_price}
+            return {
+                "adjust": True,
+                "direction": "up",
+                "new_upper": new_upper,
+                "new_lower": bot.current_lower_price,
+            }
         elif current_price <= lower_threshold:
             # Price moved down significantly - adjust lower bound
             new_lower = current_price * (1 - bot.lower_adjustment_percent / 100)
-            return {"adjust": True, "direction": "down", "new_upper": bot.current_upper_price, "new_lower": new_lower}
+            return {
+                "adjust": True,
+                "direction": "down",
+                "new_upper": bot.current_upper_price,
+                "new_lower": new_lower,
+            }
 
         return {"adjust": False}
 
@@ -218,20 +261,25 @@ class InfinityGridService:
         bot: InfinityGrid,
         current_price: float,
         adjustment: Dict[str, Any],
-        session: AsyncSession
+        session: AsyncSession,
     ) -> None:
         """Adjust grid bounds and rebalance orders."""
         # Update bounds
         await self.repository.update_grid_bounds(
-            session, bot.id, bot.user_id,
-            adjustment["new_upper"], adjustment["new_lower"]
+            session,
+            bot.id,
+            bot.user_id,
+            adjustment["new_upper"],
+            adjustment["new_lower"],
         )
 
         # Cancel old orders outside new bounds
         # Place new orders within new bounds
         # This is simplified - real implementation would be more complex
 
-    async def _place_initial_grid_orders(self, bot: InfinityGrid, session: AsyncSession) -> List[Dict[str, Any]]:
+    async def _place_initial_grid_orders(
+        self, bot: InfinityGrid, session: AsyncSession
+    ) -> List[Dict[str, Any]]:
         """Place initial grid orders."""
         # Similar to grid trading service
         # Calculate grid prices within current bounds
@@ -243,7 +291,7 @@ class InfinityGridService:
         bot: InfinityGrid,
         grid_state: Dict[str, Any],
         current_price: float,
-        session: AsyncSession
+        session: AsyncSession,
     ) -> List[Dict[str, Any]]:
         """Check which orders have been filled."""
         filled = []
@@ -251,8 +299,9 @@ class InfinityGridService:
             if order.get("status") == "open":
                 order_price = order.get("price")
                 order_side = order.get("side")
-                if (order_side == "buy" and current_price <= order_price) or \
-                   (order_side == "sell" and current_price >= order_price):
+                if (order_side == "buy" and current_price <= order_price) or (
+                    order_side == "sell" and current_price >= order_price
+                ):
                     filled.append(order)
         return filled
 
@@ -262,14 +311,16 @@ class InfinityGridService:
         filled_orders: List[Dict[str, Any]],
         grid_state: Dict[str, Any],
         current_price: float,
-        session: AsyncSession
+        session: AsyncSession,
     ) -> None:
         """Rebalance grid after orders are filled."""
         # Similar to grid trading rebalance
         # Remove filled orders, place new orders
         pass
 
-    async def _cancel_all_orders(self, bot: InfinityGrid, session: AsyncSession) -> None:
+    async def _cancel_all_orders(
+        self, bot: InfinityGrid, session: AsyncSession
+    ) -> None:
         """Cancel all open orders."""
         grid_state = json.loads(bot.grid_state) if bot.grid_state else {"orders": []}
         for order in grid_state.get("orders", []):
@@ -277,7 +328,9 @@ class InfinityGridService:
         # Update grid state
         pass
 
-    async def get_infinity_grid(self, bot_id: str, user_id: int) -> Optional[Dict[str, Any]]:
+    async def get_infinity_grid(
+        self, bot_id: str, user_id: int
+    ) -> Optional[Dict[str, Any]]:
         """Get infinity grid details."""
         try:
             async with self._get_session() as session:
@@ -286,16 +339,21 @@ class InfinityGridService:
                     return None
                 return bot.to_dict()
         except Exception as e:
-            logger.error(f"Error getting infinity grid {bot_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error getting infinity grid {bot_id}: {str(e)}", exc_info=True
+            )
             return None
 
-    async def list_user_infinity_grids(self, user_id: int, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
+    async def list_user_infinity_grids(
+        self, user_id: int, skip: int = 0, limit: int = 100
+    ) -> List[Dict[str, Any]]:
         """List all infinity grids for a user."""
         try:
             async with self._get_session() as session:
-                bots = await self.repository.get_user_infinity_grids(session, user_id, skip, limit)
+                bots = await self.repository.get_user_infinity_grids(
+                    session, user_id, skip, limit
+                )
                 return [bot.to_dict() for bot in bots]
         except Exception as e:
             logger.error(f"Error listing infinity grids: {str(e)}", exc_info=True)
             return []
-

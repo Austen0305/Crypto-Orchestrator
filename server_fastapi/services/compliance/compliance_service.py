@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 class ComplianceCheckResult(str, Enum):
     """Compliance check result"""
+
     APPROVED = "approved"
     REQUIRES_KYC = "requires_kyc"
     REQUIRES_REVIEW = "requires_review"
@@ -25,98 +26,103 @@ class ComplianceCheckResult(str, Enum):
 
 class ComplianceService:
     """Service for regulatory compliance and transaction monitoring"""
-    
+
     # Regulatory thresholds (configurable)
     KYC_THRESHOLD_USD = 10000.0  # Require KYC for trades over $10,000
     LARGE_TRANSACTION_THRESHOLD_USD = 50000.0  # Flag for review
     DAILY_LIMIT_WITHOUT_KYC_USD = 50000.0  # Daily limit without KYC
     SUSPICIOUS_ACTIVITY_THRESHOLD = 100000.0  # Flag for suspicious activity monitoring
-    
+
     def __init__(self):
         # Transaction history for monitoring (in production, use database)
         self.transaction_history: Dict[int, List[Dict]] = {}
-        self.daily_volumes: Dict[int, Dict[str, float]] = {}  # user_id -> {date: volume}
-    
+        self.daily_volumes: Dict[int, Dict[str, float]] = (
+            {}
+        )  # user_id -> {date: volume}
+
     async def check_trade_compliance(
-        self,
-        user_id: int,
-        amount_usd: float,
-        exchange: str,
-        symbol: str,
-        side: str
+        self, user_id: int, amount_usd: float, exchange: str, symbol: str, side: str
     ) -> Tuple[ComplianceCheckResult, List[str]]:
         """
         Check if a trade complies with regulatory requirements.
-        
+
         Args:
             user_id: User ID
             amount_usd: Trade amount in USD
             exchange: Exchange name
             symbol: Trading symbol
             side: Trade side (buy/sell)
-        
+
         Returns:
             Tuple of (result, reasons)
         """
         reasons = []
-        
+
         try:
             # 1. Check KYC requirement
             kyc_required = await self._check_kyc_requirement(user_id, amount_usd)
             if kyc_required:
                 is_verified = await kyc_service.is_verified(user_id)
                 if not is_verified:
-                    reasons.append(f"KYC verification required for trades over ${self.KYC_THRESHOLD_USD:,.0f}")
+                    reasons.append(
+                        f"KYC verification required for trades over ${self.KYC_THRESHOLD_USD:,.0f}"
+                    )
                     return ComplianceCheckResult.REQUIRES_KYC, reasons
-            
+
             # 2. Check daily limits
             daily_limit_check = await self._check_daily_limits(user_id, amount_usd)
             if not daily_limit_check[0]:
                 reasons.extend(daily_limit_check[1])
                 return ComplianceCheckResult.BLOCKED, reasons
-            
+
             # 3. Check for suspicious activity patterns
-            suspicious_check = await self._check_suspicious_activity(user_id, amount_usd, exchange, symbol)
+            suspicious_check = await self._check_suspicious_activity(
+                user_id, amount_usd, exchange, symbol
+            )
             if suspicious_check[0]:
                 reasons.extend(suspicious_check[1])
                 return ComplianceCheckResult.REQUIRES_REVIEW, reasons
-            
+
             # 4. Check large transaction reporting
             if amount_usd >= self.LARGE_TRANSACTION_THRESHOLD_USD:
-                reasons.append(f"Large transaction (${amount_usd:,.2f}) flagged for compliance review")
+                reasons.append(
+                    f"Large transaction (${amount_usd:,.2f}) flagged for compliance review"
+                )
                 # Don't block, but flag for review
                 return ComplianceCheckResult.REQUIRES_REVIEW, reasons
-            
+
             # All checks passed
             return ComplianceCheckResult.APPROVED, []
-            
+
         except Exception as e:
             logger.error(f"Error in compliance check: {e}", exc_info=True)
             # Fail safe: block trade if compliance check fails
             return ComplianceCheckResult.BLOCKED, [f"Compliance check error: {str(e)}"]
-    
+
     async def _check_kyc_requirement(self, user_id: int, amount_usd: float) -> bool:
         """Check if KYC is required for this trade amount"""
         return amount_usd >= self.KYC_THRESHOLD_USD
-    
-    async def _check_daily_limits(self, user_id: int, amount_usd: float) -> Tuple[bool, List[str]]:
+
+    async def _check_daily_limits(
+        self, user_id: int, amount_usd: float
+    ) -> Tuple[bool, List[str]]:
         """Check daily trading limits"""
         reasons = []
         today = datetime.now().date().isoformat()
-        
+
         # Get or initialize daily volume
         if user_id not in self.daily_volumes:
             self.daily_volumes[user_id] = {}
-        
+
         if today not in self.daily_volumes[user_id]:
             self.daily_volumes[user_id][today] = 0.0
-        
+
         # Check if user is KYC verified
         is_verified = await kyc_service.is_verified(user_id)
-        
+
         # Calculate new daily volume
         new_daily_volume = self.daily_volumes[user_id][today] + amount_usd
-        
+
         # Check limits
         if not is_verified:
             if new_daily_volume > self.DAILY_LIMIT_WITHOUT_KYC_USD:
@@ -125,41 +131,42 @@ class ComplianceService:
                     "KYC verification required for higher limits."
                 )
                 return False, reasons
-        
+
         # Update daily volume
         self.daily_volumes[user_id][today] = new_daily_volume
-        
+
         return True, []
-    
+
     async def _check_suspicious_activity(
-        self,
-        user_id: int,
-        amount_usd: float,
-        exchange: str,
-        symbol: str
+        self, user_id: int, amount_usd: float, exchange: str, symbol: str
     ) -> Tuple[bool, List[str]]:
         """Check for suspicious activity patterns"""
         reasons = []
         is_suspicious = False
-        
+
         # Get user transaction history
         user_history = self.transaction_history.get(user_id, [])
-        
+
         # Check for rapid large transactions
         recent_transactions = [
-            t for t in user_history
-            if (datetime.now() - datetime.fromisoformat(t.get('timestamp', datetime.now().isoformat()))).total_seconds() < 3600
+            t
+            for t in user_history
+            if (
+                datetime.now()
+                - datetime.fromisoformat(t.get("timestamp", datetime.now().isoformat()))
+            ).total_seconds()
+            < 3600
         ]
-        
-        recent_volume = sum(t.get('amount_usd', 0) for t in recent_transactions)
-        
+
+        recent_volume = sum(t.get("amount_usd", 0) for t in recent_transactions)
+
         if recent_volume + amount_usd > self.SUSPICIOUS_ACTIVITY_THRESHOLD:
             is_suspicious = True
             reasons.append(
                 f"Suspicious activity detected: ${recent_volume + amount_usd:,.2f} in transactions "
                 f"within the last hour. Requires manual review."
             )
-        
+
         # Check for unusual trading patterns (e.g., very large single transactions)
         if amount_usd > self.SUSPICIOUS_ACTIVITY_THRESHOLD:
             is_suspicious = True
@@ -167,9 +174,9 @@ class ComplianceService:
                 f"Unusually large transaction: ${amount_usd:,.2f}. "
                 "Requires compliance review."
             )
-        
+
         return is_suspicious, reasons
-    
+
     async def record_transaction(
         self,
         user_id: int,
@@ -178,13 +185,13 @@ class ComplianceService:
         exchange: str,
         symbol: str,
         side: str,
-        order_id: Optional[str] = None
+        order_id: Optional[str] = None,
     ):
         """Record transaction for compliance monitoring"""
         try:
             if user_id not in self.transaction_history:
                 self.transaction_history[user_id] = []
-            
+
             transaction = {
                 "transaction_id": transaction_id,
                 "order_id": order_id,
@@ -193,58 +200,68 @@ class ComplianceService:
                 "exchange": exchange,
                 "symbol": symbol,
                 "side": side,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
+
             self.transaction_history[user_id].append(transaction)
-            
+
             # Keep only last 1000 transactions per user
             if len(self.transaction_history[user_id]) > 1000:
-                self.transaction_history[user_id] = self.transaction_history[user_id][-1000:]
-            
+                self.transaction_history[user_id] = self.transaction_history[user_id][
+                    -1000:
+                ]
+
             logger.info(f"Transaction recorded for compliance: {transaction_id}")
-            
+
         except Exception as e:
             logger.error(f"Error recording transaction: {e}", exc_info=True)
-    
+
     async def get_user_compliance_status(self, user_id: int) -> Dict[str, Any]:
         """Get comprehensive compliance status for a user"""
         try:
             is_kyc_verified = await kyc_service.is_verified(user_id)
             kyc_status = await kyc_service.get_kyc_status(user_id)
-            
+
             today = datetime.now().date().isoformat()
             daily_volume = self.daily_volumes.get(user_id, {}).get(today, 0.0)
-            
+
             # Get recent transaction count
             user_history = self.transaction_history.get(user_id, [])
-            recent_count = len([
-                t for t in user_history
-                if (datetime.now() - datetime.fromisoformat(t.get('timestamp', datetime.now().isoformat()))).total_seconds() < 86400
-            ])
-            
+            recent_count = len(
+                [
+                    t
+                    for t in user_history
+                    if (
+                        datetime.now()
+                        - datetime.fromisoformat(
+                            t.get("timestamp", datetime.now().isoformat())
+                        )
+                    ).total_seconds()
+                    < 86400
+                ]
+            )
+
             return {
                 "user_id": user_id,
                 "kyc_verified": is_kyc_verified,
                 "kyc_status": kyc_status.get("status") if kyc_status else "not_started",
                 "daily_volume_usd": daily_volume,
-                "daily_limit_usd": self.DAILY_LIMIT_WITHOUT_KYC_USD if not is_kyc_verified else float('inf'),
+                "daily_limit_usd": (
+                    self.DAILY_LIMIT_WITHOUT_KYC_USD
+                    if not is_kyc_verified
+                    else float("inf")
+                ),
                 "recent_transactions_24h": recent_count,
-                "can_trade": is_kyc_verified or daily_volume < self.DAILY_LIMIT_WITHOUT_KYC_USD
+                "can_trade": is_kyc_verified
+                or daily_volume < self.DAILY_LIMIT_WITHOUT_KYC_USD,
             }
-            
+
         except Exception as e:
             logger.error(f"Error getting compliance status: {e}", exc_info=True)
-            return {
-                "user_id": user_id,
-                "error": str(e)
-            }
-    
+            return {"user_id": user_id, "error": str(e)}
+
     async def generate_compliance_report(
-        self,
-        start_date: datetime,
-        end_date: datetime,
-        user_id: Optional[int] = None
+        self, start_date: datetime, end_date: datetime, user_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """Generate compliance report for a date range"""
         try:
@@ -253,20 +270,23 @@ class ComplianceService:
             for uid, transactions in self.transaction_history.items():
                 if user_id and uid != user_id:
                     continue
-                
+
                 for txn in transactions:
-                    txn_date = datetime.fromisoformat(txn.get('timestamp', datetime.now().isoformat()))
+                    txn_date = datetime.fromisoformat(
+                        txn.get("timestamp", datetime.now().isoformat())
+                    )
                     if start_date <= txn_date <= end_date:
                         all_transactions.append(txn)
-            
+
             # Calculate statistics
-            total_volume = sum(t.get('amount_usd', 0) for t in all_transactions)
+            total_volume = sum(t.get("amount_usd", 0) for t in all_transactions)
             total_count = len(all_transactions)
             large_transactions = [
-                t for t in all_transactions
-                if t.get('amount_usd', 0) >= self.LARGE_TRANSACTION_THRESHOLD_USD
+                t
+                for t in all_transactions
+                if t.get("amount_usd", 0) >= self.LARGE_TRANSACTION_THRESHOLD_USD
             ]
-            
+
             return {
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -275,9 +295,11 @@ class ComplianceService:
                 "total_volume_usd": total_volume,
                 "large_transactions_count": len(large_transactions),
                 "large_transactions": large_transactions[:100],  # Limit to 100
-                "average_transaction_size": total_volume / total_count if total_count > 0 else 0
+                "average_transaction_size": (
+                    total_volume / total_count if total_count > 0 else 0
+                ),
             }
-            
+
         except Exception as e:
             logger.error(f"Error generating compliance report: {e}", exc_info=True)
             raise
@@ -285,4 +307,3 @@ class ComplianceService:
 
 # Global instance
 compliance_service = ComplianceService()
-

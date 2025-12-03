@@ -5,37 +5,40 @@ from logging.handlers import RotatingFileHandler
 import json
 
 # Create logs directory if it doesn't exist
-logs_dir = os.path.join(os.getcwd(), 'logs')
+logs_dir = os.path.join(os.getcwd(), "logs")
 os.makedirs(logs_dir, exist_ok=True)
 
 # Configure logging with Winston-like functionality
-logger = logging.getLogger('crypto_orchestrator')
+logger = logging.getLogger("crypto_orchestrator")
 logger.setLevel(logging.INFO)
 
 # Create formatters
 json_formatter = logging.Formatter(
-    json.dumps({
-        'timestamp': '%(asctime)s',
-        'level': '%(levelname)s',
-        'message': '%(message)s',
-        'module': '%(name)s'
-    }, default=str)
+    json.dumps(
+        {
+            "timestamp": "%(asctime)s",
+            "level": "%(levelname)s",
+            "message": "%(message)s",
+            "module": "%(name)s",
+        },
+        default=str,
+    )
 )
 
 # Error log file - rotates daily, keep 14 days
 error_handler = RotatingFileHandler(
-    os.path.join(logs_dir, 'error.log'),
-    maxBytes=10*1024*1024,  # 10MB
-    backupCount=14
+    os.path.join(logs_dir, "error.log"),
+    maxBytes=10 * 1024 * 1024,  # 10MB
+    backupCount=14,
 )
 error_handler.setLevel(logging.ERROR)
 error_handler.setFormatter(json_formatter)
 
 # Combined log file - rotates daily, keep 14 days
 combined_handler = RotatingFileHandler(
-    os.path.join(logs_dir, 'combined.log'),
-    maxBytes=10*1024*1024,  # 10MB
-    backupCount=14
+    os.path.join(logs_dir, "combined.log"),
+    maxBytes=10 * 1024 * 1024,  # 10MB
+    backupCount=14,
 )
 combined_handler.setLevel(logging.INFO)
 combined_handler.setFormatter(json_formatter)
@@ -46,6 +49,7 @@ logger.addHandler(combined_handler)
 
 # Prevent duplicate logs
 logger.propagate = False
+
 
 class LoggerService:
     """Logger service with Winston-like functionality for FastAPI"""
@@ -71,16 +75,17 @@ class LoggerService:
 
     def log(self, level: str, message: str, extra: dict = None):
         """Generic log method"""
-        if level.lower() == 'info':
+        if level.lower() == "info":
             self.info(message, extra)
-        elif level.lower() == 'warn' or level.lower() == 'warning':
+        elif level.lower() == "warn" or level.lower() == "warning":
             self.warn(message, extra)
-        elif level.lower() == 'error':
+        elif level.lower() == "error":
             self.error(message, extra)
-        elif level.lower() == 'debug':
+        elif level.lower() == "debug":
             self.debug(message, extra)
         else:
             self.info(message, extra)
+
 
 # Export singleton instance
 logger_service = LoggerService()

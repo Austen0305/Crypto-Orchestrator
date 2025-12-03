@@ -34,20 +34,20 @@ class CopyTradeRequest(BaseModel):
 async def follow_trader(
     request: FollowTraderRequest,
     current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     """Follow a trader to copy their trades"""
     try:
         follower_id = current_user.get("id")
         service = CopyTradingService(db)
-        
+
         result = await service.follow_trader(
             follower_id=follower_id,
             trader_id=request.trader_id,
             allocation_percentage=request.allocation_percentage,
-            max_position_size=request.max_position_size
+            max_position_size=request.max_position_size,
         )
-        
+
         return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -60,15 +60,15 @@ async def follow_trader(
 async def unfollow_trader(
     trader_id: int,
     current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     """Unfollow a trader"""
     try:
         follower_id = current_user.get("id")
         service = CopyTradingService(db)
-        
+
         success = await service.unfollow_trader(follower_id, trader_id)
-        
+
         if success:
             return {"message": "Successfully unfollowed trader"}
         else:
@@ -81,13 +81,13 @@ async def unfollow_trader(
 @router.get("/followed")
 async def get_followed_traders(
     current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     """Get list of traders being followed"""
     try:
         follower_id = current_user.get("id")
         service = CopyTradingService(db)
-        
+
         traders = await service.get_followed_traders(follower_id)
         return {"traders": traders}
     except Exception as e:
@@ -99,20 +99,20 @@ async def get_followed_traders(
 async def copy_trade(
     request: CopyTradeRequest,
     current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     """Copy a specific trade from a trader"""
     try:
         follower_id = current_user.get("id")
         service = CopyTradingService(db)
-        
+
         result = await service.copy_trade(
             follower_id=follower_id,
             trader_id=request.trader_id,
             original_trade_id=request.original_trade_id,
-            allocation_percentage=request.allocation_percentage
+            allocation_percentage=request.allocation_percentage,
         )
-        
+
         return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -124,16 +124,15 @@ async def copy_trade(
 @router.get("/stats")
 async def get_copy_trading_stats(
     current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     """Get copy trading statistics"""
     try:
         follower_id = current_user.get("id")
         service = CopyTradingService(db)
-        
+
         stats = await service.get_copy_trading_stats(follower_id)
         return stats
     except Exception as e:
         logger.error(f"Error getting copy trading stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get copy trading stats")
-

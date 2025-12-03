@@ -3,22 +3,36 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import Dict, Any, List, Optional
 import logging
 
-from ..services.trading_orchestrator import TradingOrchestrator, EnsemblePrediction, PingResult, BacktestResult
-from ..services.integration_service import integration_service, IntegrationConfig, FreqtradeConfig, JesseConfig
+from ..services.trading_orchestrator import (
+    TradingOrchestrator,
+    EnsemblePrediction,
+    PingResult,
+    BacktestResult,
+)
+from ..services.integration_service import (
+    integration_service,
+    IntegrationConfig,
+    FreqtradeConfig,
+    JesseConfig,
+)
 
 
 logger = logging.getLogger(__name__)
+
 
 # Dependency injection for orchestrator
 def get_trading_orchestrator():
     return TradingOrchestrator()
 
+
 # Dependency injection for integration service
 def get_integration_service():
     return integration_service
 
+
 # Import centralized auth dependency
 from ..dependencies.auth import get_current_user
+
 
 # Pydantic models for integration management
 class IntegrationListResponse(BaseModel):
@@ -28,21 +42,26 @@ class IntegrationListResponse(BaseModel):
     version: Optional[str] = None
     config: Dict[str, Any]
 
+
 class ConfigureIntegrationRequest(BaseModel):
     enabled: Optional[bool] = None
     config: Optional[Dict[str, Any]] = None
 
+
 class IntegrationTestRequest(BaseModel):
     config: Optional[Dict[str, Any]] = None
+
 
 class IntegrationResponse(BaseModel):
     message: str
     data: Optional[Dict[str, Any]] = None
 
+
 class IntegrationStatusResponse(BaseModel):
     name: str
     status: Dict[str, Any]
     details: Optional[Dict[str, Any]] = None
+
 
 class IntegrationStatusDetail(BaseModel):
     name: str
@@ -51,6 +70,7 @@ class IntegrationStatusDetail(BaseModel):
     enabled: bool = True
     error: Optional[str] = None
 
+
 class IntegrationsOverviewResponse(BaseModel):
     status: str
     running: bool
@@ -58,13 +78,15 @@ class IntegrationsOverviewResponse(BaseModel):
     adapters: Dict[str, IntegrationStatusDetail] | None = None
     started: bool | None = None
 
+
 router = APIRouter()
+
 
 # Overview status endpoint (public, no auth required)
 @router.get("/status", response_model=IntegrationsOverviewResponse)
 async def get_integrations_overview(
     integration_svc=Depends(get_integration_service),
-    orchestrator: TradingOrchestrator = Depends(get_trading_orchestrator)
+    orchestrator: TradingOrchestrator = Depends(get_trading_orchestrator),
 ) -> IntegrationsOverviewResponse:
     """Get overview status of all integrations and trading adapters"""
     try:
@@ -76,21 +98,19 @@ async def get_integrations_overview(
             proc = integration_svc.processes.get(name)
             running = proc is not None and proc.poll() is None
             any_running = any_running or running
-            
+
             statuses[name] = IntegrationStatusDetail(
                 name=name,
                 running=running,
                 pid=proc.pid if running else None,
-                enabled=integration_svc.integrations[name].enabled
+                enabled=integration_svc.integrations[name].enabled,
             )
 
         # Collect adapter statuses separately for response shape expected by tests
         adapters: Dict[str, IntegrationStatusDetail] = {}
-        for adapter_name in ['freqtrade', 'jesse']:
+        for adapter_name in ["freqtrade", "jesse"]:
             detail = IntegrationStatusDetail(
-                name=adapter_name,
-                running=orchestrator.started,
-                enabled=True
+                name=adapter_name, running=orchestrator.started, enabled=True
             )
             adapters[adapter_name] = detail
             if orchestrator.started:
@@ -103,17 +123,17 @@ async def get_integrations_overview(
             running=any_running,
             integrations=statuses,
             adapters=adapters,
-            started=orchestrator.started
+            started=orchestrator.started,
         )
     except Exception as e:
         logger.error(f"Error getting integrations overview: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # Integration management endpoints
 @router.get("/integrations", response_model=List[IntegrationListResponse])
 async def list_integrations(
-    integration_svc=Depends(get_integration_service),
-    user=Depends(get_current_user)
+    integration_svc=Depends(get_integration_service), user=Depends(get_current_user)
 ) -> List[IntegrationListResponse]:
     """List all available integrations with their status"""
     try:
@@ -123,11 +143,12 @@ async def list_integrations(
         logger.error(f"Error listing integrations: {e}")
         raise HTTPException(status_code=500, detail="Failed to list integrations")
 
+
 @router.get("/integrations/{name}/status", response_model=IntegrationStatusResponse)
 async def get_integration_status(
     name: str,
     integration_svc=Depends(get_integration_service),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ) -> IntegrationStatusResponse:
     """Get status of a specific integration"""
     try:
@@ -139,12 +160,13 @@ async def get_integration_status(
         logger.error(f"Error getting integration status for {name}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get status for {name}")
 
+
 @router.put("/integrations/{name}/configure", response_model=IntegrationResponse)
 async def configure_integration(
     name: str,
     request: ConfigureIntegrationRequest,
     integration_svc=Depends(get_integration_service),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ) -> IntegrationResponse:
     """Configure an integration adapter"""
     try:
@@ -162,12 +184,13 @@ async def configure_integration(
         logger.error(f"Error configuring integration {name}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to configure {name}")
 
+
 @router.post("/integrations/{name}/test", response_model=Dict[str, Any])
 async def run_integration_test(
     name: str,
     request: IntegrationTestRequest = IntegrationTestRequest(),
     integration_svc=Depends(get_integration_service),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ) -> Dict[str, Any]:
     """Run tests for an integration"""
     try:
@@ -179,16 +202,19 @@ async def run_integration_test(
         logger.error(f"Error running test for integration {name}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to run test for {name}")
 
+
 @router.post("/integrations/{name}/start", response_model=IntegrationResponse)
 async def start_integration(
     name: str,
     integration_svc=Depends(get_integration_service),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ) -> IntegrationResponse:
     """Start an integration adapter"""
     try:
         result = await integration_svc.start_integration(name)
-        return IntegrationResponse(message=result["message"], data={"pid": result.get("pid")})
+        return IntegrationResponse(
+            message=result["message"], data={"pid": result.get("pid")}
+        )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except FileNotFoundError as e:
@@ -197,11 +223,12 @@ async def start_integration(
         logger.error(f"Error starting integration {name}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to start {name}")
 
+
 @router.post("/integrations/{name}/stop", response_model=IntegrationResponse)
 async def stop_integration(
     name: str,
     integration_svc=Depends(get_integration_service),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ) -> IntegrationResponse:
     """Stop an integration adapter"""
     try:
@@ -213,67 +240,81 @@ async def stop_integration(
         logger.error(f"Error stopping integration {name}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to stop {name}")
 
+
 @router.post("/integrations/{name}/restart", response_model=IntegrationResponse)
 async def restart_integration(
     name: str,
     integration_svc=Depends(get_integration_service),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ) -> IntegrationResponse:
     """Restart an integration adapter"""
     try:
         result = await integration_svc.restart_integration(name)
-        return IntegrationResponse(message=result["message"], data={"pid": result.get("pid")})
+        return IntegrationResponse(
+            message=result["message"], data={"pid": result.get("pid")}
+        )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logger.error(f"Error restarting integration {name}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to restart {name}")
 
+
 class PredictRequest(BaseModel):
     symbol: str = Field(..., description="Trading symbol (e.g., 'BTC/USDT')")
     timeframe: str = Field("1h", description="Timeframe for analysis")
-    data: List[Dict[str, Any]] = Field(..., description="OHLCV market data", min_length=1)
-    
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "symbol": "BTC/USDT",
-            "timeframe": "1h",
-            "data": [
-                {
-                    "timestamp": "2023-01-01T00:00:00Z",
-                    "open": 16500.0,
-                    "high": 16600.0,
-                    "low": 16400.0,
-                    "close": 16550.0,
-                    "volume": 100.0
-                }
-            ]
+    data: List[Dict[str, Any]] = Field(
+        ..., description="OHLCV market data", min_length=1
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "symbol": "BTC/USDT",
+                "timeframe": "1h",
+                "data": [
+                    {
+                        "timestamp": "2023-01-01T00:00:00Z",
+                        "open": 16500.0,
+                        "high": 16600.0,
+                        "low": 16400.0,
+                        "close": 16550.0,
+                        "volume": 100.0,
+                    }
+                ],
+            }
         }
-    })
+    )
+
 
 class BacktestRequest(BaseModel):
     symbol: str = Field(..., description="Trading symbol")
     start_date: str = Field(..., description="Backtest start date (ISO format)")
     end_date: str = Field(..., description="Backtest end date (ISO format)")
     initial_balance: float = Field(10000.0, description="Initial balance", gt=0)
-    strategy_params: Dict[str, Any] = Field(default_factory=dict, description="Strategy parameters")
+    strategy_params: Dict[str, Any] = Field(
+        default_factory=dict, description="Strategy parameters"
+    )
 
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "symbol": "BTC/USDT",
-            "start_date": "2023-01-01",
-            "end_date": "2023-12-31",
-            "initial_balance": 10000.0,
-            "strategy_params": {"rsi_period": 14}
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "symbol": "BTC/USDT",
+                "start_date": "2023-01-01",
+                "end_date": "2023-12-31",
+                "initial_balance": 10000.0,
+                "strategy_params": {"rsi_period": 14},
+            }
         }
-    })
+    )
+
 
 @router.post("/predict")
 async def predict(
     request: PredictRequest,
     orchestrator: TradingOrchestrator = Depends(get_trading_orchestrator),
     integration_svc=Depends(get_integration_service),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ) -> EnsemblePrediction:
     """Get ensemble prediction from all available trading frameworks"""
     try:
@@ -284,9 +325,9 @@ async def predict(
             raise HTTPException(status_code=400, detail="Symbol is required")
 
         payload = {
-            'symbol': request.symbol,
-            'timeframe': request.timeframe,
-            'data': request.data
+            "symbol": request.symbol,
+            "timeframe": request.timeframe,
+            "data": request.data,
         }
         prediction = await orchestrator.get_ensemble_prediction(payload)
         return prediction
@@ -296,12 +337,13 @@ async def predict(
         logger.error(f"Error getting ensemble prediction: {e}")
         raise HTTPException(status_code=500, detail="Failed to get prediction")
 
+
 @router.post("/backtest")
 async def backtest(
     request: BacktestRequest,
     orchestrator: TradingOrchestrator = Depends(get_trading_orchestrator),
     integration_svc=Depends(get_integration_service),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ) -> BacktestResult:
     """Run backtest across all trading frameworks"""
     try:
@@ -309,18 +351,24 @@ async def backtest(
         if not request.symbol:
             raise HTTPException(status_code=400, detail="Symbol is required")
         if not request.start_date or not request.end_date:
-            raise HTTPException(status_code=400, detail="Start and end dates are required")
+            raise HTTPException(
+                status_code=400, detail="Start and end dates are required"
+            )
         if request.start_date >= request.end_date:
-            raise HTTPException(status_code=400, detail="End date must be after start date")
+            raise HTTPException(
+                status_code=400, detail="End date must be after start date"
+            )
         if request.initial_balance <= 0:
-            raise HTTPException(status_code=400, detail="Initial balance must be positive")
+            raise HTTPException(
+                status_code=400, detail="Initial balance must be positive"
+            )
 
         payload = {
-            'symbol': request.symbol,
-            'start_date': request.start_date,
-            'end_date': request.end_date,
-            'initial_balance': request.initial_balance,
-            'strategy_params': request.strategy_params
+            "symbol": request.symbol,
+            "start_date": request.start_date,
+            "end_date": request.end_date,
+            "initial_balance": request.initial_balance,
+            "strategy_params": request.strategy_params,
         }
         result = await orchestrator.backtest(payload)
         return result
@@ -330,30 +378,29 @@ async def backtest(
         logger.error(f"Error running backtest: {e}")
         raise HTTPException(status_code=500, detail="Failed to run backtest")
 
+
 @router.get("/ping")
 async def ping(
     orchestrator: TradingOrchestrator = Depends(get_trading_orchestrator),
     integration_svc=Depends(get_integration_service),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ) -> PingResult:
     """Ping all trading framework adapters"""
     try:
         result = await orchestrator.ping_all()
         # Enhance with integration service status
-        enhanced_result = PingResult(
-            freqtrade=result.freqtrade,
-            jesse=result.jesse
-        )
+        enhanced_result = PingResult(freqtrade=result.freqtrade, jesse=result.jesse)
         return enhanced_result
     except Exception as e:
         logger.error(f"Error pinging adapters: {e}")
         raise HTTPException(status_code=500, detail="Failed to ping adapters")
 
+
 @router.post("/start")
 async def start_all(
     orchestrator: TradingOrchestrator = Depends(get_trading_orchestrator),
     integration_svc=Depends(get_integration_service),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ):
     """Start all trading framework adapters"""
     try:
@@ -370,11 +417,12 @@ async def start_all(
         logger.error(f"Error starting adapters: {e}")
         raise HTTPException(status_code=500, detail="Failed to start adapters")
 
+
 @router.post("/stop")
 async def stop_all(
     orchestrator: TradingOrchestrator = Depends(get_trading_orchestrator),
     integration_svc=Depends(get_integration_service),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ):
     """Stop all trading framework adapters"""
     try:
@@ -386,11 +434,12 @@ async def stop_all(
         logger.error(f"Error stopping adapters: {e}")
         raise HTTPException(status_code=500, detail="Failed to stop adapters")
 
+
 @router.get("/status")
 async def get_status(
     orchestrator: TradingOrchestrator = Depends(get_trading_orchestrator),
     integration_svc=Depends(get_integration_service),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ) -> Dict[str, Any]:
     """Get status of all trading framework adapters"""
     try:
@@ -408,20 +457,21 @@ async def get_status(
             "started": getattr(orchestrator, "started", False),
             "adapters": {
                 "freqtrade": getattr(ping_result, "freqtrade", None),
-                "jesse": getattr(ping_result, "jesse", None)
+                "jesse": getattr(ping_result, "jesse", None),
             },
-            "integrations": integration_statuses
+            "integrations": integration_statuses,
         }
     except Exception as e:
         logger.error(f"Error getting status: {e}")
         raise HTTPException(status_code=500, detail="Failed to get status")
+
 
 @router.get("/adapter/{name}/health")
 async def get_adapter_health(
     name: str,
     orchestrator: TradingOrchestrator = Depends(get_trading_orchestrator),
     integration_svc=Depends(get_integration_service),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ) -> Dict[str, Any]:
     """Get health status of a specific adapter"""
     try:
@@ -438,7 +488,10 @@ async def get_adapter_health(
 
         # Combine results
         healthy = False
-        details = {"orchestrator": orchestrator_status, "integration": integration_status}
+        details = {
+            "orchestrator": orchestrator_status,
+            "integration": integration_status,
+        }
 
         # Determine overall health
         if orchestrator_status and orchestrator_status.get("ok", False):
@@ -446,23 +499,20 @@ async def get_adapter_health(
         elif integration_status.get("status") == "running":
             healthy = True
 
-        return {
-            "adapter": name,
-            "healthy": healthy,
-            "details": details
-        }
+        return {"adapter": name, "healthy": healthy, "details": details}
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error getting adapter health for {name}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get health for {name}")
 
+
 @router.post("/adapter/{name}/restart")
 async def restart_adapter(
     name: str,
     orchestrator: TradingOrchestrator = Depends(get_trading_orchestrator),
     integration_svc=Depends(get_integration_service),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ):
     """Restart a specific adapter"""
     try:

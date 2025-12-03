@@ -21,11 +21,13 @@ class APIKey(BaseModel):
     key_prefix: str  # First 8 characters for identification
     permissions: List[str]
     active: bool = True
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = Field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
     last_used_at: Optional[str] = None
     expires_at: Optional[str] = None
 
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
 class APIKeyCreateRequest(BaseModel):
@@ -44,7 +46,12 @@ class APIKeyService:
         self._key_hashes: Dict[str, str] = {}  # key_hash -> key_id (for lookup)
         logger.info("APIKeyService initialized with in-memory storage")
 
-    async def create_api_key(self, user_id: str, permissions: List[str], expires_in_days: Optional[int] = None) -> APIKey:
+    async def create_api_key(
+        self,
+        user_id: str,
+        permissions: List[str],
+        expires_in_days: Optional[int] = None,
+    ) -> APIKey:
         """Create new API key for user with secure generation"""
         try:
             logger.info(f"Creating API key for user: {user_id}")
@@ -59,8 +66,10 @@ class APIKeyService:
             # Create expiration date if specified
             expires_at = None
             if expires_in_days:
-                expires_at = (datetime.now(timezone.utc) +
-                            datetime.timedelta(days=expires_in_days)).isoformat()
+                expires_at = (
+                    datetime.now(timezone.utc)
+                    + datetime.timedelta(days=expires_in_days)
+                ).isoformat()
 
             # Create APIKey instance
             api_key = APIKey(
@@ -68,14 +77,16 @@ class APIKeyService:
                 key_hash=key_hash,
                 key_prefix=key_prefix,
                 permissions=permissions,
-                expires_at=expires_at
+                expires_at=expires_at,
             )
 
             # Store in memory (production: database)
             self._keys[api_key.id] = api_key
             self._key_hashes[key_hash] = api_key.id
 
-            logger.info(f"API key created successfully for user {user_id}, key_id: {api_key.id}")
+            logger.info(
+                f"API key created successfully for user {user_id}, key_id: {api_key.id}"
+            )
             logger.debug(f"API key prefix: {key_prefix}")
 
             # Return with plain key for one-time display to user
@@ -92,7 +103,9 @@ class APIKeyService:
     async def validate_api_key(self, key: str) -> Optional[APIKey]:
         """Validate API key and return key data if valid"""
         try:
-            logger.debug(f"Validating API key with prefix: {key[:8] if len(key) >= 8 else key}")
+            logger.debug(
+                f"Validating API key with prefix: {key[:8] if len(key) >= 8 else key}"
+            )
 
             # Hash the provided key
             key_hash = hashlib.sha256(key.encode()).hexdigest()
@@ -175,7 +188,8 @@ class APIKeyService:
         """Get all active API keys for a user"""
         try:
             user_keys = [
-                key for key in self._keys.values()
+                key
+                for key in self._keys.values()
                 if key.user_id == user_id and key.active
             ]
             logger.debug(f"Found {len(user_keys)} active API keys for user: {user_id}")
@@ -208,9 +222,11 @@ class APIKeyService:
             now = datetime.now(timezone.utc)
 
             for key_id, api_key in list(self._keys.items()):
-                if (api_key.expires_at and
-                    now > datetime.fromisoformat(api_key.expires_at) and
-                    api_key.active):
+                if (
+                    api_key.expires_at
+                    and now > datetime.fromisoformat(api_key.expires_at)
+                    and api_key.active
+                ):
                     await self._deactivate_key(key_id)
                     cleaned_count += 1
 

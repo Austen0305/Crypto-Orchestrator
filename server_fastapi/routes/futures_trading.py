@@ -24,7 +24,9 @@ class CreateFuturesPositionRequest(BaseModel):
     quantity: float = Field(..., gt=0)
     leverage: int = Field(..., ge=1, le=125, description="Leverage multiplier (1-125x)")
     trading_mode: str = Field(default="paper", pattern="^(paper|real)$")
-    entry_price: Optional[float] = Field(None, gt=0, description="Entry price (None = market)")
+    entry_price: Optional[float] = Field(
+        None, gt=0, description="Entry price (None = market)"
+    )
     stop_loss_price: Optional[float] = Field(None, gt=0)
     take_profit_price: Optional[float] = Field(None, gt=0)
     trailing_stop_percent: Optional[float] = Field(None, gt=0, le=100)
@@ -41,7 +43,7 @@ class CreateFuturesPositionRequest(BaseModel):
                 "leverage": 10,
                 "trading_mode": "paper",
                 "stop_loss_price": 45000.0,
-                "take_profit_price": 55000.0
+                "take_profit_price": 55000.0,
             }
         }
     }
@@ -81,11 +83,16 @@ class FuturesPositionResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-@router.post("/futures/positions", response_model=Dict[str, str], status_code=status.HTTP_201_CREATED, tags=["Futures Trading"])
+@router.post(
+    "/futures/positions",
+    response_model=Dict[str, str],
+    status_code=status.HTTP_201_CREATED,
+    tags=["Futures Trading"],
+)
 async def create_futures_position(
     request: CreateFuturesPositionRequest,
     current_user: dict = Depends(get_current_user),
-    db_session: AsyncSession = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session),
 ):
     """Create a new futures position with leverage."""
     try:
@@ -103,28 +110,38 @@ async def create_futures_position(
             take_profit_price=request.take_profit_price,
             trailing_stop_percent=request.trailing_stop_percent,
             name=request.name,
-            config=request.config
+            config=request.config,
         )
-        
+
         if not position_id:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to create futures position")
-        
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to create futures position",
+            )
+
         return {"id": position_id, "message": "Futures position created successfully"}
-    
+
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Error creating futures position: {e}", exc_info=True)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create futures position")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create futures position",
+        )
 
 
-@router.get("/futures/positions", response_model=List[FuturesPositionResponse], tags=["Futures Trading"])
+@router.get(
+    "/futures/positions",
+    response_model=List[FuturesPositionResponse],
+    tags=["Futures Trading"],
+)
 async def list_futures_positions(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     open_only: bool = Query(False, description="Only return open positions"),
     current_user: dict = Depends(get_current_user),
-    db_session: AsyncSession = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session),
 ):
     """List all futures positions for the current user."""
     try:
@@ -135,57 +152,86 @@ async def list_futures_positions(
         return positions
     except Exception as e:
         logger.error(f"Error listing futures positions: {e}", exc_info=True)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to list futures positions")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to list futures positions",
+        )
 
 
-@router.get("/futures/positions/{position_id}", response_model=FuturesPositionResponse, tags=["Futures Trading"])
+@router.get(
+    "/futures/positions/{position_id}",
+    response_model=FuturesPositionResponse,
+    tags=["Futures Trading"],
+)
 async def get_futures_position(
     position_id: str,
     current_user: dict = Depends(get_current_user),
-    db_session: AsyncSession = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session),
 ):
     """Get a specific futures position by ID."""
     try:
         service = FuturesTradingService(session=db_session)
         position = await service.get_futures_position(position_id, current_user["id"])
         if not position:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Futures position not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Futures position not found",
+            )
         return position
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error getting futures position: {e}", exc_info=True)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get futures position")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get futures position",
+        )
 
 
-@router.post("/futures/positions/{position_id}/close", response_model=Dict[str, Any], tags=["Futures Trading"])
+@router.post(
+    "/futures/positions/{position_id}/close",
+    response_model=Dict[str, Any],
+    tags=["Futures Trading"],
+)
 async def close_futures_position(
     position_id: str,
     close_price: Optional[float] = Query(None, gt=0),
     current_user: dict = Depends(get_current_user),
-    db_session: AsyncSession = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session),
 ):
     """Close a futures position."""
     try:
         service = FuturesTradingService(session=db_session)
-        result = await service.close_futures_position(position_id, current_user["id"], close_price)
-        
+        result = await service.close_futures_position(
+            position_id, current_user["id"], close_price
+        )
+
         if result.get("action") == "error":
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result.get("error", "Failed to close position"))
-        
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result.get("error", "Failed to close position"),
+            )
+
         return result
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error closing futures position: {e}", exc_info=True)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to close futures position")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to close futures position",
+        )
 
 
-@router.post("/futures/positions/{position_id}/update-pnl", response_model=Dict[str, Any], tags=["Futures Trading"])
+@router.post(
+    "/futures/positions/{position_id}/update-pnl",
+    response_model=Dict[str, Any],
+    tags=["Futures Trading"],
+)
 async def update_position_pnl(
     position_id: str,
     current_user: dict = Depends(get_current_user),
-    db_session: AsyncSession = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session),
 ):
     """Update P&L for a futures position."""
     try:
@@ -194,5 +240,7 @@ async def update_position_pnl(
         return result
     except Exception as e:
         logger.error(f"Error updating position P&L: {e}", exc_info=True)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update position P&L")
-
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update position P&L",
+        )

@@ -16,17 +16,21 @@ logger = logging.getLogger(__name__)
 
 class EncryptionService:
     """Service for encrypting and decrypting sensitive data"""
-    
+
     def __init__(self):
         # Get encryption key from environment or generate one
         encryption_key = os.getenv("ENCRYPTION_KEY")
-        
+
         if not encryption_key:
             # Generate a key from a master password (for development)
             # In production, this should be set via environment variable
-            master_password = os.getenv("MASTER_PASSWORD", "default-master-password-change-in-production")
-            salt = os.getenv("ENCRYPTION_SALT", "default-salt-change-in-production").encode()
-            
+            master_password = os.getenv(
+                "MASTER_PASSWORD", "default-master-password-change-in-production"
+            )
+            salt = os.getenv(
+                "ENCRYPTION_SALT", "default-salt-change-in-production"
+            ).encode()
+
             kdf = PBKDF2HMAC(
                 algorithm=hashes.SHA256(),
                 length=32,
@@ -35,7 +39,9 @@ class EncryptionService:
             )
             key = base64.urlsafe_b64encode(kdf.derive(master_password.encode()))
             self.cipher = Fernet(key)
-            logger.warning("Using generated encryption key - set ENCRYPTION_KEY in production!")
+            logger.warning(
+                "Using generated encryption key - set ENCRYPTION_KEY in production!"
+            )
         else:
             # Use provided key
             try:
@@ -43,14 +49,14 @@ class EncryptionService:
             except Exception as e:
                 logger.error(f"Invalid encryption key format: {e}")
                 raise ValueError("Invalid encryption key format")
-    
+
     def encrypt(self, data: str) -> str:
         """
         Encrypt sensitive data.
-        
+
         Args:
             data: Plain text data to encrypt
-        
+
         Returns:
             Encrypted data as base64 string
         """
@@ -62,14 +68,14 @@ class EncryptionService:
         except Exception as e:
             logger.error(f"Error encrypting data: {e}", exc_info=True)
             raise
-    
+
     def decrypt(self, encrypted_data: str) -> str:
         """
         Decrypt sensitive data.
-        
+
         Args:
             encrypted_data: Encrypted data as base64 string
-        
+
         Returns:
             Decrypted plain text data
         """
@@ -86,4 +92,3 @@ class EncryptionService:
 
 # Global instance
 encryption_service = EncryptionService()
-

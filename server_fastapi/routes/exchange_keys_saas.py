@@ -2,6 +2,7 @@
 SaaS Exchange Keys Routes
 Secure exchange API key management with encryption
 """
+
 from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -57,7 +58,7 @@ async def create_exchange_key(
     """Create encrypted exchange API key"""
     try:
         service = ExchangeKeysService()
-        
+
         exchange_key = await service.create_exchange_key(
             db=db,
             user_id=current_user["id"],
@@ -68,31 +69,39 @@ async def create_exchange_key(
             label=request.label,
             is_testnet=request.is_testnet,
         )
-        
+
         if not exchange_key:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create exchange key"
+                detail="Failed to create exchange key",
             )
-        
+
         return ExchangeKeyResponse(
             id=exchange_key.id,
             exchange=exchange_key.exchange,
             label=exchange_key.label,
             is_testnet=exchange_key.is_testnet,
             is_validated=exchange_key.is_validated,
-            validated_at=exchange_key.validated_at.isoformat() if exchange_key.validated_at else None,
-            last_used_at=exchange_key.last_used_at.isoformat() if exchange_key.last_used_at else None,
+            validated_at=(
+                exchange_key.validated_at.isoformat()
+                if exchange_key.validated_at
+                else None
+            ),
+            last_used_at=(
+                exchange_key.last_used_at.isoformat()
+                if exchange_key.last_used_at
+                else None
+            ),
             created_at=exchange_key.created_at.isoformat(),
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to create exchange key: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create exchange key"
+            detail="Failed to create exchange key",
         )
 
 
@@ -105,13 +114,13 @@ async def get_exchange_keys(
     """Get user's exchange API keys"""
     try:
         service = ExchangeKeysService()
-        
+
         keys = await service.get_exchange_keys(
             db=db,
             user_id=current_user["id"],
             exchange=exchange,
         )
-        
+
         return [
             ExchangeKeyResponse(
                 id=key.id,
@@ -125,12 +134,12 @@ async def get_exchange_keys(
             )
             for key in keys
         ]
-        
+
     except Exception as e:
         logger.error(f"Failed to get exchange keys: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get exchange keys"
+            detail="Failed to get exchange keys",
         )
 
 
@@ -143,31 +152,27 @@ async def delete_exchange_key(
     """Delete exchange API key"""
     try:
         service = ExchangeKeysService()
-        
+
         success = await service.delete_exchange_key(
             db=db,
             user_id=current_user["id"],
             exchange=exchange,
         )
-        
+
         if not success:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Exchange key not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Exchange key not found"
             )
-        
-        return {
-            "success": True,
-            "message": f"Exchange key for {exchange} deleted"
-        }
-        
+
+        return {"success": True, "message": f"Exchange key for {exchange} deleted"}
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to delete exchange key: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete exchange key"
+            detail="Failed to delete exchange key",
         )
 
 
@@ -180,19 +185,18 @@ async def test_connection(
     """Test exchange API connection"""
     try:
         service = ExchangeKeysService()
-        
+
         result = await service.test_connection(
             db=db,
             user_id=current_user["id"],
             exchange=exchange,
         )
-        
+
         return result
-        
+
     except Exception as e:
         logger.error(f"Connection test failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Connection test failed"
+            detail="Connection test failed",
         )
-

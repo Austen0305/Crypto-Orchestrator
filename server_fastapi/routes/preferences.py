@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
 def _default_notifications(enabled: bool) -> Dict[str, bool]:
     return {
         "trade_executed": enabled,
@@ -22,6 +23,7 @@ def _default_notifications(enabled: bool) -> Dict[str, bool]:
         "market_alert": enabled,
         "system": enabled,
     }
+
 
 def _merge_with_defaults(prefs_obj) -> Dict[str, Any]:
     # Start with defaults from shared schema
@@ -48,7 +50,9 @@ def _merge_with_defaults(prefs_obj) -> Dict[str, Any]:
         "confirm_orders": True,
         "show_fees": True,
     }
-    notifications = data_json.get("notifications") or _default_notifications(notifications_enabled)
+    notifications = data_json.get("notifications") or _default_notifications(
+        notifications_enabled
+    )
 
     return {
         "userId": str(prefs_obj.user_id),
@@ -60,30 +64,36 @@ def _merge_with_defaults(prefs_obj) -> Dict[str, Any]:
         "updatedAt": float(prefs_obj.updated_at.timestamp()),
     }
 
+
 # Routes (mounted at /api/preferences in main.py)
 @router.get("/", response_model=UserPreferences)
 async def get_user_preferences(current_user: dict = Depends(get_current_user)):
     async with get_db_context() as session:
-        prefs = await preferences_repository.get_by_user_id(session, current_user['id'])
+        prefs = await preferences_repository.get_by_user_id(session, current_user["id"])
         if not prefs:
             prefs = await preferences_repository.upsert_for_user(
                 session,
-                current_user['id'],
+                current_user["id"],
                 theme="light",
                 language="en",
                 notifications_enabled=True,
-                data_json=json.dumps({})
+                data_json=json.dumps({}),
             )
         data = _merge_with_defaults(prefs)
         return UserPreferences(**data)
 
+
 @router.put("/", response_model=UserPreferences)
-async def update_user_preferences(updates: UpdateUserPreferences, current_user: dict = Depends(get_current_user)):
+async def update_user_preferences(
+    updates: UpdateUserPreferences, current_user: dict = Depends(get_current_user)
+):
     update_data = updates.dict(exclude_unset=True)
     async with get_db_context() as session:
-        prefs = await preferences_repository.get_by_user_id(session, current_user['id'])
+        prefs = await preferences_repository.get_by_user_id(session, current_user["id"])
         if not prefs:
-            prefs = await preferences_repository.upsert_for_user(session, current_user['id'])
+            prefs = await preferences_repository.upsert_for_user(
+                session, current_user["id"]
+            )
 
         # Load existing data_json and merge
         existing_json = {}
@@ -109,52 +119,66 @@ async def update_user_preferences(updates: UpdateUserPreferences, current_user: 
 
         await preferences_repository.upsert_for_user(
             session,
-            current_user['id'],
-            theme=(update_data.get('theme') or prefs.theme),
-            language=(existing_json.get("uiSettings", {}).get("language") or prefs.language),
-            notifications_enabled=prefs.notifications_enabled if update_data.get("notifications") is None else all(update_data["notifications"].values()),
-            data_json=json.dumps(existing_json)
+            current_user["id"],
+            theme=(update_data.get("theme") or prefs.theme),
+            language=(
+                existing_json.get("uiSettings", {}).get("language") or prefs.language
+            ),
+            notifications_enabled=(
+                prefs.notifications_enabled
+                if update_data.get("notifications") is None
+                else all(update_data["notifications"].values())
+            ),
+            data_json=json.dumps(existing_json),
         )
 
         # Reload and return
-        prefs = await preferences_repository.get_by_user_id(session, current_user['id'])
+        prefs = await preferences_repository.get_by_user_id(session, current_user["id"])
         data = _merge_with_defaults(prefs)
         logger.info(f"Updated preferences for user {current_user['id']}")
         return UserPreferences(**data)
 
+
 class ThemeUpdate(BaseModel):
     theme: Theme
 
+
 @router.patch("/theme")
-async def update_theme(payload: ThemeUpdate, current_user: dict = Depends(get_current_user)):
+async def update_theme(
+    payload: ThemeUpdate, current_user: dict = Depends(get_current_user)
+):
     async with get_db_context() as session:
-        await preferences_repository.upsert_for_user(session, current_user['id'], theme=payload.theme)
+        await preferences_repository.upsert_for_user(
+            session, current_user["id"], theme=payload.theme
+        )
         return {"message": "Theme updated successfully", "theme": payload.theme}
+
 
 @router.delete("/")
 async def delete_user_preferences(current_user: dict = Depends(get_current_user)):
     async with get_db_context() as session:
-        prefs = await preferences_repository.get_by_user_id(session, current_user['id'])
+        prefs = await preferences_repository.get_by_user_id(session, current_user["id"])
         if not prefs:
             raise HTTPException(status_code=404, detail="Preferences not found")
         await session.delete(prefs)
         await session.commit()
         return {"message": "Preferences reset to defaults"}
 
+
 @router.post("/reset")
 async def reset_user_preferences(current_user: dict = Depends(get_current_user)):
     async with get_db_context() as session:
-        prefs = await preferences_repository.get_by_user_id(session, current_user['id'])
+        prefs = await preferences_repository.get_by_user_id(session, current_user["id"])
         if prefs:
             await session.delete(prefs)
             await session.commit()
         prefs = await preferences_repository.upsert_for_user(
             session,
-            current_user['id'],
+            current_user["id"],
             theme="light",
             language="en",
             notifications_enabled=True,
-            data_json=json.dumps({})
+            data_json=json.dumps({}),
         )
         data = _merge_with_defaults(prefs)
         return {"message": "Preferences reset to defaults", "preferences": data}

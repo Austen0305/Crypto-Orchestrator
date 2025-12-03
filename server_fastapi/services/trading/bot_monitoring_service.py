@@ -40,8 +40,8 @@ class BotMonitoringService:
                 return {"healthy": False, "status": "not_found"}
 
             # Check if bot should be active but isn't responding
-            is_active = bot_status.get('active', False)
-            last_update = bot_status.get('updated_at')
+            is_active = bot_status.get("active", False)
+            last_update = bot_status.get("updated_at")
 
             # Get safety status
             safety_status = await self.safe_trading_system.get_safety_status()
@@ -71,10 +71,10 @@ class BotMonitoringService:
 
             return {
                 "healthy": healthy,
-                "status": bot_status.get('status', 'unknown'),
+                "status": bot_status.get("status", "unknown"),
                 "issues": health_issues,
                 "alerts_count": len(alerts),
-                "safety_status": safety_status["status"]
+                "safety_status": safety_status["status"],
             }
 
         except Exception as e:
@@ -92,13 +92,15 @@ class BotMonitoringService:
             for alert in system_alerts:
                 # This is a simplified filtering - in reality you'd need bot-specific alert types
                 if bot_id in alert.message or "bot" in alert.type.lower():
-                    bot_alerts.append(MonitoringAlert(
-                        bot_id=bot_id,
-                        type=alert.type,
-                        severity=alert.severity,
-                        message=alert.message,
-                        timestamp=alert.timestamp
-                    ))
+                    bot_alerts.append(
+                        MonitoringAlert(
+                            bot_id=bot_id,
+                            type=alert.type,
+                            severity=alert.severity,
+                            message=alert.message,
+                            timestamp=alert.timestamp,
+                        )
+                    )
 
             return bot_alerts
 
@@ -106,17 +108,15 @@ class BotMonitoringService:
             logger.error(f"Error getting alerts for bot {bot_id}: {str(e)}")
             return []
 
-    async def validate_bot_start_conditions(self, bot_id: str, user_id: int) -> Dict[str, Any]:
+    async def validate_bot_start_conditions(
+        self, bot_id: str, user_id: int
+    ) -> Dict[str, Any]:
         """Validate conditions before starting a bot"""
         try:
             # Check safety status
             safety_status = await self.safe_trading_system.get_safety_status()
 
-            validation_result = {
-                "can_start": True,
-                "warnings": [],
-                "blockers": []
-            }
+            validation_result = {"can_start": True, "warnings": [], "blockers": []}
 
             if safety_status["status"] == "emergency_stop":
                 validation_result["can_start"] = False
@@ -135,22 +135,27 @@ class BotMonitoringService:
             critical_alerts = [a for a in alerts if a.severity == "critical"]
             if critical_alerts:
                 validation_result["can_start"] = False
-                validation_result["blockers"].append(f"Critical alerts: {len(critical_alerts)}")
+                validation_result["blockers"].append(
+                    f"Critical alerts: {len(critical_alerts)}"
+                )
 
             return validation_result
 
         except Exception as e:
-            logger.error(f"Error validating start conditions for bot {bot_id}: {str(e)}")
+            logger.error(
+                f"Error validating start conditions for bot {bot_id}: {str(e)}"
+            )
             return {
                 "can_start": False,
                 "warnings": [],
-                "blockers": [f"Validation error: {str(e)}"]
+                "blockers": [f"Validation error: {str(e)}"],
             }
 
     async def monitor_active_bots(self, user_id: int) -> Dict[str, Any]:
         """Monitor all active bots for a user"""
         try:
             from .bot_creation_service import BotCreationService
+
             creation_service = BotCreationService()
 
             user_bots = await creation_service.list_user_bots(user_id)
@@ -160,7 +165,7 @@ class BotMonitoringService:
                 "total_active": len(active_bots),
                 "healthy_count": 0,
                 "unhealthy_count": 0,
-                "bot_health": {}
+                "bot_health": {},
             }
 
             for bot in active_bots:
@@ -178,10 +183,14 @@ class BotMonitoringService:
             logger.error(f"Error monitoring active bots for user {user_id}: {str(e)}")
             return {"error": str(e)}
 
-    async def emergency_stop_bot(self, bot_id: str, user_id: int, reason: str = "manual_emergency") -> bool:
+    async def emergency_stop_bot(
+        self, bot_id: str, user_id: int, reason: str = "manual_emergency"
+    ) -> bool:
         """Emergency stop a specific bot"""
         try:
-            logger.warning(f"Emergency stop triggered for bot {bot_id}, reason: {reason}")
+            logger.warning(
+                f"Emergency stop triggered for bot {bot_id}, reason: {reason}"
+            )
 
             # Stop the bot
             success = await self.control_service.stop_bot(bot_id, user_id)
@@ -197,18 +206,26 @@ class BotMonitoringService:
             logger.error(f"Error during emergency stop for bot {bot_id}: {str(e)}")
             return False
 
-    async def emergency_stop_all_user_bots(self, user_id: int, reason: str = "system_emergency") -> int:
+    async def emergency_stop_all_user_bots(
+        self, user_id: int, reason: str = "system_emergency"
+    ) -> int:
         """Emergency stop all active bots for a user"""
         try:
-            logger.warning(f"Emergency stop all bots for user {user_id}, reason: {reason}")
+            logger.warning(
+                f"Emergency stop all bots for user {user_id}, reason: {reason}"
+            )
 
             stopped_count = await self.control_service.bulk_stop_user_bots(user_id)
 
-            logger.critical(f"Emergency stopped {stopped_count} bots for user {user_id}: {reason}")
+            logger.critical(
+                f"Emergency stopped {stopped_count} bots for user {user_id}: {reason}"
+            )
             return stopped_count
 
         except Exception as e:
-            logger.error(f"Error during emergency stop all for user {user_id}: {str(e)}")
+            logger.error(
+                f"Error during emergency stop all for user {user_id}: {str(e)}"
+            )
             return 0
 
     async def get_system_safety_status(self) -> Dict[str, Any]:

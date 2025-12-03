@@ -31,7 +31,7 @@ class UnstakeRequest(BaseModel):
 @router.get("/options")
 async def get_staking_options(
     current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     """Get available staking options"""
     try:
@@ -47,22 +47,20 @@ async def get_staking_options(
 async def stake_assets(
     request: StakeRequest,
     current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     """Stake assets to earn rewards"""
     try:
         if request.amount <= 0:
             raise HTTPException(status_code=400, detail="Amount must be greater than 0")
-        
+
         user_id = current_user.get("id")
         service = StakingService(db)
-        
+
         result = await service.stake_assets(
-            user_id=user_id,
-            asset=request.asset,
-            amount=request.amount
+            user_id=user_id, asset=request.asset, amount=request.amount
         )
-        
+
         return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -77,22 +75,20 @@ async def stake_assets(
 async def unstake_assets(
     request: UnstakeRequest,
     current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     """Unstake assets"""
     try:
         if request.amount <= 0:
             raise HTTPException(status_code=400, detail="Amount must be greater than 0")
-        
+
         user_id = current_user.get("id")
         service = StakingService(db)
-        
+
         result = await service.unstake_assets(
-            user_id=user_id,
-            asset=request.asset,
-            amount=request.amount
+            user_id=user_id, asset=request.asset, amount=request.amount
         )
-        
+
         return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -107,13 +103,13 @@ async def unstake_assets(
 async def get_staking_rewards(
     asset: str = Query(..., description="Asset to check rewards for"),
     current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     """Get staking rewards for a user"""
     try:
         user_id = current_user.get("id")
         service = StakingService(db)
-        
+
         rewards = await service.calculate_staking_rewards(user_id, asset)
         return rewards
     except Exception as e:
@@ -124,36 +120,37 @@ async def get_staking_rewards(
 @router.get("/my-stakes")
 async def get_my_stakes(
     current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     """Get all staked assets for current user"""
     try:
         from ..models.wallet import Wallet
         from sqlalchemy import select, and_
-        
+
         user_id = current_user.get("id")
         stmt = select(Wallet).where(
             and_(
                 Wallet.user_id == user_id,
                 Wallet.wallet_type == "staking",
-                Wallet.balance > 0
+                Wallet.balance > 0,
             )
         )
         result = await db.execute(stmt)
         wallets = result.scalars().all()
-        
+
         service = StakingService(db)
         stakes = []
         for wallet in wallets:
             rewards = await service.calculate_staking_rewards(user_id, wallet.currency)
-            stakes.append({
-                "asset": wallet.currency,
-                "staked_amount": wallet.balance,
-                "rewards": rewards
-            })
-        
+            stakes.append(
+                {
+                    "asset": wallet.currency,
+                    "staked_amount": wallet.balance,
+                    "rewards": rewards,
+                }
+            )
+
         return {"stakes": stakes}
     except Exception as e:
         logger.error(f"Error getting user stakes: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get stakes")
-

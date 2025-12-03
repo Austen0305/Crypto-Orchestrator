@@ -43,7 +43,9 @@ class BotRunner:
                     return False
 
                 # Update bot status
-                updated_bot = await self.repository.update_bot_status(session, bot_id, user_id, True, 'running')
+                updated_bot = await self.repository.update_bot_status(
+                    session, bot_id, user_id, True, "running"
+                )
                 if updated_bot:
                     logger.info(f"Bot {bot_id} started successfully")
                     return True
@@ -72,7 +74,9 @@ class BotRunner:
                     return False
 
                 # Update bot status
-                updated_bot = await self.repository.update_bot_status(session, bot_id, user_id, False, 'stopped')
+                updated_bot = await self.repository.update_bot_status(
+                    session, bot_id, user_id, False, "stopped"
+                )
                 if updated_bot:
                     logger.info(f"Bot {bot_id} stopped successfully")
                     return True
@@ -84,7 +88,9 @@ class BotRunner:
             logger.error(f"Error stopping bot {bot_id}: {str(e)}")
             return False
 
-    async def get_bot_status(self, bot_id: str, user_id: int) -> Optional[Dict[str, Any]]:
+    async def get_bot_status(
+        self, bot_id: str, user_id: int
+    ) -> Optional[Dict[str, Any]]:
         """Get bot status"""
         try:
             async with get_db_context() as session:
@@ -106,12 +112,14 @@ class BotRunner:
 
                 result = []
                 for bot in bots:
-                    result.append(BotConfiguration(
-                        id=bot.id,
-                        strategy=bot.strategy,
-                        parameters=bot.to_dict().get('parameters', {}),
-                        active=bot.active
-                    ))
+                    result.append(
+                        BotConfiguration(
+                            id=bot.id,
+                            strategy=bot.strategy,
+                            parameters=bot.to_dict().get("parameters", {}),
+                            active=bot.active,
+                        )
+                    )
 
                 return result
 
@@ -119,13 +127,22 @@ class BotRunner:
             logger.error(f"Error listing bots for user {user_id}: {str(e)}")
             return []
 
-    async def create_bot(self, user_id: int, name: str, symbol: str, strategy: str, parameters: Dict[str, Any]) -> Optional[str]:
+    async def create_bot(
+        self,
+        user_id: int,
+        name: str,
+        symbol: str,
+        strategy: str,
+        parameters: Dict[str, Any],
+    ) -> Optional[str]:
         """Create a new bot"""
         try:
             bot_id = f"bot-{user_id}-{hash(f'{user_id}-{name}-{datetime.now().isoformat()}') % 1000000}"
 
             async with get_db_context() as session:
-                bot = await self.repository.create_bot(session, bot_id, user_id, name, symbol, strategy, parameters)
+                bot = await self.repository.create_bot(
+                    session, bot_id, user_id, name, symbol, strategy, parameters
+                )
                 if bot:
                     logger.info(f"Created bot {bot_id} for user {user_id}")
                     return bot_id
@@ -137,11 +154,15 @@ class BotRunner:
             logger.error(f"Error creating bot for user {user_id}: {str(e)}")
             return None
 
-    async def update_bot_performance(self, bot_id: str, user_id: int, performance_data: Dict[str, Any]) -> bool:
+    async def update_bot_performance(
+        self, bot_id: str, user_id: int, performance_data: Dict[str, Any]
+    ) -> bool:
         """Update bot performance data"""
         try:
             async with get_db_context() as session:
-                return await self.repository.update_performance_data(session, bot_id, user_id, performance_data)
+                return await self.repository.update_performance_data(
+                    session, bot_id, user_id, performance_data
+                )
 
         except Exception as e:
             logger.error(f"Error updating performance for bot {bot_id}: {str(e)}")

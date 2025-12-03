@@ -12,8 +12,10 @@ import psutil
 
 logger = logging.getLogger(__name__)
 
+
 class PerformanceMetrics(BaseModel):
     """Trading performance metrics"""
+
     win_rate: float
     profit_factor: float
     average_win: float
@@ -25,22 +27,27 @@ class PerformanceMetrics(BaseModel):
     max_drawdown: float
     sharpe_ratio: float
 
+
 class TradeMetrics(BaseModel):
     """Individual trade metrics"""
+
     profit: float
     duration: int
     entry_price: float
     exit_price: float
     timestamp: int
 
+
 class SystemMetrics(BaseModel):
     """System performance metrics"""
+
     timestamp: int
     cpu_usage: float
     memory_usage: float
     response_time: float
     error_rate: float
     active_connections: int
+
 
 class PerformanceMonitor:
     """Performance monitoring service with trading metrics and system monitoring"""
@@ -56,17 +63,17 @@ class PerformanceMonitor:
             total_trades=0,
             consecutive_losses=0,
             max_drawdown=0.0,
-            sharpe_ratio=0.0
+            sharpe_ratio=0.0,
         )
         self.recent_trades: List[TradeMetrics] = []
         self.system_metrics: List[SystemMetrics] = []
         self.max_trades_history = 1000
         self.alert_thresholds = {
-            'min_win_rate': 0.4,        # 40% minimum win rate
-            'min_profit_factor': 1.2,   # 1.2 minimum profit factor
-            'max_consecutive_losses': 5, # Maximum consecutive losses
-            'max_drawdown': 0.15,       # 15% maximum drawdown
-            'min_sharpe_ratio': 0.5     # Minimum Sharpe ratio
+            "min_win_rate": 0.4,  # 40% minimum win rate
+            "min_profit_factor": 1.2,  # 1.2 minimum profit factor
+            "max_consecutive_losses": 5,  # Maximum consecutive losses
+            "max_drawdown": 0.15,  # 15% maximum drawdown
+            "min_sharpe_ratio": 0.5,  # Minimum Sharpe ratio
         }
         self._update_task: Optional[asyncio.Task] = None
         # Don't start async task in __init__ to avoid event loop issues
@@ -95,8 +102,13 @@ class PerformanceMonitor:
         # Update consecutive losses
         if trade.profit < 0:
             self.metrics.consecutive_losses += 1
-            if self.metrics.consecutive_losses >= self.alert_thresholds['max_consecutive_losses']:
-                logger.warning(f"Consecutive losses alert: {self.metrics.consecutive_losses} losses in a row")
+            if (
+                self.metrics.consecutive_losses
+                >= self.alert_thresholds["max_consecutive_losses"]
+            ):
+                logger.warning(
+                    f"Consecutive losses alert: {self.metrics.consecutive_losses} losses in a row"
+                )
                 # Emit alert event (would be handled by event system)
         else:
             self.metrics.consecutive_losses = 0
@@ -114,62 +126,78 @@ class PerformanceMonitor:
         self.metrics.successful_trades = len(winning_trades)
         self.metrics.failed_trades = len(losing_trades)
         self.metrics.total_trades = len(self.recent_trades)
-        self.metrics.win_rate = len(winning_trades) / len(self.recent_trades) if self.recent_trades else 0
+        self.metrics.win_rate = (
+            len(winning_trades) / len(self.recent_trades) if self.recent_trades else 0
+        )
 
         # Calculate average win/loss
         self.metrics.average_win = (
             sum(t.profit for t in winning_trades) / len(winning_trades)
-            if winning_trades else 0
+            if winning_trades
+            else 0
         )
         self.metrics.average_loss = (
             abs(sum(t.profit for t in losing_trades) / len(losing_trades))
-            if losing_trades else 0
+            if losing_trades
+            else 0
         )
 
         # Calculate profit factor
         total_profit = sum(t.profit for t in winning_trades)
         total_loss = abs(sum(t.profit for t in losing_trades))
-        self.metrics.profit_factor = total_profit / total_loss if total_loss > 0 else (float('inf') if total_profit > 0 else 0)
+        self.metrics.profit_factor = (
+            total_profit / total_loss
+            if total_loss > 0
+            else (float("inf") if total_profit > 0 else 0)
+        )
 
         # Calculate Sharpe ratio
         returns = [t.profit for t in self.recent_trades]
         if returns:
             avg_return = sum(returns) / len(returns)
-            std_dev = math.sqrt(sum((r - avg_return) ** 2 for r in returns) / len(returns))
-            self.metrics.sharpe_ratio = (avg_return / std_dev * math.sqrt(252)) if std_dev > 0 else 0
+            std_dev = math.sqrt(
+                sum((r - avg_return) ** 2 for r in returns) / len(returns)
+            )
+            self.metrics.sharpe_ratio = (
+                (avg_return / std_dev * math.sqrt(252)) if std_dev > 0 else 0
+            )
 
         # Check performance alerts
         await self._check_performance_alerts()
 
-        logger.info("Performance metrics updated", extra={'metrics': self.metrics.dict()})
+        logger.info(
+            "Performance metrics updated", extra={"metrics": self.metrics.dict()}
+        )
 
     async def _check_performance_alerts(self) -> None:
         """Check for performance alerts"""
         alerts = []
 
-        if self.metrics.win_rate < self.alert_thresholds['min_win_rate']:
+        if self.metrics.win_rate < self.alert_thresholds["min_win_rate"]:
             alerts.append(f"Low win rate: {self.metrics.win_rate:.2%}")
             logger.warning(f"Low win rate alert: {self.metrics.win_rate:.2%}")
 
-        if self.metrics.profit_factor < self.alert_thresholds['min_profit_factor']:
+        if self.metrics.profit_factor < self.alert_thresholds["min_profit_factor"]:
             alerts.append(f"Low profit factor: {self.metrics.profit_factor:.2f}")
             logger.warning(f"Low profit factor alert: {self.metrics.profit_factor:.2f}")
 
-        if self.metrics.max_drawdown > self.alert_thresholds['max_drawdown']:
+        if self.metrics.max_drawdown > self.alert_thresholds["max_drawdown"]:
             alerts.append(f"High drawdown: {self.metrics.max_drawdown:.2%}")
             logger.warning(f"High drawdown alert: {self.metrics.max_drawdown:.2%}")
 
-        if self.metrics.sharpe_ratio < self.alert_thresholds['min_sharpe_ratio']:
+        if self.metrics.sharpe_ratio < self.alert_thresholds["min_sharpe_ratio"]:
             alerts.append(f"Low Sharpe ratio: {self.metrics.sharpe_ratio:.2f}")
             logger.warning(f"Low Sharpe ratio alert: {self.metrics.sharpe_ratio:.2f}")
 
         # Multiple poor indicators trigger emergency
-        poor_indicators = sum([
-            self.metrics.win_rate < self.alert_thresholds['min_win_rate'],
-            self.metrics.profit_factor < self.alert_thresholds['min_profit_factor'],
-            self.metrics.max_drawdown > self.alert_thresholds['max_drawdown'],
-            self.metrics.sharpe_ratio < self.alert_thresholds['min_sharpe_ratio']
-        ])
+        poor_indicators = sum(
+            [
+                self.metrics.win_rate < self.alert_thresholds["min_win_rate"],
+                self.metrics.profit_factor < self.alert_thresholds["min_profit_factor"],
+                self.metrics.max_drawdown > self.alert_thresholds["max_drawdown"],
+                self.metrics.sharpe_ratio < self.alert_thresholds["min_sharpe_ratio"],
+            ]
+        )
 
         if poor_indicators >= 2:
             logger.error("Multiple poor performance indicators detected")
@@ -191,7 +219,7 @@ class PerformanceMonitor:
                 memory_usage=memory_percent,
                 response_time=0.0,  # Would need actual response time tracking
                 error_rate=error_rate,
-                active_connections=0  # Would need connection tracking
+                active_connections=0,  # Would need connection tracking
             )
 
             self.system_metrics.append(metrics)
@@ -207,7 +235,7 @@ class PerformanceMonitor:
                 memory_usage=0.0,
                 response_time=0.0,
                 error_rate=0.0,
-                active_connections=0
+                active_connections=0,
             )
 
     async def get_metrics_history(self, hours: int = 24) -> List[SystemMetrics]:
@@ -228,7 +256,7 @@ class PerformanceMonitor:
                 "status": status,
                 "uptime": time.time() - psutil.boot_time(),
                 "cpu_ok": cpu_ok,
-                "memory_ok": memory_ok
+                "memory_ok": memory_ok,
             }
         except Exception as e:
             logger.error(f"Error getting system health: {e}")
@@ -239,13 +267,13 @@ class PerformanceMonitor:
         alerts = []
         current_metrics = await self.collect_system_metrics()
 
-        if current_metrics.cpu_usage > thresholds.get('cpu', 90):
+        if current_metrics.cpu_usage > thresholds.get("cpu", 90):
             alerts.append(f"High CPU usage: {current_metrics.cpu_usage:.1f}%")
 
-        if current_metrics.memory_usage > thresholds.get('memory', 90):
+        if current_metrics.memory_usage > thresholds.get("memory", 90):
             alerts.append(f"High memory usage: {current_metrics.memory_usage:.1f}%")
 
-        if current_metrics.error_rate > thresholds.get('error_rate', 0.05):
+        if current_metrics.error_rate > thresholds.get("error_rate", 0.05):
             alerts.append(f"High error rate: {current_metrics.error_rate:.2%}")
 
         return alerts
@@ -272,7 +300,7 @@ class PerformanceMonitor:
             total_trades=0,
             consecutive_losses=0,
             max_drawdown=0.0,
-            sharpe_ratio=0.0
+            sharpe_ratio=0.0,
         )
         logger.info("Performance monitor reset")
 
@@ -284,6 +312,7 @@ class PerformanceMonitor:
                 await self._update_task
             except asyncio.CancelledError:
                 pass
+
 
 # Export singleton instance
 performance_monitor = PerformanceMonitor()

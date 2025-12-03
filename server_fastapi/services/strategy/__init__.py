@@ -1,12 +1,13 @@
 """
 Strategy Services
 """
+
 from .template_service import (
     StrategyTemplateService,
     StrategyTemplate,
     StrategyType,
     StrategyCategory,
-    template_service
+    template_service,
 )
 
 __all__ = [
@@ -14,5 +15,5 @@ __all__ = [
     "StrategyTemplate",
     "StrategyType",
     "StrategyCategory",
-    "template_service"
+    "template_service",
 ]

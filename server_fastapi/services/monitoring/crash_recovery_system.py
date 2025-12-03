@@ -35,7 +35,8 @@ class CrashRecoverySystem:
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
 
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute('''
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS checkpoints (
                     id TEXT PRIMARY KEY,
                     timestamp INTEGER NOT NULL,
@@ -43,26 +44,32 @@ class CrashRecoverySystem:
                     description TEXT NOT NULL,
                     created_at REAL DEFAULT (strftime('%s', 'now'))
                 )
-            ''')
+            """
+            )
             logger.info(f"Crash recovery database initialized at {self.db_path}")
 
-    async def create_checkpoint(self, state_data: Dict[str, any], description: str) -> RecoveryCheckpoint:
+    async def create_checkpoint(
+        self, state_data: Dict[str, any], description: str
+    ) -> RecoveryCheckpoint:
         """Create a recovery checkpoint"""
         checkpoint_id = str(uuid.uuid4())
         timestamp = int(time.time() * 1000)  # milliseconds
 
         try:
             with sqlite3.connect(self.db_path) as conn:
-                conn.execute('''
+                conn.execute(
+                    """
                     INSERT INTO checkpoints (id, timestamp, state_data, description)
                     VALUES (?, ?, ?, ?)
-                ''', (checkpoint_id, timestamp, json.dumps(state_data), description))
+                """,
+                    (checkpoint_id, timestamp, json.dumps(state_data), description),
+                )
 
             checkpoint = RecoveryCheckpoint(
                 id=checkpoint_id,
                 timestamp=timestamp,
                 state_data=state_data,
-                description=description
+                description=description,
             )
             logger.info(f"Created checkpoint {checkpoint_id}: {description}")
             return checkpoint
@@ -70,13 +77,18 @@ class CrashRecoverySystem:
             logger.error(f"Failed to create checkpoint: {e}")
             raise
 
-    async def recover_from_checkpoint(self, checkpoint_id: str) -> Optional[Dict[str, any]]:
+    async def recover_from_checkpoint(
+        self, checkpoint_id: str
+    ) -> Optional[Dict[str, any]]:
         """Recover system state from checkpoint"""
         try:
             with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute('''
+                cursor = conn.execute(
+                    """
                     SELECT state_data FROM checkpoints WHERE id = ?
-                ''', (checkpoint_id,))
+                """,
+                    (checkpoint_id,),
+                )
                 row = cursor.fetchone()
 
                 if row:
@@ -94,12 +106,14 @@ class CrashRecoverySystem:
         """Get the most recent checkpoint"""
         try:
             with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute('''
+                cursor = conn.execute(
+                    """
                     SELECT id, timestamp, state_data, description
                     FROM checkpoints
                     ORDER BY timestamp DESC
                     LIMIT 1
-                ''')
+                """
+                )
                 row = cursor.fetchone()
 
                 if row:
@@ -107,7 +121,7 @@ class CrashRecoverySystem:
                         id=row[0],
                         timestamp=row[1],
                         state_data=json.loads(row[2]),
-                        description=row[3]
+                        description=row[3],
                     )
                 return None
         except Exception as e:
@@ -118,21 +132,25 @@ class CrashRecoverySystem:
         """List all available checkpoints"""
         try:
             with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute('''
+                cursor = conn.execute(
+                    """
                     SELECT id, timestamp, state_data, description
                     FROM checkpoints
                     ORDER BY timestamp DESC
-                ''')
+                """
+                )
                 rows = cursor.fetchall()
 
                 checkpoints = []
                 for row in rows:
-                    checkpoints.append(RecoveryCheckpoint(
-                        id=row[0],
-                        timestamp=row[1],
-                        state_data=json.loads(row[2]),
-                        description=row[3]
-                    ))
+                    checkpoints.append(
+                        RecoveryCheckpoint(
+                            id=row[0],
+                            timestamp=row[1],
+                            state_data=json.loads(row[2]),
+                            description=row[3],
+                        )
+                    )
                 return checkpoints
         except Exception as e:
             logger.error(f"Failed to list checkpoints: {e}")
@@ -143,7 +161,9 @@ class CrashRecoverySystem:
         try:
             latest_checkpoint = await self.get_latest_checkpoint()
             if latest_checkpoint:
-                logger.info(f"Automatic recovery initiated from checkpoint {latest_checkpoint.id}")
+                logger.info(
+                    f"Automatic recovery initiated from checkpoint {latest_checkpoint.id}"
+                )
                 # Recovery logic would be implemented here based on the state data
                 # For now, we just log the successful recovery attempt
                 return True

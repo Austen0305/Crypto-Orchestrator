@@ -52,11 +52,11 @@ class GridTradingService:
         order_amount: float,
         trading_mode: str = "paper",
         grid_spacing_type: str = "arithmetic",
-        config: Optional[Dict[str, Any]] = None
+        config: Optional[Dict[str, Any]] = None,
     ) -> Optional[str]:
         """
         Create a new grid trading bot.
-        
+
         Args:
             user_id: User ID
             name: Bot name
@@ -69,7 +69,7 @@ class GridTradingService:
             trading_mode: "paper" or "real"
             grid_spacing_type: "arithmetic" or "geometric"
             config: Additional configuration (JSON)
-        
+
         Returns:
             Bot ID if successful, None otherwise
         """
@@ -82,7 +82,9 @@ class GridTradingService:
             if order_amount <= 0:
                 raise ValueError("Order amount must be positive")
             if grid_spacing_type not in ["arithmetic", "geometric"]:
-                raise ValueError("Grid spacing type must be 'arithmetic' or 'geometric'")
+                raise ValueError(
+                    "Grid spacing type must be 'arithmetic' or 'geometric'"
+                )
 
             bot_id = f"grid-{user_id}-{uuid.uuid4().hex[:12]}"
 
@@ -102,12 +104,10 @@ class GridTradingService:
                     order_amount=order_amount,
                     active=False,
                     status="stopped",
-                    grid_state=json.dumps({
-                        "orders": [],
-                        "filled_orders": [],
-                        "current_price": None
-                    }),
-                    config=json.dumps(config or {})
+                    grid_state=json.dumps(
+                        {"orders": [], "filled_orders": [], "current_price": None}
+                    ),
+                    config=json.dumps(config or {}),
                 )
 
                 session.add(grid_bot)
@@ -118,7 +118,9 @@ class GridTradingService:
                 return bot_id
 
         except Exception as e:
-            logger.error(f"Error creating grid bot for user {user_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error creating grid bot for user {user_id}: {str(e)}", exc_info=True
+            )
             raise
 
     async def start_grid_bot(self, bot_id: str, user_id: int) -> bool:
@@ -137,7 +139,9 @@ class GridTradingService:
                 # Validate start conditions
                 validation = await self._validate_start_conditions(bot, session)
                 if not validation["can_start"]:
-                    logger.warning(f"Cannot start grid bot {bot_id}: {validation['reason']}")
+                    logger.warning(
+                        f"Cannot start grid bot {bot_id}: {validation['reason']}"
+                    )
                     return False
 
                 # Place initial grid orders
@@ -205,59 +209,64 @@ class GridTradingService:
                     return {"action": "skipped", "reason": "bot_inactive"}
 
                 # Get current grid state
-                grid_state = json.loads(bot.grid_state) if bot.grid_state else {"orders": [], "filled_orders": []}
+                grid_state = (
+                    json.loads(bot.grid_state)
+                    if bot.grid_state
+                    else {"orders": [], "filled_orders": []}
+                )
 
                 # Check for filled orders
-                filled_orders = await self._check_filled_orders(bot, grid_state, session)
-                
+                filled_orders = await self._check_filled_orders(
+                    bot, grid_state, session
+                )
+
                 if filled_orders:
                     # Rebalance grid
                     await self._rebalance_grid(bot, filled_orders, grid_state, session)
-                    
+
                     # Update performance
                     await self._update_performance(bot, filled_orders, session)
 
                 return {
                     "action": "processed",
                     "filled_orders": len(filled_orders),
-                    "total_profit": bot.total_profit
+                    "total_profit": bot.total_profit,
                 }
 
         except Exception as e:
-            logger.error(f"Error processing grid cycle for bot {bot_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error processing grid cycle for bot {bot_id}: {str(e)}", exc_info=True
+            )
             return {"action": "error", "error": str(e)}
 
-    async def _validate_start_conditions(self, bot: GridBot, session: AsyncSession) -> Dict[str, Any]:
+    async def _validate_start_conditions(
+        self, bot: GridBot, session: AsyncSession
+    ) -> Dict[str, Any]:
         """Validate that grid bot can start."""
         # Check if exchange is configured
         # Check if user has sufficient balance
         # Check risk limits
         return {"can_start": True, "reason": None}
 
-    async def _place_initial_grid_orders(self, bot: GridBot, session: AsyncSession) -> List[Dict[str, Any]]:
+    async def _place_initial_grid_orders(
+        self, bot: GridBot, session: AsyncSession
+    ) -> List[Dict[str, Any]]:
         """Place initial grid orders."""
         # Calculate grid prices
         grid_prices = self._calculate_grid_prices(
-            bot.lower_price,
-            bot.upper_price,
-            bot.grid_count,
-            bot.grid_spacing_type
+            bot.lower_price, bot.upper_price, bot.grid_count, bot.grid_spacing_type
         )
 
         # Get current market price
         exchange_service = ExchangeService(bot.exchange)
         current_price = await exchange_service.get_market_price(bot.symbol)
-        
+
         if not current_price:
             logger.warning(f"Could not get market price for {bot.symbol}")
             current_price = (bot.lower_price + bot.upper_price) / 2
 
         orders = []
-        grid_state = {
-            "orders": [],
-            "filled_orders": [],
-            "current_price": current_price
-        }
+        grid_state = {"orders": [], "filled_orders": [], "current_price": current_price}
 
         # Place buy orders below current price
         buy_prices = [p for p in grid_prices if p < current_price]
@@ -267,13 +276,15 @@ class GridTradingService:
             )
             if order:
                 orders.append(order)
-                grid_state["orders"].append({
-                    "order_id": order.get("id"),
-                    "side": "buy",
-                    "price": price,
-                    "amount": bot.order_amount,
-                    "status": "open"
-                })
+                grid_state["orders"].append(
+                    {
+                        "order_id": order.get("id"),
+                        "side": "buy",
+                        "price": price,
+                        "amount": bot.order_amount,
+                        "status": "open",
+                    }
+                )
 
         # Place sell orders above current price
         sell_prices = [p for p in grid_prices if p > current_price]
@@ -283,25 +294,25 @@ class GridTradingService:
             )
             if order:
                 orders.append(order)
-                grid_state["orders"].append({
-                    "order_id": order.get("id"),
-                    "side": "sell",
-                    "price": price,
-                    "amount": bot.order_amount,
-                    "status": "open"
-                })
+                grid_state["orders"].append(
+                    {
+                        "order_id": order.get("id"),
+                        "side": "sell",
+                        "price": price,
+                        "amount": bot.order_amount,
+                        "status": "open",
+                    }
+                )
 
         # Update grid state
-        await self.repository.update_grid_state(session, bot.id, bot.user_id, grid_state)
+        await self.repository.update_grid_state(
+            session, bot.id, bot.user_id, grid_state
+        )
 
         return orders
 
     def _calculate_grid_prices(
-        self,
-        lower_price: float,
-        upper_price: float,
-        grid_count: int,
-        spacing_type: str
+        self, lower_price: float, upper_price: float, grid_count: int, spacing_type: str
     ) -> List[float]:
         """Calculate grid price levels."""
         if spacing_type == "arithmetic":
@@ -312,7 +323,7 @@ class GridTradingService:
         else:
             # Geometric spacing: equal percentage intervals
             ratio = (upper_price / lower_price) ** (1 / (grid_count - 1))
-            return [lower_price * (ratio ** i) for i in range(grid_count)]
+            return [lower_price * (ratio**i) for i in range(grid_count)]
 
     async def _place_grid_order(
         self,
@@ -320,7 +331,7 @@ class GridTradingService:
         side: str,
         price: float,
         amount: float,
-        session: AsyncSession
+        session: AsyncSession,
     ) -> Optional[Dict[str, Any]]:
         """Place a single grid order."""
         try:
@@ -332,7 +343,7 @@ class GridTradingService:
                     "price": price,
                     "amount": amount,
                     "status": "open",
-                    "symbol": bot.symbol
+                    "symbol": bot.symbol,
                 }
             else:
                 # Real trading - place actual order
@@ -342,7 +353,7 @@ class GridTradingService:
                     side=side,
                     type_="limit",
                     amount=amount,
-                    price=price
+                    price=price,
                 )
                 return order
 
@@ -351,28 +362,26 @@ class GridTradingService:
             return None
 
     async def _check_filled_orders(
-        self,
-        bot: GridBot,
-        grid_state: Dict[str, Any],
-        session: AsyncSession
+        self, bot: GridBot, grid_state: Dict[str, Any], session: AsyncSession
     ) -> List[Dict[str, Any]]:
         """Check which orders have been filled."""
         filled = []
-        
+
         if bot.trading_mode == "paper":
             # In paper trading, simulate order fills based on current price
             exchange_service = ExchangeService(bot.exchange)
             current_price = await exchange_service.get_market_price(bot.symbol)
-            
+
             if current_price:
                 for order in grid_state.get("orders", []):
                     if order.get("status") == "open":
                         order_price = order.get("price")
                         order_side = order.get("side")
-                        
+
                         # Check if order would be filled
-                        if (order_side == "buy" and current_price <= order_price) or \
-                           (order_side == "sell" and current_price >= order_price):
+                        if (order_side == "buy" and current_price <= order_price) or (
+                            order_side == "sell" and current_price >= order_price
+                        ):
                             filled.append(order)
         else:
             # Real trading - check exchange for filled orders
@@ -392,13 +401,14 @@ class GridTradingService:
         bot: GridBot,
         filled_orders: List[Dict[str, Any]],
         grid_state: Dict[str, Any],
-        session: AsyncSession
+        session: AsyncSession,
     ) -> None:
         """Rebalance grid after orders are filled."""
         # Remove filled orders from open orders
         filled_order_ids = {o.get("order_id") for o in filled_orders}
         grid_state["orders"] = [
-            o for o in grid_state.get("orders", [])
+            o
+            for o in grid_state.get("orders", [])
             if o.get("order_id") not in filled_order_ids
         ]
 
@@ -409,15 +419,12 @@ class GridTradingService:
         for filled_order in filled_orders:
             side = filled_order.get("side")
             price = filled_order.get("price")
-            
+
             # Calculate opposite side order price
             grid_prices = self._calculate_grid_prices(
-                bot.lower_price,
-                bot.upper_price,
-                bot.grid_count,
-                bot.grid_spacing_type
+                bot.lower_price, bot.upper_price, bot.grid_count, bot.grid_spacing_type
             )
-            
+
             # Find adjacent grid level
             if side == "buy":
                 # Place sell order at next higher grid level
@@ -427,13 +434,15 @@ class GridTradingService:
                         bot, "sell", next_price, bot.order_amount, session
                     )
                     if new_order:
-                        grid_state["orders"].append({
-                            "order_id": new_order.get("id"),
-                            "side": "sell",
-                            "price": next_price,
-                            "amount": bot.order_amount,
-                            "status": "open"
-                        })
+                        grid_state["orders"].append(
+                            {
+                                "order_id": new_order.get("id"),
+                                "side": "sell",
+                                "price": next_price,
+                                "amount": bot.order_amount,
+                                "status": "open",
+                            }
+                        )
             else:
                 # Place buy order at next lower grid level
                 next_price = max([p for p in grid_prices if p < price], default=None)
@@ -442,32 +451,35 @@ class GridTradingService:
                         bot, "buy", next_price, bot.order_amount, session
                     )
                     if new_order:
-                        grid_state["orders"].append({
-                            "order_id": new_order.get("id"),
-                            "side": "buy",
-                            "price": next_price,
-                            "amount": bot.order_amount,
-                            "status": "open"
-                        })
+                        grid_state["orders"].append(
+                            {
+                                "order_id": new_order.get("id"),
+                                "side": "buy",
+                                "price": next_price,
+                                "amount": bot.order_amount,
+                                "status": "open",
+                            }
+                        )
 
         # Update grid state
-        await self.repository.update_grid_state(session, bot.id, bot.user_id, grid_state)
+        await self.repository.update_grid_state(
+            session, bot.id, bot.user_id, grid_state
+        )
 
     async def _update_performance(
-        self,
-        bot: GridBot,
-        filled_orders: List[Dict[str, Any]],
-        session: AsyncSession
+        self, bot: GridBot, filled_orders: List[Dict[str, Any]], session: AsyncSession
     ) -> None:
         """Update grid bot performance metrics."""
         # Calculate profit from filled orders
-        grid_state = json.loads(bot.grid_state) if bot.grid_state else {"filled_orders": []}
-        
+        grid_state = (
+            json.loads(bot.grid_state) if bot.grid_state else {"filled_orders": []}
+        )
+
         # Simple profit calculation: sum of (sell_price - buy_price) for matched pairs
         # This is simplified - real implementation would match buy/sell pairs
         total_profit = bot.total_profit
         total_trades = bot.total_trades + len(filled_orders)
-        
+
         # Update win rate (simplified)
         win_rate = bot.win_rate  # Would need to track wins/losses properly
 
@@ -478,7 +490,7 @@ class GridTradingService:
     async def _cancel_all_orders(self, bot: GridBot, session: AsyncSession) -> None:
         """Cancel all open orders for the grid bot."""
         grid_state = json.loads(bot.grid_state) if bot.grid_state else {"orders": []}
-        
+
         for order in grid_state.get("orders", []):
             if order.get("status") == "open":
                 # Cancel order on exchange
@@ -486,11 +498,13 @@ class GridTradingService:
                     exchange_service = ExchangeService(bot.exchange)
                     # Cancel order - would need exchange API call
                     pass
-                
+
                 order["status"] = "cancelled"
 
         # Update grid state
-        await self.repository.update_grid_state(session, bot.id, bot.user_id, grid_state)
+        await self.repository.update_grid_state(
+            session, bot.id, bot.user_id, grid_state
+        )
 
     async def get_grid_bot(self, bot_id: str, user_id: int) -> Optional[Dict[str, Any]]:
         """Get grid bot details."""
@@ -499,21 +513,26 @@ class GridTradingService:
                 bot = await self.repository.get_by_user_and_id(session, bot_id, user_id)
                 if not bot:
                     return None
-                
+
                 return bot.to_dict()
 
         except Exception as e:
             logger.error(f"Error getting grid bot {bot_id}: {str(e)}", exc_info=True)
             return None
 
-    async def list_user_grid_bots(self, user_id: int, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
+    async def list_user_grid_bots(
+        self, user_id: int, skip: int = 0, limit: int = 100
+    ) -> List[Dict[str, Any]]:
         """List all grid bots for a user."""
         try:
             async with self._get_session() as session:
-                bots = await self.repository.get_user_grid_bots(session, user_id, skip, limit)
+                bots = await self.repository.get_user_grid_bots(
+                    session, user_id, skip, limit
+                )
                 return [bot.to_dict() for bot in bots]
 
         except Exception as e:
-            logger.error(f"Error listing grid bots for user {user_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error listing grid bots for user {user_id}: {str(e)}", exc_info=True
+            )
             return []
-
