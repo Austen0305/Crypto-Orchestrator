@@ -39,6 +39,10 @@ class BotTradingService:
 
         # Use singleton instance for risk manager
         self.risk_manager = AdvancedRiskManager.get_instance()
+        
+        # Initialize trading safety service
+        from .trading_safety_service import get_trading_safety_service
+        self.safety_service = get_trading_safety_service()
 
     async def execute_trading_cycle(self, bot_config: Dict[str, Any]) -> Dict[str, Any]:
         """Execute one complete trading cycle for a bot"""
@@ -80,7 +84,7 @@ class BotTradingService:
             trade_details['mode'] = bot_config.get('mode', 'paper')
             trade_details['exchange'] = bot_config.get('exchange', 'binance')
 
-            # Validate trade with safety system
+            # Validate trade with existing safety system (backward compatibility)
             from ..trading.safe_trading_system import SafeTradingSystem
             safe_system = SafeTradingSystem()
             validation = await safe_system.validate_trade(trade_details)
@@ -88,12 +92,118 @@ class BotTradingService:
             if not validation["valid"]:
                 logger.warning(f"Trade blocked by safety system for bot {bot_id}: {validation['errors']}")
                 return {"action": "blocked", "reason": "safety_validation_failed", "details": validation}
+            
+            # Additional validation with new trading safety service
+            # Get account balance and positions (mock for now, replace with real data)
+            account_balance = await self._get_account_balance(user_id, trade_details['exchange'])
+            current_positions = await self._get_current_positions(user_id, trade_details['exchange'])
+            
+            # Validate with trading safety service
+            safety_result = self.safety_service.validate_trade(
+                symbol=trade_details['symbol'],
+                side=trade_details['action'],
+                quantity=trade_details['quantity'],
+                price=trade_details['price'],
+                account_balance=account_balance,
+                current_positions=current_positions
+            )
+            
+            if not safety_result['valid']:
+                logger.warning(f"Trade blocked by trading safety service for bot {bot_id}: {safety_result['reason']}")
+                return {
+                    "action": "blocked",
+                    "reason": "safety_limits_exceeded",
+                    "details": safety_result
+                }
+            
+            # Apply any adjustments from safety service
+            if safety_result.get('adjustments'):
+                original_qty = trade_details['quantity']
+                trade_details['quantity'] = safety_result['adjustments']['adjusted_quantity']
+                logger.info(
+                    f"Position size adjusted by safety service for bot {bot_id}: "
+                    f"{original_qty:.6f} -> {trade_details['quantity']:.6f}"
+                )
 
-            # Execute trade (mock implementation)
+            # Execute trade
             trade_result = await self._execute_trade(trade_details)
 
-            # Record trade result
+            # Record trade result with both systems
             await safe_system.record_trade_result(trade_details, trade_result.get('pnl', 0.0))
+            
+            # Record with new safety service
+            if trade_result.get('success'):
+                # Generate trade ID if not present
+                trade_id = trade_result.get('order_id') or f"{bot_id}_{datetime.now().timestamp()}"
+                
+                # Calculate P&L (for now, 0 until position is closed)
+                pnl = trade_result.get('pnl', 0.0)
+                
+                # Record trade result
+                self.safety_service.record_trade_result(
+                    trade_id=str(trade_id),
+                    pnl=pnl,
+                    symbol=trade_details['symbol'],
+                    side=trade_details['action'],
+                    quantity=trade_details['quantity'],
+                    price=trade_result.get('executed_price', trade_details['price'])
+                )
+                
+                # Automatically create stop-loss and take-profit orders
+                position_id = f"pos_{trade_id}"
+                executed_price = trade_result.get('executed_price', trade_details['price'])
+                
+                try:
+                    from .sl_tp_service import get_sl_tp_service
+                    sl_tp_service = get_sl_tp_service()
+                    
+                    # Get stop-loss and take-profit percentages from risk profile
+                    stop_loss_pct = trade_details.get('risk_profile', {}).get('stop_loss_pct', 0.02)  # 2% default
+                    take_profit_pct = trade_details.get('risk_profile', {}).get('take_profit_pct', 0.05)  # 5% default
+                    
+                    # Create stop-loss order
+                    sl_order = sl_tp_service.create_stop_loss(
+                        position_id=position_id,
+                        symbol=trade_details['symbol'],
+                        side=trade_details['action'],
+                        quantity=trade_details['quantity'],
+                        entry_price=executed_price,
+                        stop_loss_pct=stop_loss_pct,
+                        user_id=str(user_id),
+                        bot_id=str(bot_id)
+                    )
+                    
+                    logger.info(
+                        f"Auto-created stop-loss for position {position_id}: "
+                        f"Entry ${executed_price:.2f}, Stop ${sl_order['trigger_price']:.2f}"
+                    )
+                    
+                    # Create take-profit order
+                    tp_order = sl_tp_service.create_take_profit(
+                        position_id=position_id,
+                        symbol=trade_details['symbol'],
+                        side=trade_details['action'],
+                        quantity=trade_details['quantity'],
+                        entry_price=executed_price,
+                        take_profit_pct=take_profit_pct,
+                        user_id=str(user_id),
+                        bot_id=str(bot_id)
+                    )
+                    
+                    logger.info(
+                        f"Auto-created take-profit for position {position_id}: "
+                        f"Entry ${executed_price:.2f}, Target ${tp_order['trigger_price']:.2f}"
+                    )
+                    
+                    # Store order IDs in trade result for reference
+                    trade_result['stop_loss_order_id'] = sl_order['order_id']
+                    trade_result['take_profit_order_id'] = tp_order['order_id']
+                    
+                except Exception as e:
+                    logger.error(f"Failed to create SL/TP orders for position {position_id}: {e}")
+                    # Don't fail the trade, just log the error
+                
+                logger.info(f"Trade result recorded with safety service for bot {bot_id}")
 
             # Adaptive Learning: Learn from trade
             try:
@@ -840,3 +950,75 @@ class BotTradingService:
                     "pnl": 0.0,
                     "error": str(e)
                 }
+    
+    async def _get_account_balance(self, user_id: str, exchange: str) -> float:
+        """
+        Get current account balance for user on exchange.
+        
+        Args:
+            user_id: User identifier
+            exchange: Exchange name (e.g., 'binance')
+            
+        Returns:
+            Current account balance in USD
+        """
+        try:
+            # Try to get real balance from exchange service
+            from ..exchange.exchange_service import exchange_service
+            
+            # Get user's exchange API keys
+            from ..auth.exchange_key_service import exchange_key_service
+            api_key_data = await exchange_key_service.get_api_key(
+                str(user_id), exchange, include_secrets=False
+            )
+            
+            if api_key_data and api_key_data.get('is_validated'):
+                # Get real balance (implementation depends on exchange service)
+                # For now, return a default value
+                # TODO: Implement actual balance fetching
+                logger.info(f"Getting account balance for user {user_id} on {exchange}")
+                return 10000.0  # Default for now
+            else:
+                # Paper trading mode or no API keys
+                logger.info(f"Using default balance for user {user_id} (paper trading)")
+                return 10000.0  # Default paper trading balance
+                
+        except Exception as e:
+            logger.warning(f"Error getting account balance: {e}, using default")
+            return 10000.0  # Safe default
+    
+    async def _get_current_positions(self, user_id: str, exchange: str) -> Dict[str, Dict[str, Any]]:
+        """
+        Get current open positions for user on exchange.
+        
+        Args:
+            user_id: User identifier
+            exchange: Exchange name (e.g., 'binance')
+            
+        Returns:
+            Dictionary of positions keyed by symbol
+        """
+        try:
+            # Try to get real positions from exchange service
+            from ..exchange.exchange_service import exchange_service
+            
+            # Get user's exchange API keys
+            from ..auth.exchange_key_service import exchange_key_service
+            api_key_data = await exchange_key_service.get_api_key(
+                str(user_id), exchange, include_secrets=False
+            )
+            
+            if api_key_data and api_key_data.get('is_validated'):
+                # Get real positions (implementation depends on exchange service)
+                # For now, return empty dict
+                # TODO: Implement actual position fetching
+                logger.info(f"Getting positions for user {user_id} on {exchange}")
+                return {}  # Empty for now
+            else:
+                # Paper trading mode or no API keys
+                logger.info(f"Using empty positions for user {user_id} (paper trading)")
+                return {}
+                
+        except Exception as e:
+            logger.warning(f"Error getting positions: {e}, using empty positions")
+            return {}  # Safe default
