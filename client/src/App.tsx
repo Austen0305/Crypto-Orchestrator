@@ -24,6 +24,7 @@ import { useExchangeStatus } from "@/hooks/useExchange";
 import { useTokenRefresh } from "@/hooks/useTokenRefresh";
 import { useTranslation } from "react-i18next";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import type { Portfolio } from "@shared/types/api";
 
 // Lazy load all pages for better performance
 const Landing = React.lazy(() => import("@/pages/Landing"));
@@ -97,7 +98,7 @@ function Router() {
 }
 
 function AppContent() {
-  const { data: portfolio } = usePortfolio("paper");
+  const { data: portfolio } = usePortfolio("paper") as { data: Portfolio | undefined };
   const { isConnected } = useExchangeStatus();
   const { i18n } = useTranslation();
   const { isAuthenticated } = useAuth();

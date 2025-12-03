@@ -107,3 +107,49 @@ export interface APIError {
   message: string;
   details?: any;
 }
+
+// Market Analysis Types
+export interface MarketAnalysisData {
+  historical_data?: OHLCV[];
+  recommendation?: 'buy' | 'sell' | 'hold';
+  confidence?: number;
+  current_price?: number;
+  signals?: {
+    bullish: number;
+    bearish: number;
+    neutral: number;
+  };
+  summary?: string;
+  indicators?: {
+    rsi?: number;
+    macd?: number;
+    ema?: number;
+    sma?: number;
+    bollinger_upper?: number;
+    bollinger_middle?: number;
+    bollinger_lower?: number;
+    stochastic_k?: number;
+    stochastic_d?: number;
+    [key: string]: number | undefined;
+  };
+}
+
+// User Profile Types
+export interface UserProfile {
+  id: string;
+  username: string;
+  email: string;
+  totalBalance?: number;
+  mfaEnabled?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Portfolio Types
+export interface Portfolio {
+  totalBalance?: number;
+  available?: number;
+  locked?: number;
+  positions?: any[];
+  [key: string]: any;
+}
