@@ -79,7 +79,10 @@
     "validate:all": "npm run validate:env && npm run validate:jwt-auth",
     "postinstall": "node -e \"try{const {execSync}=require('child_process');const cmd=process.platform==='win32'?'python\\\\python.exe -m pip install -r requirements.txt':(process.env.PYTHON||'python3')+' -m pip install -r requirements.txt';execSync(cmd,{stdio:'inherit'})}catch(e){console.log('Skipping pip install:', e.message)}\"",
     "precommit": "lint-staged",
-    "prepare": "husky"
+    "prepare": "husky",
+    "validate:db-migrations": "python scripts/validate_db_migrations.py",
+    "validate:backend": "python scripts/validate_backend_api.py",
+    "validate:security": "npm audit && python scripts/validate_security.py"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
