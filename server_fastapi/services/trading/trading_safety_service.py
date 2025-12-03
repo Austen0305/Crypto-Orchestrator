@@ -261,6 +261,15 @@ class TradingSafetyService:
             }
         }
     
+    def get_status(self) -> Dict[str, Any]:
+        """
+        Alias for get_safety_status() for API compatibility.
+        
+        Returns:
+            Dict with safety metrics and status
+        """
+        return self.get_safety_status()
+    
     def reset_kill_switch(self, admin_override: bool = False) -> Dict[str, Any]:
         """
         Reset the kill switch (requires admin override or new day).

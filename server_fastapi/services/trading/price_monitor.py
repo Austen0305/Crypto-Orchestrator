@@ -223,6 +223,15 @@ class PriceMonitoringService:
             'check_interval': self.check_interval,
             'monitored_symbols': list(self.monitored_symbols)
         }
+    
+    def get_status(self) -> Dict[str, Any]:
+        """
+        Alias for get_monitoring_status() for API compatibility.
+        
+        Returns:
+            Dict with monitoring status
+        """
+        return self.get_monitoring_status()
 
 
 # Singleton instance
@@ -235,3 +244,7 @@ def get_price_monitor() -> PriceMonitoringService:
     if _price_monitor_instance is None:
         _price_monitor_instance = PriceMonitoringService()
     return _price_monitor_instance
+
+
+# Class alias for API compatibility
+PriceMonitor = PriceMonitoringService
