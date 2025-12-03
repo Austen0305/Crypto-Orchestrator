@@ -105,7 +105,6 @@ export const AdvancedMarketAnalysis = React.memo(function AdvancedMarketAnalysis
         ) : error ? (
           <ErrorRetry
             title="Failed to load market analysis"
-            message={error instanceof Error ? error.message : "Unable to fetch advanced market analysis. Please try again."}
             onRetry={() => refetch()}
             error={error as Error}
           />
