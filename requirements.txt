@@ -60,14 +60,14 @@ torch>=2.2.0  # PyTorch for RL and transformers (Python 3.12 compatible)
 vaderSentiment==3.3.2  # VADER sentiment analyzer
 textblob==0.17.1  # Text processing and sentiment
 
-# OpenTelemetry for observability
-opentelemetry-api
-opentelemetry-sdk
-opentelemetry-instrumentation-fastapi
-opentelemetry-instrumentation-sqlalchemy
-opentelemetry-instrumentation-requests
-opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-exporter-prometheus
+# OpenTelemetry for observability (compatible versions to avoid conflicts)
+opentelemetry-api>=1.21.0,<2.0.0
+opentelemetry-sdk>=1.21.0,<2.0.0
+opentelemetry-instrumentation-fastapi>=0.42b0,<1.0.0
+opentelemetry-instrumentation-sqlalchemy>=0.42b0,<1.0.0
+opentelemetry-instrumentation-requests>=0.42b0,<1.0.0
+opentelemetry-exporter-otlp-proto-grpc>=1.21.0,<2.0.0
+opentelemetry-exporter-prometheus>=0.43b0,<1.0.0
 
 # SMS notifications
 twilio==9.2.3  # For SMS notifications via Twilio
