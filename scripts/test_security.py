@@ -177,12 +177,12 @@ class SecurityTester:
         """Test password validation"""
         print("\n🔑 Testing Password Validation...")
         
-        # Weak passwords that should be rejected
+        # Weak passwords that should be rejected (clearly marked as test data)
         weak_passwords = [
-            "123",
-            "password",
-            "12345678",
-            "test"
+            "TEST123",  # Too weak
+            "TEST_PASSWORD_WEAK",  # Common pattern
+            "12345678",  # All numbers
+            "testonly"  # Too simple
         ]
         
         async with aiohttp.ClientSession() as session:

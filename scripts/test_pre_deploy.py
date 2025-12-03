@@ -99,11 +99,14 @@ class TestRunner:
         
         # Check for npm vulnerabilities
         success, output = self.run_command(
-            "npm audit --audit-level=high || echo 'Audit complete'",
+            "npm audit --audit-level=high",
             "NPM Security Audit",
             timeout=120
         )
-        tests.append(("NPM Audit", True, output))  # Don't fail on audit
+        # Note: NPM audit may return non-zero for vulnerabilities
+        # We report the result but don't fail the entire test suite
+        # Manual review of audit results is required
+        tests.append(("NPM Audit", success, output if not success else "No high/critical vulnerabilities"))
         
         self.results["phase2"] = {
             "name": "Security",

@@ -91,28 +91,30 @@ test.describe('Critical User Flows', () => {
       return;
     }
     
-    // Navigate to wallet
-    await page.click('a[href*="wallet"], nav >> text=Wallet');
+    // Navigate to wallet - try multiple selectors for robustness
+    const walletLink = page.locator('[data-testid="wallet-link"], a[href*="wallet"], nav >> text=Wallet');
+    await walletLink.first().click();
     await expect(page).toHaveURL(/.*wallet/);
     
-    // Check balance display
-    const balanceElement = page.locator('[data-testid="balance"], .balance, .wallet-balance');
+    // Check balance display - use test ID or fallback to class/aria selectors
+    const balanceElement = page.locator('[data-testid="balance"], [aria-label*="balance"], .balance, .wallet-balance');
     await expect(balanceElement.first()).toBeVisible();
     
     const initialBalance = await balanceElement.first().textContent();
     console.log('Initial balance:', initialBalance);
     
     // Look for deposit button
-    const depositButton = page.locator('button:has-text("Deposit"), a:has-text("Deposit")');
+    const depositButton = page.locator('[data-testid="deposit-button"], button:has-text("Deposit"), a:has-text("Deposit")');
     if (await depositButton.count() > 0) {
       console.log('✅ Deposit button found');
     }
     
     // Check transaction history
-    await page.locator('text=/Transaction|History/i').first().click();
+    const historyLink = page.locator('[data-testid="transaction-history"], text=/Transaction|History/i');
+    await historyLink.first().click();
     
-    const hasTransactions = await page.locator('.transaction-item, [data-testid="transaction"]').count() > 0;
-    const hasEmptyState = await page.locator('text=/No transactions|Empty/i').count() > 0;
+    const hasTransactions = await page.locator('[data-testid="transaction"], .transaction-item, [role="row"]').count() > 0;
+    const hasEmptyState = await page.locator('[data-testid="empty-state"], text=/No transactions|Empty/i').count() > 0;
     
     expect(hasTransactions || hasEmptyState).toBeTruthy();
     console.log('✅ Transaction history accessible');
@@ -218,11 +220,17 @@ test.describe('Critical User Flows', () => {
     
     for (const link of navLinks) {
       try {
-        await page.click(`nav a:has-text("${link.text.source}")`);
-        await page.waitForTimeout(500);
-        console.log(`✅ Navigated to ${link.text.source}`);
+        // Use the regex pattern directly in locator
+        const linkElement = page.locator('nav a', { hasText: link.text });
+        if (await linkElement.count() > 0) {
+          await linkElement.first().click();
+          await page.waitForTimeout(500);
+          console.log(`✅ Navigated to link matching ${link.text}`);
+        } else {
+          console.log(`⚠️  Navigation link not found: ${link.text}`);
+        }
       } catch (error) {
-        console.log(`⚠️  Navigation link not found: ${link.text.source}`);
+        console.log(`⚠️  Error navigating to ${link.text}: ${error}`);
       }
     }
   });
