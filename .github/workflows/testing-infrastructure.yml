@@ -175,12 +175,50 @@ jobs:
         run: |
           python scripts/test_pre_deploy.py || true
       
+      - name: Run Coverage Analysis
+        run: |
+          python scripts/coverage_reporter.py --run-tests --badge --trends || true
+        continue-on-error: true
+      
+      - name: Set Performance Baseline (on main branch)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          python scripts/monitor_performance.py --set-baseline || true
+        continue-on-error: true
+      
+      - name: Check Performance Regression (on PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          python scripts/monitor_performance.py --compare --threshold 1.3 || true
+        continue-on-error: true
+      
       - name: Upload Test Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pre-deployment-report
           path: test_report_*.json
+          if-no-files-found: ignore
+      
+      - name: Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            htmlcov/
+            coverage.json
+            coverage_badge.svg
+          if-no-files-found: ignore
+      
+      - name: Upload Performance Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-report
+          path: |
+            performance_baseline.json
+            performance_history.json
           if-no-files-found: ignore
       
       - name: Stop FastAPI server
