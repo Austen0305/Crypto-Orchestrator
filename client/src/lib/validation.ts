@@ -195,3 +195,80 @@ export function formatValidationErrors(errors: z.ZodError): Record<string, strin
   });
   return formatted;
 }
+
+/**
+ * Wallet deposit schema
+ */
+export const depositSchema = z.object({
+  currency: z.string().min(1, 'Currency is required'),
+  amount: validationSchemas.amount,
+  paymentMethod: z.enum(['card', 'bank', 'crypto']).optional(),
+});
+
+/**
+ * Wallet withdraw schema
+ */
+export const withdrawSchema = z.object({
+  currency: z.string().min(1, 'Currency is required'),
+  amount: validationSchemas.amount,
+  address: z.string().min(1, 'Withdrawal address is required').optional(),
+});
+
+/**
+ * Staking schema
+ */
+export const stakeSchema = z.object({
+  currency: z.string().min(1, 'Currency is required'),
+  amount: validationSchemas.amount,
+  duration: z.number().int().positive('Duration must be positive').optional(),
+});
+
+/**
+ * Unstaking schema
+ */
+export const unstakeSchema = z.object({
+  currency: z.string().min(1, 'Currency is required'),
+  amount: validationSchemas.amount,
+});
+
+/**
+ * Validate amount utility
+ */
+export function validateAmount(value: string | number, min = 0.0001): { valid: boolean; error?: string } {
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  
+  if (isNaN(numValue)) {
+    return { valid: false, error: 'Invalid amount' };
+  }
+  
+  if (numValue <= 0) {
+    return { valid: false, error: 'Amount must be positive' };
+  }
+  
+  if (numValue < min) {
+    return { valid: false, error: `Amount must be at least ${min}` };
+  }
+  
+  return { valid: true };
+}
+
+/**
+ * Format currency input utility
+ */
+export function formatCurrencyInput(value: string): string {
+  // Remove non-numeric characters except decimal point
+  const cleaned = value.replace(/[^\d.]/g, '');
+  
+  // Ensure only one decimal point
+  const parts = cleaned.split('.');
+  if (parts.length > 2) {
+    return parts[0] + '.' + parts.slice(1).join('');
+  }
+  
+  // Limit decimal places to 8
+  if (parts.length === 2 && parts[1].length > 8) {
+    return parts[0] + '.' + parts[1].substring(0, 8);
+  }
+  
+  return cleaned;
+}
