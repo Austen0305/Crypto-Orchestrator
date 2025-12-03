@@ -14,27 +14,38 @@ router = APIRouter()
 security = HTTPBearer(auto_error=False)
 JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key")
 
-def get_optional_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> Optional[dict]:
+
+def get_optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+) -> Optional[dict]:
     """Optionally decode current user from JWT; returns None if no credentials provided."""
     if not credentials:
         return None
     try:
         token = credentials.credentials
         payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-        user_id = payload.get('id')
+        user_id = payload.get("id")
         if not user_id:
             return None
-        return {'id': user_id, 'email': f'user{user_id}@example.com'}
+        return {"id": user_id, "email": f"user{user_id}@example.com"}
     except Exception:
         return None
 
 
 class ScenarioRequest(BaseModel):
-    portfolio_value: float = Field(..., gt=0, description="Total portfolio value in quote currency")
-    baseline_var: float = Field(..., ge=0, description="Baseline VaR (absolute currency)")
-    shock_percent: float = Field(..., ge=-1, le=1, description="Shock percentage, e.g. -0.12 for -12%")
+    portfolio_value: float = Field(
+        ..., gt=0, description="Total portfolio value in quote currency"
+    )
+    baseline_var: float = Field(
+        ..., ge=0, description="Baseline VaR (absolute currency)"
+    )
+    shock_percent: float = Field(
+        ..., ge=-1, le=1, description="Shock percentage, e.g. -0.12 for -12%"
+    )
     horizon_days: int = Field(1, ge=1, le=365, description="Projection horizon in days")
-    correlation_factor: float = Field(1.0, ge=0, le=5, description="Correlation amplification factor")
+    correlation_factor: float = Field(
+        1.0, ge=0, le=5, description="Correlation amplification factor"
+    )
 
     class Config:
         json_schema_extra = {
@@ -43,7 +54,7 @@ class ScenarioRequest(BaseModel):
                 "baseline_var": 2500,
                 "shock_percent": -0.1,
                 "horizon_days": 7,
-                "correlation_factor": 1.2
+                "correlation_factor": 1.2,
             }
         }
 
@@ -62,18 +73,21 @@ class ScenarioResponse(BaseModel):
 
 
 @router.post("/simulate", response_model=ScenarioResponse)
-async def simulate_scenario(req: ScenarioRequest, current_user: Optional[dict] = Depends(get_optional_user)):
+async def simulate_scenario(
+    req: ScenarioRequest, current_user: Optional[dict] = Depends(get_optional_user)
+):
     try:
+
         async def notify_fn(event: dict):
             if not current_user:
                 return
             await notification_service.create_notification(
-                user_id=current_user['id'],
+                user_id=current_user["id"],
                 message="Risk scenario computed",
-                level='info',
-                title='Risk Scenario',
+                level="info",
+                title="Risk Scenario",
                 category=NotificationCategory.RISK,
-                data=event
+                data=event,
             )
 
         result = await risk_scenario_service.compute_scenario(

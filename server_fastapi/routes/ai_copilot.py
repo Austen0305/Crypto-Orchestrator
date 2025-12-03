@@ -1,6 +1,7 @@
 """
 AI Copilot Routes - Trade explanations, strategy generation, optimization, backtest summaries
 """
+
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Dict, Any, Optional, List
 import logging
@@ -15,7 +16,7 @@ from ..services.ai_copilot.copilot_service import (
     StrategyOptimizationRequest,
     OptimizationResult,
     BacktestSummaryRequest,
-    BacktestSummary
+    BacktestSummary,
 )
 from ..dependencies.auth import get_current_user
 
@@ -26,8 +27,10 @@ router = APIRouter(prefix="/api/ai-copilot", tags=["AI Copilot"])
 
 # ===== Trade Explanation Routes =====
 
+
 class TradeExplanationRequest(BaseModel):
     """Trade explanation request"""
+
     trade_id: str
     trade_data: Dict[str, Any]
     market_data: Optional[Dict[str, Any]] = None
@@ -35,28 +38,27 @@ class TradeExplanationRequest(BaseModel):
 
 @router.post("/trade/explain", response_model=Dict)
 async def explain_trade(
-    request: TradeExplanationRequest,
-    current_user: dict = Depends(get_current_user)
+    request: TradeExplanationRequest, current_user: dict = Depends(get_current_user)
 ):
     """Generate natural language explanation of a trade"""
     try:
         explanation = await copilot_service.explain_trade(
-            request.trade_id,
-            request.trade_data,
-            request.market_data
+            request.trade_id, request.trade_data, request.market_data
         )
         return explanation.dict()
     except Exception as e:
         logger.error(f"Error explaining trade: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to explain trade: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to explain trade: {str(e)}"
+        )
 
 
 # ===== Strategy Generation Routes =====
 
+
 @router.post("/strategy/generate", response_model=Dict)
 async def generate_strategy(
-    request: StrategyGenerationRequest,
-    current_user: dict = Depends(get_current_user)
+    request: StrategyGenerationRequest, current_user: dict = Depends(get_current_user)
 ):
     """Generate trading strategy from natural language description"""
     try:
@@ -64,15 +66,17 @@ async def generate_strategy(
         return strategy.dict()
     except Exception as e:
         logger.error(f"Error generating strategy: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate strategy: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to generate strategy: {str(e)}"
+        )
 
 
 # ===== Strategy Optimization Routes =====
 
+
 @router.post("/strategy/optimize", response_model=Dict)
 async def optimize_strategy(
-    request: StrategyOptimizationRequest,
-    current_user: dict = Depends(get_current_user)
+    request: StrategyOptimizationRequest, current_user: dict = Depends(get_current_user)
 ):
     """Generate strategy optimization recommendations"""
     try:
@@ -80,13 +84,17 @@ async def optimize_strategy(
         return result.dict()
     except Exception as e:
         logger.error(f"Error optimizing strategy: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to optimize strategy: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to optimize strategy: {str(e)}"
+        )
 
 
 # ===== Backtest Summary Routes =====
 
+
 class BacktestSummaryRequestWrapper(BaseModel):
     """Backtest summary request wrapper"""
+
     backtest_id: str
     backtest_data: Dict[str, Any]
     include_charts: bool = True
@@ -97,7 +105,7 @@ class BacktestSummaryRequestWrapper(BaseModel):
 @router.post("/backtest/summarize", response_model=Dict)
 async def summarize_backtest(
     request: BacktestSummaryRequestWrapper,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Generate AI summary of backtesting results"""
     try:
@@ -105,15 +113,15 @@ async def summarize_backtest(
             backtest_id=request.backtest_id,
             include_charts=request.include_charts,
             include_detailed_metrics=request.include_detailed_metrics,
-            focus_areas=request.focus_areas
+            focus_areas=request.focus_areas,
         )
-        
+
         summary = await copilot_service.summarize_backtest(
-            summary_request,
-            request.backtest_data
+            summary_request, request.backtest_data
         )
         return summary.dict()
     except Exception as e:
         logger.error(f"Error summarizing backtest: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to summarize backtest: {str(e)}")
-
+        raise HTTPException(
+            status_code=500, detail=f"Failed to summarize backtest: {str(e)}"
+        )

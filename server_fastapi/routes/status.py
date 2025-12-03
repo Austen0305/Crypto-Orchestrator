@@ -10,12 +10,14 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
 class SystemStatus(BaseModel):
     status: str
     timestamp: str
     uptime: float
     version: str
     services: Dict[str, str]
+
 
 @router.get("/")
 async def get_status() -> SystemStatus:
@@ -29,15 +31,18 @@ async def get_status() -> SystemStatus:
             services={
                 "fastapi": "healthy",
                 "database": "healthy",  # Mock
-                "redis": "healthy"  # Mock
-            }
+                "redis": "healthy",  # Mock
+            },
         )
     except Exception as e:
         logger.error(f"Failed to get status: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve status")
 
+
 @router.get("/protected")
-async def get_protected_status(current_user: dict = Depends(get_current_user)) -> SystemStatus:
+async def get_protected_status(
+    current_user: dict = Depends(get_current_user),
+) -> SystemStatus:
     """Get system status (authenticated endpoint)"""
     try:
         return SystemStatus(
@@ -49,9 +54,11 @@ async def get_protected_status(current_user: dict = Depends(get_current_user)) -
                 "fastapi": "healthy",
                 "database": "healthy",
                 "redis": "healthy",
-                "auth": "healthy"
-            }
+                "auth": "healthy",
+            },
         )
     except Exception as e:
         logger.error(f"Failed to get protected status: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve protected status")
+        raise HTTPException(
+            status_code=500, detail="Failed to retrieve protected status"
+        )

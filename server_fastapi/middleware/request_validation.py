@@ -15,26 +15,26 @@ logger = logging.getLogger(__name__)
 
 class RequestValidationMiddleware(BaseHTTPMiddleware):
     """Middleware to validate and sanitize requests"""
-    
+
     # Patterns for potentially dangerous content
     SQL_INJECTION_PATTERNS = [
         r"(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE)\b)",
         r"(--|;|/\*|\*/)",
         r"(\b(OR|AND)\s+\d+\s*=\s*\d+)",
     ]
-    
+
     XSS_PATTERNS = [
         r"<script[^>]*>.*?</script>",
         r"javascript:",
         r"on\w+\s*=",
     ]
-    
+
     async def dispatch(self, request: Request, call_next):
         # Skip validation for certain paths
         skip_paths = ["/docs", "/openapi.json", "/redoc", "/health"]
         if any(request.url.path.startswith(path) for path in skip_paths):
             return await call_next(request)
-        
+
         # Validate request body for POST/PUT/PATCH
         if request.method in ["POST", "PUT", "PATCH"]:
             try:
@@ -47,27 +47,28 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                             body_json = json.loads(body.decode())
                             # Recursively validate and sanitize
                             sanitized = self._sanitize_data(body_json)
-                            
+
                             # Replace request body with sanitized version
                             request._body = json.dumps(sanitized).encode()
                         except json.JSONDecodeError:
                             pass  # Not JSON, skip validation
             except Exception as e:
                 logger.warning(f"Request validation error: {e}")
-        
+
         # Validate query parameters
         query_params = dict(request.query_params)
         for key, value in query_params.items():
             if self._contains_sql_injection(value) or self._contains_xss(value):
-                logger.warning(f"Potential security threat in query param {key}: {value}")
-                raise HTTPException(
-                    status_code=400,
-                    detail="Invalid request parameters"
+                logger.warning(
+                    f"Potential security threat in query param {key}: {value}"
                 )
-        
+                raise HTTPException(
+                    status_code=400, detail="Invalid request parameters"
+                )
+
         response = await call_next(request)
         return response
-    
+
     def _sanitize_data(self, data):
         """Recursively sanitize data structures"""
         if isinstance(data, dict):
@@ -82,7 +83,7 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
             return sanitized.strip()
         else:
             return data
-    
+
     def _contains_sql_injection(self, value: str) -> bool:
         """Check if value contains SQL injection patterns"""
         if not isinstance(value, str):
@@ -92,7 +93,7 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
             if re.search(pattern, value_upper, re.IGNORECASE):
                 return True
         return False
-    
+
     def _contains_xss(self, value: str) -> bool:
         """Check if value contains XSS patterns"""
         if not isinstance(value, str):
@@ -101,4 +102,3 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
             if re.search(pattern, value, re.IGNORECASE):
                 return True
         return False
-

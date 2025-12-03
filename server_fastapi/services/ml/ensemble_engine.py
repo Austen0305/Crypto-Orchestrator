@@ -5,10 +5,12 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
+
 class EnsemblePrediction(BaseModel):
     action: str  # 'buy', 'sell', 'hold'
     confidence: float
     votes: Dict[str, Dict[str, Any]]  # qLearning and neuralNetwork votes
+
 
 class MarketData(BaseModel):
     timestamp: int
@@ -17,6 +19,7 @@ class MarketData(BaseModel):
     low: float
     close: float
     volume: float
+
 
 class EnsembleEngine:
     def __init__(self):
@@ -28,6 +31,7 @@ class EnsembleEngine:
         try:
             from .ml_service import MLModel  # Q-learning engine
             from .neural_network_engine import NeuralNetworkEngine
+
             self.q_learning_engine = MLModel()
             self.neural_network_engine = NeuralNetworkEngine()
         except ImportError as e:
@@ -52,11 +56,11 @@ class EnsembleEngine:
         if self.neural_network_engine:
             try:
                 await self.neural_network_engine.train(market_data)
-                logger.info('Neural network training completed')
+                logger.info("Neural network training completed")
             except Exception as error:
-                logger.error(f'Neural network training failed: {error}')
+                logger.error(f"Neural network training failed: {error}")
         else:
-            logger.warning('Neural network engine not available for training')
+            logger.warning("Neural network engine not available for training")
 
     def _calculate_q_learning_confidence_from_state_key(self, state_key: str) -> float:
         """Calculate confidence from Q-table values for a given state"""
@@ -78,7 +82,9 @@ class EnsembleEngine:
         # Calculate Q-learning confidence from qTable using current state
         state = self._derive_state(market_data)
         state_key = self._get_state_key(state)
-        q_learning_confidence = self._calculate_q_learning_confidence_from_state_key(state_key)
+        q_learning_confidence = self._calculate_q_learning_confidence_from_state_key(
+            state_key
+        )
 
         # Get weights based on recent accuracy
         q_learning_weight = self._get_q_learning_accuracy()
@@ -88,8 +94,12 @@ class EnsembleEngine:
         # Calculate weighted votes
         votes: Dict[str, float] = {"buy": 0.0, "sell": 0.0, "hold": 0.0}
 
-        votes[q_learning_prediction["action"]] += (q_learning_weight / total_weight) * q_learning_confidence
-        votes[nn_prediction["action"]] += (nn_weight / total_weight) * nn_prediction["confidence"]
+        votes[q_learning_prediction["action"]] += (
+            q_learning_weight / total_weight
+        ) * q_learning_confidence
+        votes[nn_prediction["action"]] += (nn_weight / total_weight) * nn_prediction[
+            "confidence"
+        ]
 
         # Determine final action
         max_action = max(votes, key=votes.get)
@@ -101,13 +111,15 @@ class EnsembleEngine:
             votes={
                 "qLearning": {
                     "action": q_learning_prediction["action"],
-                    "confidence": q_learning_confidence
+                    "confidence": q_learning_confidence,
                 },
-                "neuralNetwork": nn_prediction
-            }
+                "neuralNetwork": nn_prediction,
+            },
         )
 
-    async def _get_q_learning_prediction(self, market_data: List[MarketData]) -> Dict[str, Any]:
+    async def _get_q_learning_prediction(
+        self, market_data: List[MarketData]
+    ) -> Dict[str, Any]:
         """Get prediction from Q-learning engine"""
         if self.q_learning_engine:
             try:
@@ -119,7 +131,9 @@ class EnsembleEngine:
                 return {"action": "hold", "confidence": 0.0}
         return {"action": "hold", "confidence": 0.0}
 
-    async def _get_neural_network_prediction(self, market_data: List[MarketData]) -> Dict[str, Any]:
+    async def _get_neural_network_prediction(
+        self, market_data: List[MarketData]
+    ) -> Dict[str, Any]:
         """Get prediction from neural network engine"""
         if self.neural_network_engine:
             try:
@@ -132,7 +146,7 @@ class EnsembleEngine:
 
     def _get_q_learning_accuracy(self) -> float:
         """Get recent accuracy of Q-learning engine"""
-        if self.q_learning_engine and hasattr(self.q_learning_engine, 'get_accuracy'):
+        if self.q_learning_engine and hasattr(self.q_learning_engine, "get_accuracy"):
             try:
                 return self.q_learning_engine.get_accuracy()
             except:
@@ -141,14 +155,22 @@ class EnsembleEngine:
 
     def _get_neural_network_accuracy(self) -> float:
         """Get recent accuracy of neural network engine"""
-        if self.neural_network_engine and hasattr(self.neural_network_engine, 'get_recent_accuracy'):
+        if self.neural_network_engine and hasattr(
+            self.neural_network_engine, "get_recent_accuracy"
+        ):
             try:
                 return self.neural_network_engine.get_recent_accuracy()
             except:
                 pass
         return 0.5  # Default neutral weight
 
-    def update_q_value(self, state: Dict[str, Any], action: str, reward: float, next_state: Dict[str, Any]) -> None:
+    def update_q_value(
+        self,
+        state: Dict[str, Any],
+        action: str,
+        reward: float,
+        next_state: Dict[str, Any],
+    ) -> None:
         """Update Q-value in the Q-table"""
         state_key = self._get_state_key(state)
         next_state_key = self._get_state_key(next_state)
@@ -165,10 +187,18 @@ class EnsembleEngine:
 
         old_value = self.q_table[state_key][action]
         next_max = max(self.q_table[next_state_key].values())
-        new_value = old_value + learning_rate * (reward + discount_factor * next_max - old_value)
+        new_value = old_value + learning_rate * (
+            reward + discount_factor * next_max - old_value
+        )
         self.q_table[state_key][action] = new_value
 
-    def calculate_reward(self, action: str, entry_price: float, exit_price: float, position: Optional[str]) -> float:
+    def calculate_reward(
+        self,
+        action: str,
+        entry_price: float,
+        exit_price: float,
+        position: Optional[str],
+    ) -> float:
         """Calculate reward based on trading action and outcome"""
         if position == "long":
             if action == "sell":
@@ -192,7 +222,9 @@ class EnsembleEngine:
                 return -0.05  # Small penalty for opening positions
             return 0.0
 
-    def _derive_state(self, market_data: List[MarketData], current_index: Optional[int] = None) -> Dict[str, Any]:
+    def _derive_state(
+        self, market_data: List[MarketData], current_index: Optional[int] = None
+    ) -> Dict[str, Any]:
         """Derive state from market data"""
         if not market_data:
             return {
@@ -200,7 +232,7 @@ class EnsembleEngine:
                 "rsi": "neutral",
                 "volume": "medium",
                 "volatility": "medium",
-                "trend": "neutral"
+                "trend": "neutral",
             }
 
         index = current_index if current_index is not None else len(market_data) - 1
@@ -232,7 +264,9 @@ class EnsembleEngine:
             rsi_state = "neutral"
 
         # Volume (relative to recent average)
-        avg_volume = sum(d.volume for d in market_data[max(0, index-20):index+1]) / min(20, index+1)
+        avg_volume = sum(
+            d.volume for d in market_data[max(0, index - 20) : index + 1]
+        ) / min(20, index + 1)
         volume_ratio = current.volume / avg_volume if avg_volume > 0 else 1.0
         if volume_ratio > 1.5:
             volume_state = "high"
@@ -243,8 +277,12 @@ class EnsembleEngine:
 
         # Volatility (simplified)
         if len(market_data) >= 20:
-            returns = [(d.close - market_data[max(0, i-1)].close) / market_data[max(0, i-1)].close
-                      for i, d in enumerate(market_data[max(0, index-19):index+1]) if i > 0]
+            returns = [
+                (d.close - market_data[max(0, i - 1)].close)
+                / market_data[max(0, i - 1)].close
+                for i, d in enumerate(market_data[max(0, index - 19) : index + 1])
+                if i > 0
+            ]
             volatility = sum(abs(r) for r in returns) / len(returns) if returns else 0.0
             if volatility > 0.02:
                 volatility_state = "high"
@@ -257,8 +295,12 @@ class EnsembleEngine:
 
         # Trend (simplified moving average)
         if len(market_data) >= 20:
-            sma_short = sum(d.close for d in market_data[max(0, index-9):index+1]) / min(10, index+1)
-            sma_long = sum(d.close for d in market_data[max(0, index-19):index+1]) / min(20, index+1)
+            sma_short = sum(
+                d.close for d in market_data[max(0, index - 9) : index + 1]
+            ) / min(10, index + 1)
+            sma_long = sum(
+                d.close for d in market_data[max(0, index - 19) : index + 1]
+            ) / min(20, index + 1)
             if sma_short > sma_long * 1.005:
                 trend = "bullish"
             elif sma_short < sma_long * 0.995:
@@ -273,14 +315,16 @@ class EnsembleEngine:
             "rsi": rsi_state,
             "volume": volume_state,
             "volatility": volatility_state,
-            "trend": trend
+            "trend": trend,
         }
 
     def _get_state_key(self, state: Dict[str, Any]) -> str:
         """Convert state to a string key for Q-table"""
         return f"{state['price_direction']}_{state['rsi']}_{state['volume']}_{state['volatility']}_{state['trend']}"
 
-    def _calculate_rsi(self, data: List[MarketData], index: int, period: int = 14) -> float:
+    def _calculate_rsi(
+        self, data: List[MarketData], index: int, period: int = 14
+    ) -> float:
         """Calculate RSI for the given index"""
         if index < period:
             return 50.0
@@ -310,15 +354,18 @@ class EnsembleEngine:
                 await self.neural_network_engine.save_model(bot_id)
                 logger.info(f"Neural network model saved for bot {bot_id}")
             except Exception as error:
-                logger.error(f'Failed to save neural network model: {error}')
+                logger.error(f"Failed to save neural network model: {error}")
 
     def dispose(self) -> None:
         """Clean up resources"""
-        if self.neural_network_engine and hasattr(self.neural_network_engine, 'dispose'):
+        if self.neural_network_engine and hasattr(
+            self.neural_network_engine, "dispose"
+        ):
             try:
                 self.neural_network_engine.dispose()
             except:
                 pass
+
 
 # Global instance
 ensemble_engine = EnsembleEngine()

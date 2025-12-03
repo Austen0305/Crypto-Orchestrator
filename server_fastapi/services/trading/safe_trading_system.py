@@ -27,11 +27,13 @@ class SafeTradingSystem:
             max_daily_loss=500.0,
             max_drawdown=0.1,
             required_confirmations=2,
-            allowed_symbols=["BTC/USD", "ETH/USD", "ADA/USD", "SOL/USD"]
+            allowed_symbols=["BTC/USD", "ETH/USD", "ADA/USD", "SOL/USD"],
         )
 
         # Track daily trading activity per user
-        self.daily_stats = {}  # {user_id: {date, total_loss, total_trades, positions, emergency_stop_active}}
+        self.daily_stats = (
+            {}
+        )  # {user_id: {date, total_loss, total_trades, positions, emergency_stop_active}}
 
         logger.info("Safe trading system initialized")
 
@@ -44,7 +46,7 @@ class SafeTradingSystem:
             # Get user_id and initialize daily stats if needed
             user_id = str(trade_details.get("user_id", "default"))
             today = datetime.now().date()
-            
+
             if user_id not in self.daily_stats:
                 self.daily_stats[user_id] = {
                     "date": today,
@@ -52,9 +54,9 @@ class SafeTradingSystem:
                     "total_profit": 0.0,
                     "total_trades": 0,
                     "positions": {},
-                    "emergency_stop_active": False
+                    "emergency_stop_active": False,
                 }
-            
+
             # Reset daily stats if it's a new day
             if self.daily_stats[user_id]["date"] != today:
                 self.daily_stats[user_id] = {
@@ -63,9 +65,9 @@ class SafeTradingSystem:
                     "total_profit": 0.0,
                     "total_trades": 0,
                     "positions": {},
-                    "emergency_stop_active": False
+                    "emergency_stop_active": False,
                 }
-            
+
             user_stats = self.daily_stats[user_id]
 
             # Check if emergency stop is active
@@ -99,7 +101,9 @@ class SafeTradingSystem:
             # Validate position size
             position_value = quantity * price
             if position_value > self.rules.max_position_size:
-                errors.append(f"Position size ${position_value:.2f} exceeds max ${self.rules.max_position_size}")
+                errors.append(
+                    f"Position size ${position_value:.2f} exceeds max ${self.rules.max_position_size}"
+                )
 
             # Check daily loss limit
             if user_stats["total_loss"] >= self.rules.max_daily_loss:
@@ -110,13 +114,17 @@ class SafeTradingSystem:
 
             # For sell orders, check if we have enough position
             if action == "sell" and current_position < quantity:
-                errors.append(f"Insufficient position: have {current_position}, trying to sell {quantity}")
+                errors.append(
+                    f"Insufficient position: have {current_position}, trying to sell {quantity}"
+                )
 
             # For buy orders, check if adding this would exceed position limit
             if action == "buy":
                 new_position_value = (current_position + quantity) * price
                 if new_position_value > self.rules.max_position_size:
-                    warnings.append(f"New position value ${new_position_value:.2f} approaches max limit")
+                    warnings.append(
+                        f"New position value ${new_position_value:.2f} approaches max limit"
+                    )
 
             # Validate price (basic sanity check)
             if price <= 0:
@@ -134,39 +142,57 @@ class SafeTradingSystem:
                 "warnings": warnings,
                 "errors": errors,
                 "risk_score": self._calculate_risk_score(trade_details, user_stats),
-                "position_impact": position_value / self.rules.max_position_size
+                "position_impact": position_value / self.rules.max_position_size,
             }
 
         except Exception as e:
             logger.error(f"Error validating trade: {str(e)}")
-            return {"valid": False, "warnings": [], "errors": [f"Validation error: {str(e)}"]}
+            return {
+                "valid": False,
+                "warnings": [],
+                "errors": [f"Validation error: {str(e)}"],
+            }
 
-    async def apply_risk_limits(self, portfolio: Dict[str, Any], user_id: Optional[str] = None) -> Dict[str, Any]:
+    async def apply_risk_limits(
+        self, portfolio: Dict[str, Any], user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Apply risk limits to portfolio"""
         try:
             user_id_str = str(user_id) if user_id else "default"
-            user_stats = self.daily_stats.get(user_id_str, {
-                "total_loss": 0.0,
-                "total_profit": 0.0,
-                "total_trades": 0,
-                "positions": {},
-                "emergency_stop_active": False
-            })
-            
+            user_stats = self.daily_stats.get(
+                user_id_str,
+                {
+                    "total_loss": 0.0,
+                    "total_profit": 0.0,
+                    "total_trades": 0,
+                    "positions": {},
+                    "emergency_stop_active": False,
+                },
+            )
+
             modified_portfolio = portfolio.copy()
 
             # Calculate current portfolio value and drawdown
-            total_value = sum(position.get("value", 0) for position in portfolio.get("positions", {}).values())
+            total_value = sum(
+                position.get("value", 0)
+                for position in portfolio.get("positions", {}).values()
+            )
 
             # Check drawdown limit
             if "initial_value" in portfolio:
                 initial_value = portfolio["initial_value"]
                 drawdown = (initial_value - total_value) / initial_value
                 if drawdown > self.rules.max_drawdown:
-                    logger.warning(f"Drawdown limit exceeded: {drawdown:.2%} > {self.rules.max_drawdown:.2%}")
+                    logger.warning(
+                        f"Drawdown limit exceeded: {drawdown:.2%} > {self.rules.max_drawdown:.2%}"
+                    )
                     # Reduce position sizes to bring drawdown within limits
-                    reduction_factor = (initial_value * (1 - self.rules.max_drawdown)) / total_value
-                    for symbol, position in modified_portfolio.get("positions", {}).items():
+                    reduction_factor = (
+                        initial_value * (1 - self.rules.max_drawdown)
+                    ) / total_value
+                    for symbol, position in modified_portfolio.get(
+                        "positions", {}
+                    ).items():
                         position["quantity"] *= reduction_factor
                         position["value"] *= reduction_factor
 
@@ -175,7 +201,9 @@ class SafeTradingSystem:
             for symbol, position in positions.items():
                 if position.get("value", 0) > self.rules.max_position_size:
                     logger.warning(f"Position size limit exceeded for {symbol}")
-                    position["quantity"] *= self.rules.max_position_size / position["value"]
+                    position["quantity"] *= (
+                        self.rules.max_position_size / position["value"]
+                    )
                     position["value"] = self.rules.max_position_size
 
             # Apply daily loss limits
@@ -194,7 +222,9 @@ class SafeTradingSystem:
         """Emergency stop all trading activities for a user"""
         try:
             user_id_str = str(user_id) if user_id else "default"
-            logger.warning(f"EMERGENCY STOP ACTIVATED for user {user_id_str} - Stopping all trading activities")
+            logger.warning(
+                f"EMERGENCY STOP ACTIVATED for user {user_id_str} - Stopping all trading activities"
+            )
 
             # Initialize user stats if needed
             if user_id_str not in self.daily_stats:
@@ -205,9 +235,9 @@ class SafeTradingSystem:
                     "total_profit": 0.0,
                     "total_trades": 0,
                     "positions": {},
-                    "emergency_stop_active": False
+                    "emergency_stop_active": False,
                 }
-            
+
             self.daily_stats[user_id_str]["emergency_stop_active"] = True
 
             # In a real implementation, this would:
@@ -217,7 +247,9 @@ class SafeTradingSystem:
             # 4. Notify administrators
 
             # For now, just set the flag and log
-            logger.critical(f"Emergency stop: All trading halted for user {user_id_str}")
+            logger.critical(
+                f"Emergency stop: All trading halted for user {user_id_str}"
+            )
 
             return True
 
@@ -230,7 +262,7 @@ class SafeTradingSystem:
         try:
             user_id_str = str(user_id) if user_id else "default"
             today = datetime.now().date()
-            
+
             # Initialize user stats if needed
             if user_id_str not in self.daily_stats:
                 self.daily_stats[user_id_str] = {
@@ -239,11 +271,11 @@ class SafeTradingSystem:
                     "total_profit": 0.0,
                     "total_trades": 0,
                     "positions": {},
-                    "emergency_stop_active": False
+                    "emergency_stop_active": False,
                 }
-            
+
             user_stats = self.daily_stats[user_id_str]
-            
+
             # Reset daily stats if it's a new day
             if user_stats["date"] != today:
                 user_stats = {
@@ -252,13 +284,20 @@ class SafeTradingSystem:
                     "total_profit": 0.0,
                     "total_trades": 0,
                     "positions": {},
-                    "emergency_stop_active": False
+                    "emergency_stop_active": False,
                 }
                 self.daily_stats[user_id_str] = user_stats
 
             # Calculate safety metrics
-            drawdown_pct = (user_stats.get("total_loss", 0.0) / max(self.rules.max_daily_loss, 1)) * 100
-            position_utilization = sum(user_stats.get("positions", {}).values()) / max(self.rules.max_position_size, 1) if user_stats.get("positions") else 0
+            drawdown_pct = (
+                user_stats.get("total_loss", 0.0) / max(self.rules.max_daily_loss, 1)
+            ) * 100
+            position_utilization = (
+                sum(user_stats.get("positions", {}).values())
+                / max(self.rules.max_position_size, 1)
+                if user_stats.get("positions")
+                else 0
+            )
 
             status = "safe"
             alerts = []
@@ -279,17 +318,17 @@ class SafeTradingSystem:
                     f"Max position size: ${self.rules.max_position_size}",
                     f"Max daily loss: ${self.rules.max_daily_loss}",
                     f"Max drawdown: {self.rules.max_drawdown:.1%}",
-                    f"Required confirmations: {self.rules.required_confirmations}"
+                    f"Required confirmations: {self.rules.required_confirmations}",
                 ],
                 "current_stats": {
                     "daily_loss": user_stats.get("total_loss", 0.0),
                     "daily_profit": user_stats.get("total_profit", 0.0),
                     "daily_trades": user_stats.get("total_trades", 0),
                     "active_positions": len(user_stats.get("positions", {})),
-                    "emergency_stop": user_stats.get("emergency_stop_active", False)
+                    "emergency_stop": user_stats.get("emergency_stop_active", False),
                 },
                 "alerts": alerts,
-                "allowed_symbols": self.rules.allowed_symbols
+                "allowed_symbols": self.rules.allowed_symbols,
             }
 
         except Exception as e:
@@ -299,20 +338,25 @@ class SafeTradingSystem:
                 "active_rules": [],
                 "current_stats": {},
                 "alerts": [f"Status check failed: {str(e)}"],
-                "allowed_symbols": []
+                "allowed_symbols": [],
             }
 
-    def _calculate_risk_score(self, trade_details: Dict[str, Any], user_stats: Optional[Dict[str, Any]] = None) -> float:
+    def _calculate_risk_score(
+        self, trade_details: Dict[str, Any], user_stats: Optional[Dict[str, Any]] = None
+    ) -> float:
         """Calculate risk score for a trade (0-10 scale, higher = riskier)"""
         score = 0.0
 
         # Get user stats
         user_id = str(trade_details.get("user_id", "default"))
         if user_stats is None:
-            user_stats = self.daily_stats.get(user_id, {
-                "total_loss": 0.0,
-                "total_trades": 0,
-            })
+            user_stats = self.daily_stats.get(
+                user_id,
+                {
+                    "total_loss": 0.0,
+                    "total_trades": 0,
+                },
+            )
 
         # Position size risk
         position_value = trade_details["quantity"] * trade_details["price"]
@@ -335,7 +379,7 @@ class SafeTradingSystem:
             user_id = str(trade_details.get("user_id", "default"))
             symbol = trade_details.get("symbol") or trade_details.get("pair", "unknown")
             today = datetime.now().date()
-            
+
             # Initialize user stats if needed
             if user_id not in self.daily_stats:
                 self.daily_stats[user_id] = {
@@ -344,11 +388,11 @@ class SafeTradingSystem:
                     "total_profit": 0.0,
                     "total_trades": 0,
                     "positions": {},
-                    "emergency_stop_active": False
+                    "emergency_stop_active": False,
                 }
-            
+
             user_stats = self.daily_stats[user_id]
-            
+
             # Reset daily stats if it's a new day
             if user_stats["date"] != today:
                 user_stats = {
@@ -357,7 +401,7 @@ class SafeTradingSystem:
                     "total_profit": 0.0,
                     "total_trades": 0,
                     "positions": {},
-                    "emergency_stop_active": False
+                    "emergency_stop_active": False,
                 }
                 self.daily_stats[user_id] = user_stats
 
@@ -374,24 +418,32 @@ class SafeTradingSystem:
             quantity = trade_details.get("quantity") or trade_details.get("amount", 0)
 
             if action == "buy":
-                user_stats["positions"][symbol] = user_stats["positions"].get(symbol, 0) + quantity
+                user_stats["positions"][symbol] = (
+                    user_stats["positions"].get(symbol, 0) + quantity
+                )
             elif action == "sell":
-                user_stats["positions"][symbol] = max(0, user_stats["positions"].get(symbol, 0) - quantity)
+                user_stats["positions"][symbol] = max(
+                    0, user_stats["positions"].get(symbol, 0) - quantity
+                )
 
             # Check for emergency stop conditions
-            if user_stats.get("total_loss", 0.0) > self.rules.max_daily_loss * 1.2:  # 20% buffer
-                logger.warning(f"Daily loss limit exceeded for user {user_id} - triggering emergency stop")
+            if (
+                user_stats.get("total_loss", 0.0) > self.rules.max_daily_loss * 1.2
+            ):  # 20% buffer
+                logger.warning(
+                    f"Daily loss limit exceeded for user {user_id} - triggering emergency stop"
+                )
                 await self.emergency_stop_all(user_id)
 
         except Exception as e:
             logger.error(f"Error recording trade result: {str(e)}")
-    
+
     async def get_daily_pnl(self, user_id: str) -> float:
         """Get daily P&L for a user"""
         try:
             user_id_str = str(user_id) if user_id else "default"
             today = datetime.now().date()
-            
+
             # Initialize user stats if needed
             if user_id_str not in self.daily_stats:
                 self.daily_stats[user_id_str] = {
@@ -400,18 +452,20 @@ class SafeTradingSystem:
                     "total_profit": 0.0,
                     "total_trades": 0,
                     "positions": {},
-                    "emergency_stop_active": False
+                    "emergency_stop_active": False,
                 }
-            
+
             user_stats = self.daily_stats[user_id_str]
-            
+
             # Reset daily stats if it's a new day
             if user_stats["date"] != today:
                 return 0.0  # New day, no P&L yet
-            
+
             # Return net P&L (profit - loss)
-            return user_stats.get("total_profit", 0.0) - user_stats.get("total_loss", 0.0)
-        
+            return user_stats.get("total_profit", 0.0) - user_stats.get(
+                "total_loss", 0.0
+            )
+
         except Exception as e:
             logger.error(f"Error getting daily P&L: {str(e)}")
             return 0.0

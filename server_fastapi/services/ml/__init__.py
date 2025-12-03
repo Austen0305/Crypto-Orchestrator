@@ -1,6 +1,7 @@
 """
 ML Services Module - Machine Learning engines and utilities
 """
+
 from .lstm_engine import LSTMEngine, LSTMConfig
 from .gru_engine import GRUEngine, GRUConfig
 from .transformer_engine import TransformerEngine, TransformerConfig
@@ -17,8 +18,9 @@ from .automl_service import (
     OptimizationResult,
     HyperparameterRange,
     SearchStrategy,
-    automl_service
+    automl_service,
 )
+
 try:
     from .reinforcement_learning import (
         RLService,
@@ -27,12 +29,15 @@ try:
         RLConfig,
         Action,
         TradingState,
-        rl_service
+        rl_service,
     )
 except (ImportError, RuntimeError, Exception) as e:
     import logging
+
     logger = logging.getLogger(__name__)
-    logger.warning(f"Failed to import reinforcement_learning: {e}. RL features will be disabled.")
+    logger.warning(
+        f"Failed to import reinforcement_learning: {e}. RL features will be disabled."
+    )
     # Create dummy classes to prevent import errors
     RLService = None
     QLearningAgent = None
@@ -47,13 +52,13 @@ from .sentiment_ai import (
     NewsArticle,
     SocialMediaPost,
     AggregatedSentiment,
-    sentiment_ai_service
+    sentiment_ai_service,
 )
 from .market_regime import (
     MarketRegimeService,
     MarketRegime,
     RegimeMetrics,
-    market_regime_service
+    market_regime_service,
 )
 
 __all__ = [

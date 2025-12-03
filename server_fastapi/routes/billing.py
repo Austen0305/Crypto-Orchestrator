@@ -2,6 +2,7 @@
 SaaS Billing Routes
 Stripe subscription billing endpoints
 """
+
 from fastapi import APIRouter, HTTPException, Depends, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
@@ -45,7 +46,7 @@ async def get_plans():
         logger.error(f"Failed to get plans: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get plans"
+            detail="Failed to get plans",
         )
 
 
@@ -58,10 +59,9 @@ async def get_subscription(
     try:
         subscription_service = SubscriptionService()
         subscription = await subscription_service.get_user_subscription(
-            db=db,
-            user_id=current_user["id"]
+            db=db, user_id=current_user["id"]
         )
-        
+
         if not subscription:
             # Return free plan
             config = StripeService.get_plan_config("free")
@@ -70,23 +70,33 @@ async def get_subscription(
                 status="active",
                 limits=config.get("limits", {}) if config else {},
             )
-        
-        limits = await subscription_service.get_subscription_limits(db, current_user["id"])
-        
+
+        limits = await subscription_service.get_subscription_limits(
+            db, current_user["id"]
+        )
+
         return SubscriptionResponse(
             plan=subscription.plan,
             status=subscription.status,
-            current_period_start=subscription.current_period_start.isoformat() if subscription.current_period_start else None,
-            current_period_end=subscription.current_period_end.isoformat() if subscription.current_period_end else None,
+            current_period_start=(
+                subscription.current_period_start.isoformat()
+                if subscription.current_period_start
+                else None
+            ),
+            current_period_end=(
+                subscription.current_period_end.isoformat()
+                if subscription.current_period_end
+                else None
+            ),
             cancel_at_period_end=subscription.cancel_at_period_end,
             limits=limits,
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to get subscription: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get subscription"
+            detail="Failed to get subscription",
         )
 
 
@@ -99,32 +109,32 @@ async def create_checkout(
     """Create Stripe checkout session"""
     try:
         subscription_service = SubscriptionService()
-        
+
         session = await subscription_service.create_checkout_session(
             db=db,
             user_id=current_user["id"],
             price_id=request.price_id,
             plan=request.plan,
         )
-        
+
         if not session:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create checkout session"
+                detail="Failed to create checkout session",
             )
-        
+
         return {
             "checkout_url": session["url"],
             "session_id": session["id"],
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to create checkout: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create checkout session"
+            detail="Failed to create checkout session",
         )
 
 
@@ -136,29 +146,29 @@ async def create_portal(
     """Create Stripe Customer Portal session"""
     try:
         subscription_service = SubscriptionService()
-        
+
         session = await subscription_service.create_portal_session(
             db=db,
             user_id=current_user["id"],
         )
-        
+
         if not session:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No active subscription found"
+                detail="No active subscription found",
             )
-        
+
         return {
             "portal_url": session["url"],
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to create portal session: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create portal session"
+            detail="Failed to create portal session",
         )
 
 
@@ -171,31 +181,31 @@ async def cancel_subscription(
     """Cancel user subscription"""
     try:
         subscription_service = SubscriptionService()
-        
+
         success = await subscription_service.cancel_subscription(
             db=db,
             user_id=current_user["id"],
             immediately=immediately,
         )
-        
+
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Failed to cancel subscription"
+                detail="Failed to cancel subscription",
             )
-        
+
         return {
             "success": True,
             "message": "Subscription cancelled successfully",
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to cancel subscription: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to cancel subscription"
+            detail="Failed to cancel subscription",
         )
 
 
@@ -208,21 +218,21 @@ async def stripe_webhook(
     try:
         stripe_service = StripeService()
         subscription_service = SubscriptionService()
-        
+
         payload = await request.body()
         signature = request.headers.get("stripe-signature", "")
-        
+
         event = stripe_service.handle_webhook(payload, signature)
-        
+
         if not event:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid webhook signature"
+                detail="Invalid webhook signature",
             )
-        
+
         event_type = event["type"]
         event_data = event["data"]
-        
+
         # Handle different event types
         if event_type == "customer.subscription.created":
             await _handle_subscription_created(db, event_data, subscription_service)
@@ -234,35 +244,36 @@ async def stripe_webhook(
             await _handle_payment_succeeded(db, event_data, subscription_service)
         elif event_type == "invoice.payment_failed":
             await _handle_payment_failed(db, event_data, subscription_service)
-        
+
         return {"received": True}
-        
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Webhook handling failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Webhook processing failed"
+            detail="Webhook processing failed",
         )
 
 
 async def _handle_subscription_created(
-    db: AsyncSession,
-    event_data: dict,
-    subscription_service: SubscriptionService
+    db: AsyncSession, event_data: dict, subscription_service: SubscriptionService
 ):
     """Handle subscription.created event"""
     subscription = event_data
     customer_id = subscription["customer"]
-    
+
     # Find user by customer_id
     from ..models.subscription import Subscription as SubscriptionModel
+
     result = await db.execute(
-        select(SubscriptionModel).where(SubscriptionModel.stripe_customer_id == customer_id)
+        select(SubscriptionModel).where(
+            SubscriptionModel.stripe_customer_id == customer_id
+        )
     )
     db_subscription = result.scalar_one_or_none()
-    
+
     if db_subscription:
         await subscription_service.update_subscription_from_stripe(
             db=db,
@@ -273,29 +284,28 @@ async def _handle_subscription_created(
 
 
 async def _handle_subscription_updated(
-    db: AsyncSession,
-    event_data: dict,
-    subscription_service: SubscriptionService
+    db: AsyncSession, event_data: dict, subscription_service: SubscriptionService
 ):
     """Handle subscription.updated event"""
     await _handle_subscription_created(db, event_data, subscription_service)
 
 
 async def _handle_subscription_deleted(
-    db: AsyncSession,
-    event_data: dict,
-    subscription_service: SubscriptionService
+    db: AsyncSession, event_data: dict, subscription_service: SubscriptionService
 ):
     """Handle subscription.deleted event"""
     subscription = event_data
     customer_id = subscription["customer"]
-    
+
     from ..models.subscription import Subscription as SubscriptionModel
+
     result = await db.execute(
-        select(SubscriptionModel).where(SubscriptionModel.stripe_customer_id == customer_id)
+        select(SubscriptionModel).where(
+            SubscriptionModel.stripe_customer_id == customer_id
+        )
     )
     db_subscription = result.scalar_one_or_none()
-    
+
     if db_subscription:
         db_subscription.status = "canceled"
         db_subscription.stripe_subscription_id = None
@@ -303,21 +313,22 @@ async def _handle_subscription_deleted(
 
 
 async def _handle_payment_succeeded(
-    db: AsyncSession,
-    event_data: dict,
-    subscription_service: SubscriptionService
+    db: AsyncSession, event_data: dict, subscription_service: SubscriptionService
 ):
     """Handle payment.succeeded event"""
     invoice = event_data
     customer_id = invoice.get("customer")
-    
+
     if customer_id:
         from ..models.subscription import Subscription as SubscriptionModel
+
         result = await db.execute(
-            select(SubscriptionModel).where(SubscriptionModel.stripe_customer_id == customer_id)
+            select(SubscriptionModel).where(
+                SubscriptionModel.stripe_customer_id == customer_id
+            )
         )
         db_subscription = result.scalar_one_or_none()
-        
+
         if db_subscription and db_subscription.stripe_subscription_id:
             await subscription_service.update_subscription_from_stripe(
                 db=db,
@@ -328,22 +339,22 @@ async def _handle_payment_succeeded(
 
 
 async def _handle_payment_failed(
-    db: AsyncSession,
-    event_data: dict,
-    subscription_service: SubscriptionService
+    db: AsyncSession, event_data: dict, subscription_service: SubscriptionService
 ):
     """Handle payment.failed event"""
     invoice = event_data
     customer_id = invoice.get("customer")
-    
+
     if customer_id:
         from ..models.subscription import Subscription as SubscriptionModel
+
         result = await db.execute(
-            select(SubscriptionModel).where(SubscriptionModel.stripe_customer_id == customer_id)
+            select(SubscriptionModel).where(
+                SubscriptionModel.stripe_customer_id == customer_id
+            )
         )
         db_subscription = result.scalar_one_or_none()
-        
+
         if db_subscription:
             db_subscription.status = "past_due"
             await db.commit()
-

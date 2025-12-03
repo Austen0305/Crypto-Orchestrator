@@ -1,8 +1,10 @@
 """
 Exchange Services Module
 """
+
 try:
     from .kraken_service import KrakenService
+
     kraken_service = KrakenService()
 except Exception:
     kraken_service = None
@@ -16,7 +18,7 @@ from .smart_routing import (
     OrderQuote,
     RoutingResult,
     Exchange,
-    smart_routing_service
+    smart_routing_service,
 )
 
 __all__ = [

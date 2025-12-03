@@ -2,6 +2,7 @@
 OpenTelemetry Setup and Configuration
 Provides full observability with distributed tracing, metrics, and logs
 """
+
 import logging
 import os
 from typing import Optional
@@ -19,19 +20,26 @@ try:
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
     from opentelemetry.sdk.metrics import MeterProvider
-    from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader, ConsoleMetricExporter
+    from opentelemetry.sdk.metrics.export import (
+        PeriodicExportingMetricReader,
+        ConsoleMetricExporter,
+    )
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
     from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
     from opentelemetry.instrumentation.requests import RequestsInstrumentor
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-    from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+    from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
+        OTLPMetricExporter,
+    )
     from opentelemetry.exporter.prometheus import PrometheusMetricExporter
     from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-    
+
     OTEL_AVAILABLE = True
 except ImportError:
-    logger.warning("OpenTelemetry not installed. Install with: pip install opentelemetry-api opentelemetry-sdk opentelemetry-instrumentation-fastapi opentelemetry-instrumentation-sqlalchemy opentelemetry-exporter-otlp")
+    logger.warning(
+        "OpenTelemetry not installed. Install with: pip install opentelemetry-api opentelemetry-sdk opentelemetry-instrumentation-fastapi opentelemetry-instrumentation-sqlalchemy opentelemetry-exporter-otlp"
+    )
     OTEL_AVAILABLE = False
 
 
@@ -40,87 +48,91 @@ def setup_opentelemetry(
     service_version: str = "1.0.0",
     otlp_endpoint: Optional[str] = None,
     enable_console_exporter: bool = False,
-    enable_prometheus: bool = True
+    enable_prometheus: bool = True,
 ) -> bool:
     """
     Setup OpenTelemetry instrumentation
-    
+
     Args:
         service_name: Name of the service
         service_version: Version of the service
         otlp_endpoint: OTLP endpoint URL (e.g., http://localhost:4317)
         enable_console_exporter: Enable console exporter for debugging
         enable_prometheus: Enable Prometheus metrics export
-    
+
     Returns:
         True if setup successful
     """
     if not OTEL_AVAILABLE:
         logger.warning("OpenTelemetry not available, skipping setup")
         return False
-    
+
     try:
         # Get OTLP endpoint from environment if not provided
         if not otlp_endpoint:
             otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
-        
+
         # Create resource
-        resource = Resource.create({
-            "service.name": service_name,
-            "service.version": service_version,
-            "service.namespace": "cryptoorchestrator",
-        })
-        
+        resource = Resource.create(
+            {
+                "service.name": service_name,
+                "service.version": service_version,
+                "service.namespace": "cryptoorchestrator",
+            }
+        )
+
         # Setup Tracer Provider
         trace_provider = TracerProvider(resource=resource)
-        
+
         # Add span processors
         if otlp_endpoint:
             # OTLP exporter (for Jaeger, Tempo, etc.)
             otlp_exporter = OTLPSpanExporter(endpoint=otlp_endpoint)
             trace_provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
             logger.info(f"✅ OpenTelemetry OTLP exporter configured: {otlp_endpoint}")
-        
+
         if enable_console_exporter:
             # Console exporter for debugging
             console_exporter = ConsoleSpanExporter()
             trace_provider.add_span_processor(BatchSpanProcessor(console_exporter))
             logger.info("✅ OpenTelemetry console exporter enabled")
-        
+
         trace.set_tracer_provider(trace_provider)
         global tracer
         tracer = trace.get_tracer(__name__)
-        
+
         # Setup Meter Provider
         metric_readers = []
-        
+
         if otlp_endpoint:
             # OTLP metric exporter
             otlp_metric_exporter = OTLPMetricExporter(endpoint=otlp_endpoint)
             metric_readers.append(PeriodicExportingMetricReader(otlp_metric_exporter))
-        
+
         if enable_prometheus:
             # Prometheus exporter (for /metrics endpoint)
             try:
                 from opentelemetry.exporter.prometheus import PrometheusMetricExporter
+
                 prometheus_exporter = PrometheusMetricExporter()
-                metric_readers.append(PeriodicExportingMetricReader(prometheus_exporter))
+                metric_readers.append(
+                    PeriodicExportingMetricReader(prometheus_exporter)
+                )
                 logger.info("✅ Prometheus metrics exporter enabled")
             except ImportError:
                 logger.warning("Prometheus exporter not available")
-        
+
         if metric_readers:
             meter_provider = MeterProvider(
-                resource=resource,
-                metric_readers=metric_readers
+                resource=resource, metric_readers=metric_readers
             )
             metrics.set_meter_provider(meter_provider)
             global meter
             meter = metrics.get_meter(__name__)
-        
+
         logger.info("✅ OpenTelemetry setup complete")
         return True
-        
+
     except Exception as e:
         logger.error(f"Failed to setup OpenTelemetry: {e}", exc_info=True)
         return False
@@ -129,16 +141,16 @@ def setup_opentelemetry(
 def instrument_fastapi(app) -> bool:
     """
     Instrument FastAPI application with OpenTelemetry
-    
+
     Args:
         app: FastAPI application instance
-    
+
     Returns:
         True if instrumentation successful
     """
     if not OTEL_AVAILABLE:
         return False
-    
+
     try:
         FastAPIInstrumentor.instrument_app(app)
         logger.info("✅ FastAPI instrumented with OpenTelemetry")
@@ -151,13 +163,13 @@ def instrument_fastapi(app) -> bool:
 def instrument_sqlalchemy() -> bool:
     """
     Instrument SQLAlchemy with OpenTelemetry
-    
+
     Returns:
         True if instrumentation successful
     """
     if not OTEL_AVAILABLE:
         return False
-    
+
     try:
         SQLAlchemyInstrumentor().instrument()
         logger.info("✅ SQLAlchemy instrumented with OpenTelemetry")
@@ -170,13 +182,13 @@ def instrument_sqlalchemy() -> bool:
 def instrument_requests() -> bool:
     """
     Instrument requests library with OpenTelemetry
-    
+
     Returns:
         True if instrumentation successful
     """
     if not OTEL_AVAILABLE:
         return False
-    
+
     try:
         RequestsInstrumentor().instrument()
         logger.info("✅ Requests library instrumented with OpenTelemetry")
@@ -205,7 +217,7 @@ def get_meter():
 def create_span(name: str, attributes: Optional[dict] = None):
     """
     Create a span context manager
-    
+
     Usage:
         with create_span("operation_name", {"key": "value"}):
             # Your code here
@@ -213,8 +225,9 @@ def create_span(name: str, attributes: Optional[dict] = None):
     if not OTEL_AVAILABLE:
         # Return a no-op context manager
         from contextlib import nullcontext
+
         return nullcontext()
-    
+
     tracer = get_tracer()
     if tracer:
         span = tracer.start_span(name)
@@ -224,13 +237,16 @@ def create_span(name: str, attributes: Optional[dict] = None):
         return span
     else:
         from contextlib import nullcontext
+
         return nullcontext()
 
 
-def record_metric(name: str, value: float, unit: str = "", attributes: Optional[dict] = None):
+def record_metric(
+    name: str, value: float, unit: str = "", attributes: Optional[dict] = None
+):
     """
     Record a metric value
-    
+
     Args:
         name: Metric name
         value: Metric value
@@ -239,13 +255,11 @@ def record_metric(name: str, value: float, unit: str = "", attributes: Optional[
     """
     if not OTEL_AVAILABLE:
         return
-    
+
     meter = get_meter()
     if meter:
         counter = meter.create_counter(
-            name=name,
-            description=f"Counter for {name}",
-            unit=unit
+            name=name, description=f"Counter for {name}", unit=unit
         )
         counter.add(value, attributes or {})
 
@@ -256,7 +270,7 @@ if os.getenv("ENABLE_OPENTELEMETRY", "false").lower() == "true":
         service_name=os.getenv("OTEL_SERVICE_NAME", "cryptoorchestrator"),
         service_version=os.getenv("OTEL_SERVICE_VERSION", "1.0.0"),
         otlp_endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
-        enable_console_exporter=os.getenv("OTEL_CONSOLE_EXPORTER", "false").lower() == "true",
-        enable_prometheus=os.getenv("OTEL_PROMETHEUS", "true").lower() == "true"
+        enable_console_exporter=os.getenv("OTEL_CONSOLE_EXPORTER", "false").lower()
+        == "true",
+        enable_prometheus=os.getenv("OTEL_PROMETHEUS", "true").lower() == "true",
     )
-

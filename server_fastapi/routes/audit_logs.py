@@ -55,13 +55,15 @@ async def get_audit_logs(
     try:
         user_id = current_user.get("sub") or current_user.get("user_id")
         user_role = current_user.get("role", "user")
-        
+
         if not user_id:
             raise HTTPException(status_code=401, detail="User not authenticated")
 
         # Only admins can view audit logs
         if user_role != "admin":
-            raise HTTPException(status_code=403, detail="Only admins can view audit logs")
+            raise HTTPException(
+                status_code=403, detail="Only admins can view audit logs"
+            )
 
         # Read audit log file
         if not AUDIT_LOG_FILE.exists():
@@ -77,25 +79,32 @@ async def get_audit_logs(
         try:
             with open(AUDIT_LOG_FILE, "r") as f:
                 lines = f.readlines()
-                
+
                 for line in lines:
                     if not line.strip():
                         continue
-                    
+
                     try:
                         # Try to parse as JSON (if it's a JSON log entry)
                         import json
+
                         # Log entries might be in format: "timestamp - logger - level - message"
                         # Or JSON format: {"timestamp": "...", ...}
-                        
+
                         # Check if line contains JSON
                         if line.strip().startswith("{"):
                             entry_data = json.loads(line.strip())
                             # Ensure required fields
                             if "action" not in entry_data:
-                                entry_data["action"] = entry_data.get("event_type", "unknown")
+                                entry_data["action"] = entry_data.get(
+                                    "event_type", "unknown"
+                                )
                             if "status" not in entry_data:
-                                entry_data["status"] = "success" if entry_data.get("success", True) else "failure"
+                                entry_data["status"] = (
+                                    "success"
+                                    if entry_data.get("success", True)
+                                    else "failure"
+                                )
                         else:
                             # Parse text format: "timestamp - logger - level - message"
                             parts = line.split(" - ", 3)
@@ -104,15 +113,21 @@ async def get_audit_logs(
                                 logger_name = parts[1]
                                 level = parts[2]
                                 message = parts[3].strip()
-                                
+
                                 # Try to parse message as JSON
                                 try:
                                     entry_data = json.loads(message)
                                     # Ensure required fields
                                     if "action" not in entry_data:
-                                        entry_data["action"] = entry_data.get("event_type", "unknown")
+                                        entry_data["action"] = entry_data.get(
+                                            "event_type", "unknown"
+                                        )
                                     if "status" not in entry_data:
-                                        entry_data["status"] = "success" if entry_data.get("success", True) else "failure"
+                                        entry_data["status"] = (
+                                            "success"
+                                            if entry_data.get("success", True)
+                                            else "failure"
+                                        )
                                 except:
                                     # If not JSON, create a basic entry
                                     entry_data = {
@@ -125,32 +140,37 @@ async def get_audit_logs(
                                     }
                             else:
                                 continue
-                                               
+
                         # Filter by event type if provided
                         if event_type and entry_data.get("event_type") != event_type:
                             continue
-                        
+
                         # Filter by status if provided
                         if status and entry_data.get("status") != status:
                             continue
-                        
+
                         # Filter by user_id if not admin (already checked above, but keep for safety)
-                        if user_role != "admin" and entry_data.get("user_id") != user_id:
+                        if (
+                            user_role != "admin"
+                            and entry_data.get("user_id") != user_id
+                        ):
                             continue
-                        
+
                         # Create audit log entry
                         entry = AuditLogEntry(
                             timestamp=entry_data.get("timestamp", ""),
                             event_type=entry_data.get("event_type", "unknown"),
                             user_id=entry_data.get("user_id"),
-                            action=entry_data.get("action", entry_data.get("message", "")),
+                            action=entry_data.get(
+                                "action", entry_data.get("message", "")
+                            ),
                             resource_type=entry_data.get("resource_type"),
                             resource_id=entry_data.get("resource_id"),
                             details=entry_data.get("details"),
                             status=entry_data.get("status", "success"),
                             error_message=entry_data.get("error_message"),
                         )
-                        
+
                         entries.append(entry)
                     except Exception as e:
                         logger.warning(f"Failed to parse audit log entry: {e}")
@@ -190,13 +210,15 @@ async def get_audit_log_stats(
     try:
         user_id = current_user.get("sub") or current_user.get("user_id")
         user_role = current_user.get("role", "user")
-        
+
         if not user_id:
             raise HTTPException(status_code=401, detail="User not authenticated")
 
         # Only admins can view audit log stats
         if user_role != "admin":
-            raise HTTPException(status_code=403, detail="Only admins can view audit log stats")
+            raise HTTPException(
+                status_code=403, detail="Only admins can view audit log stats"
+            )
 
         # Read audit log file
         if not AUDIT_LOG_FILE.exists():
@@ -211,18 +233,18 @@ async def get_audit_log_stats(
         event_types = {}
         statuses = {}
         users = {}
-        
+
         try:
             with open(AUDIT_LOG_FILE, "r") as f:
                 lines = f.readlines()
-                
+
                 for line in lines:
                     if not line.strip():
                         continue
-                    
+
                     try:
                         import json
-                        
+
                         # Parse line (same logic as get_audit_logs)
                         if line.strip().startswith("{"):
                             entry_data = json.loads(line.strip())
@@ -236,21 +258,25 @@ async def get_audit_log_stats(
                                     continue
                             else:
                                 continue
-                        
+
                         # Count event types
                         event_type = entry_data.get("event_type", "unknown")
                         event_types[event_type] = event_types.get(event_type, 0) + 1
-                        
+
                         # Count statuses
                         status = entry_data.get("status", "success")
                         statuses[status] = statuses.get(status, 0) + 1
-                        
+
                         # Count users
                         entry_user_id = entry_data.get("user_id")
                         if entry_user_id:
-                            users[str(entry_user_id)] = users.get(str(entry_user_id), 0) + 1
+                            users[str(entry_user_id)] = (
+                                users.get(str(entry_user_id), 0) + 1
+                            )
                     except Exception as e:
-                        logger.warning(f"Failed to parse audit log entry for stats: {e}")
+                        logger.warning(
+                            f"Failed to parse audit log entry for stats: {e}"
+                        )
                         continue
         except Exception as e:
             logger.error(f"Failed to read audit log file for stats: {e}")
@@ -268,4 +294,3 @@ async def get_audit_log_stats(
     except Exception as e:
         logger.error(f"Failed to get audit log stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-

@@ -48,7 +48,9 @@ class BotControlService:
                     return False
 
                 # Update bot status
-                updated_bot = await self.repository.update_bot_status(session, bot_id, user_id, True, 'running')
+                updated_bot = await self.repository.update_bot_status(
+                    session, bot_id, user_id, True, "running"
+                )
                 if updated_bot:
                     logger.info(f"Bot {bot_id} started successfully")
                     await self._trigger_reconciliation(user_id, session)
@@ -78,7 +80,9 @@ class BotControlService:
                     return False
 
                 # Update bot status
-                updated_bot = await self.repository.update_bot_status(session, bot_id, user_id, False, 'stopped')
+                updated_bot = await self.repository.update_bot_status(
+                    session, bot_id, user_id, False, "stopped"
+                )
                 if updated_bot:
                     logger.info(f"Bot {bot_id} stopped successfully")
                     await self._trigger_reconciliation(user_id, session)
@@ -91,7 +95,9 @@ class BotControlService:
             logger.error(f"Error stopping bot {bot_id}: {str(e)}")
             raise
 
-    async def get_bot_status(self, bot_id: str, user_id: int) -> Optional[Dict[str, Any]]:
+    async def get_bot_status(
+        self, bot_id: str, user_id: int
+    ) -> Optional[Dict[str, Any]]:
         """Get bot status"""
         try:
             async with self._get_session() as session:
@@ -110,7 +116,7 @@ class BotControlService:
         try:
             status = await self.get_bot_status(bot_id, user_id)
             # to_dict() returns 'is_active' field after mapping
-            return status is not None and status.get('is_active', False)
+            return status is not None and status.get("is_active", False)
 
         except Exception as e:
             logger.error(f"Error checking if bot {bot_id} is active: {str(e)}")
@@ -121,21 +127,27 @@ class BotControlService:
         try:
             status = await self.get_bot_status(bot_id, user_id)
             if not status:
-                return 'not_found'
+                return "not_found"
 
-            return status.get('status', 'unknown')
+            return status.get("status", "unknown")
 
         except Exception as e:
             logger.error(f"Error getting bot state for {bot_id}: {str(e)}")
-            return 'error'
+            return "error"
 
-    async def update_bot_status(self, bot_id: str, user_id: int, active: bool, status: str) -> bool:
+    async def update_bot_status(
+        self, bot_id: str, user_id: int, active: bool, status: str
+    ) -> bool:
         """Update bot status directly"""
         try:
             async with self._get_session() as session:
-                updated_bot = await self.repository.update_bot_status(session, bot_id, user_id, active, status)
+                updated_bot = await self.repository.update_bot_status(
+                    session, bot_id, user_id, active, status
+                )
                 if updated_bot:
-                    logger.info(f"Updated bot {bot_id} status to {status} (active: {active})")
+                    logger.info(
+                        f"Updated bot {bot_id} status to {status} (active: {active})"
+                    )
                     await self._trigger_reconciliation(user_id, session)
                     return True
                 else:
@@ -167,7 +179,9 @@ class BotControlService:
             logger.error(f"Error bulk stopping bots for user {user_id}: {str(e)}")
             raise
 
-    async def _trigger_reconciliation(self, user_id: int, session: AsyncSession) -> None:
+    async def _trigger_reconciliation(
+        self, user_id: int, session: AsyncSession
+    ) -> None:
         try:
             await reconcile_user_portfolio(str(user_id), session)
         except Exception as exc:

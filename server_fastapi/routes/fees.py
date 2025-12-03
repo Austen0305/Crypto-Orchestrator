@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
 # Pydantic models
 class FeeCalculationRequest(BaseModel):
     amount: float
@@ -17,11 +18,13 @@ class FeeCalculationRequest(BaseModel):
     isMaker: Optional[bool] = None
     volumeUSD: Optional[float] = None
 
+
 class FeeResponse(BaseModel):
     feeAmount: float
     feePercentage: float
     totalAmount: float
     netAmount: float
+
 
 class FeeInfo(BaseModel):
     makerFee: float
@@ -29,8 +32,11 @@ class FeeInfo(BaseModel):
     volumeUSD: float
     nextTierVolume: Optional[float] = None
 
+
 @router.get("/", response_model=FeeInfo)
-async def get_fees(volumeUSD: Optional[float] = None, current_user: dict = Depends(get_current_user)):
+async def get_fees(
+    volumeUSD: Optional[float] = None, current_user: dict = Depends(get_current_user)
+):
     """Get current fee information from exchange"""
     try:
         # Use real volume if provided, otherwise use mock volume for tier calculation
@@ -43,16 +49,23 @@ async def get_fees(volumeUSD: Optional[float] = None, current_user: dict = Depen
             "makerFee": fees.maker,
             "takerFee": fees.taker,
             "volumeUSD": volume,
-            "nextTierVolume": 500000.0 if volume < 500000 else None  # Simplified tier logic
+            "nextTierVolume": (
+                500000.0 if volume < 500000 else None
+            ),  # Simplified tier logic
         }
 
         return fee_info
     except Exception as e:
         logger.error(f"Failed to get fees: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve fee information")
+        raise HTTPException(
+            status_code=500, detail="Failed to retrieve fee information"
+        )
+
 
 @router.post("/calculate", response_model=FeeResponse)
-async def calculate_fees(request: FeeCalculationRequest, current_user: dict = Depends(get_current_user)):
+async def calculate_fees(
+    request: FeeCalculationRequest, current_user: dict = Depends(get_current_user)
+):
     """Calculate trading fees for a specific trade using exchange service"""
     try:
         # Get current trading volume for fee tier calculation (mock for now)
@@ -63,7 +76,7 @@ async def calculate_fees(request: FeeCalculationRequest, current_user: dict = De
             amount=request.amount,
             price=request.price,
             is_maker=request.isMaker if request.isMaker is not None else False,
-            volume_usd=volume_usd
+            volume_usd=volume_usd,
         )
 
         total_amount = request.amount * request.price
@@ -79,7 +92,7 @@ async def calculate_fees(request: FeeCalculationRequest, current_user: dict = De
             "feeAmount": fee_amount,
             "feePercentage": fee_percentage,
             "totalAmount": total_amount,
-            "netAmount": net_amount
+            "netAmount": net_amount,
         }
     except Exception as e:
         logger.error(f"Failed to calculate fees: {e}")

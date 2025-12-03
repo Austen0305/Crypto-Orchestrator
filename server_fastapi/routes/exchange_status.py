@@ -51,7 +51,7 @@ async def get_exchange_status(
 
         # Get all API keys for user
         api_keys = await exchange_key_service.list_api_keys(user_id)
-        
+
         if not api_keys:
             return ExchangeStatusResponse(
                 exchanges=[],
@@ -65,41 +65,44 @@ async def get_exchange_status(
         for key in api_keys:
             exchange = key["exchange"]
             is_validated = key.get("is_validated", False)
-            
+
             # Quick connectivity check
             is_connected = False
             latency_ms = None
             error = None
-            
+
             if is_validated:
                 try:
                     import time
                     import ccxt
-                    
+
                     # Get API key data
                     api_key_data = await exchange_key_service.get_api_key(
                         user_id, exchange, include_secrets=True
                     )
-                    
+
                     if api_key_data:
                         # Create exchange instance
                         exchange_class = getattr(ccxt, exchange, None)
                         if exchange_class:
-                            exchange_instance = exchange_class({
-                                "apiKey": api_key_data["api_key"],
-                                "secret": api_key_data["api_secret"],
-                                "enableRateLimit": True,
-                                "options": {
-                                    "testnet": api_key_data.get("is_testnet", False),
-                                },
-                            })
-                            
+                            exchange_instance = exchange_class(
+                                {
+                                    "apiKey": api_key_data["api_key"],
+                                    "secret": api_key_data["api_secret"],
+                                    "enableRateLimit": True,
+                                    "options": {
+                                        "testnet": api_key_data.get(
+                                            "is_testnet", False
+                                        ),
+                                    },
+                                }
+                            )
+
                             # Quick connectivity test with timeout
                             start_time = time.time()
                             try:
                                 await asyncio.wait_for(
-                                    exchange_instance.load_markets(),
-                                    timeout=5.0
+                                    exchange_instance.load_markets(), timeout=5.0
                                 )
                                 latency_ms = (time.time() - start_time) * 1000
                                 is_connected = True
@@ -111,15 +114,17 @@ async def get_exchange_status(
                 except Exception as e:
                     logger.error(f"Failed to check connectivity for {exchange}: {e}")
                     error = str(e)[:100]
-            
-            statuses.append(ExchangeStatusData(
-                exchange=exchange,
-                is_connected=is_connected,
-                is_validated=is_validated,
-                last_checked=None,  # TODO: Store last checked timestamp
-                error=error,
-                latency_ms=latency_ms,
-            ))
+
+            statuses.append(
+                ExchangeStatusData(
+                    exchange=exchange,
+                    is_connected=is_connected,
+                    is_validated=is_validated,
+                    last_checked=None,  # TODO: Store last checked timestamp
+                    error=error,
+                    latency_ms=latency_ms,
+                )
+            )
 
         connected_count = sum(1 for s in statuses if s.is_connected)
         validated_count = sum(1 for s in statuses if s.is_validated)
@@ -148,7 +153,9 @@ async def get_exchange_status_detail(
             raise HTTPException(status_code=401, detail="User not authenticated")
 
         # Get API key for exchange
-        api_key = await exchange_key_service.get_api_key(user_id, exchange, include_secrets=False)
+        api_key = await exchange_key_service.get_api_key(
+            user_id, exchange, include_secrets=False
+        )
         if not api_key:
             raise HTTPException(status_code=404, detail="Exchange API key not found")
 
@@ -161,31 +168,32 @@ async def get_exchange_status_detail(
             try:
                 import time
                 import ccxt
-                
+
                 # Get API key data with secrets
                 api_key_data = await exchange_key_service.get_api_key(
                     user_id, exchange, include_secrets=True
                 )
-                
+
                 if api_key_data:
                     # Create exchange instance
                     exchange_class = getattr(ccxt, exchange, None)
                     if exchange_class:
-                        exchange_instance = exchange_class({
-                            "apiKey": api_key_data["api_key"],
-                            "secret": api_key_data["api_secret"],
-                            "enableRateLimit": True,
-                            "options": {
-                                "testnet": api_key_data.get("is_testnet", False),
-                            },
-                        })
-                        
+                        exchange_instance = exchange_class(
+                            {
+                                "apiKey": api_key_data["api_key"],
+                                "secret": api_key_data["api_secret"],
+                                "enableRateLimit": True,
+                                "options": {
+                                    "testnet": api_key_data.get("is_testnet", False),
+                                },
+                            }
+                        )
+
                         # Quick connectivity test
                         start_time = time.time()
                         try:
                             await asyncio.wait_for(
-                                exchange_instance.load_markets(),
-                                timeout=5.0
+                                exchange_instance.load_markets(), timeout=5.0
                             )
                             latency_ms = (time.time() - start_time) * 1000
                             is_connected = True

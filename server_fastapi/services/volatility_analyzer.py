@@ -5,9 +5,11 @@ import math
 
 logger = logging.getLogger(__name__)
 
+
 class VolatilityAnalysisResult(BaseModel):
     volatility: float
     details: Dict[str, Any]
+
 
 class VolatilityAnalyzer:
     def __init__(self):
@@ -19,9 +21,9 @@ class VolatilityAnalyzer:
 
         trueRanges = []
         for i in range(1, len(data)):
-            high = data[i]['high']
-            low = data[i]['low']
-            prevClose = data[i - 1]['close']
+            high = data[i]["high"]
+            low = data[i]["low"]
+            prevClose = data[i - 1]["close"]
 
             tr1 = high - low
             tr2 = abs(high - prevClose)
@@ -36,34 +38,50 @@ class VolatilityAnalyzer:
 
         return atr
 
-    def calculateVolatilityIndex(self, data: List[Dict[str, Any]], period: int = 20) -> float:
+    def calculateVolatilityIndex(
+        self, data: List[Dict[str, Any]], period: int = 20
+    ) -> float:
         if len(data) < period:
             return 0.0
 
         returns = []
         for i in range(1, len(data)):
-            returns.append((data[i]['close'] - data[i-1]['close']) / data[i-1]['close'])
+            returns.append(
+                (data[i]["close"] - data[i - 1]["close"]) / data[i - 1]["close"]
+            )
 
         mean = sum(returns) / len(returns)
         variance = sum((r - mean) ** 2 for r in returns) / len(returns)
 
         return math.sqrt(variance * 252)  # Annualized volatility
 
-    def calculateVolatilityAdjustedSize(self, baseSize: float, currentVolatility: float, averageVolatility: float, maxVolatilityIncrease: float = 2.0) -> float:
-        volatilityRatio = averageVolatility / currentVolatility if currentVolatility != 0 else 1.0
-        adjustmentFactor = min(max(volatilityRatio, 1/maxVolatilityIncrease), maxVolatilityIncrease)
+    def calculateVolatilityAdjustedSize(
+        self,
+        baseSize: float,
+        currentVolatility: float,
+        averageVolatility: float,
+        maxVolatilityIncrease: float = 2.0,
+    ) -> float:
+        volatilityRatio = (
+            averageVolatility / currentVolatility if currentVolatility != 0 else 1.0
+        )
+        adjustmentFactor = min(
+            max(volatilityRatio, 1 / maxVolatilityIncrease), maxVolatilityIncrease
+        )
 
         return baseSize * adjustmentFactor
 
-    def analyzeMarketRegime(self, data: List[Dict[str, Any]]) -> Literal['low_volatility', 'normal', 'high_volatility']:
+    def analyzeMarketRegime(
+        self, data: List[Dict[str, Any]]
+    ) -> Literal["low_volatility", "normal", "high_volatility"]:
         volatility = self.calculateVolatilityIndex(data)
 
         if volatility < 0.15:
-            return 'low_volatility'
+            return "low_volatility"
         elif volatility > 0.35:
-            return 'high_volatility'
+            return "high_volatility"
         else:
-            return 'normal'
+            return "normal"
 
     def calculateRiskScore(self, data: List[Dict[str, Any]]) -> float:
         volatility = self.calculateVolatilityIndex(data)
@@ -74,7 +92,11 @@ class VolatilityAnalyzer:
         volatilityScore = min(100, (volatility * 100) / 0.5)
 
         # Adjust based on market regime
-        regimeMultiplier = 1.2 if regime == 'high_volatility' else 0.8 if regime == 'low_volatility' else 1.0
+        regimeMultiplier = (
+            1.2
+            if regime == "high_volatility"
+            else 0.8 if regime == "low_volatility" else 1.0
+        )
 
         return min(100, volatilityScore * regimeMultiplier)
 
@@ -89,7 +111,7 @@ class VolatilityAnalyzer:
                 "atr": atr,
                 "regime": regime,
                 "riskScore": riskScore,
-                "annualizedVolatility": volatility
+                "annualizedVolatility": volatility,
             }
 
             return VolatilityAnalysisResult(volatility=volatility, details=details)

@@ -8,8 +8,8 @@ import time
 
 
 class CircuitState(Enum):
-    CLOSED = "closed"      # Normal operation
-    OPEN = "open"          # Failing, requests blocked
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Failing, requests blocked
     HALF_OPEN = "half_open"  # Testing if service recovered
 
 
@@ -63,5 +63,5 @@ class CircuitBreaker:
         return {
             "state": self.state.value,
             "failure_count": self.failure_count,
-            "last_failure_time": self.last_failure_time
+            "last_failure_time": self.last_failure_time,
         }

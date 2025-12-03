@@ -1,4 +1,5 @@
 """Security middleware for the FastAPI application."""
+
 from typing import Callable, Optional
 
 from fastapi import FastAPI, Request, Response
@@ -8,6 +9,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 
 limiter = Limiter(key_func=get_remote_address)
+
 
 def setup_security_middleware(app: FastAPI) -> None:
     """Configure security middleware for the FastAPI application."""
@@ -20,15 +22,17 @@ def setup_security_middleware(app: FastAPI) -> None:
     @app.middleware("http")
     async def add_security_headers(request: Request, call_next: Callable) -> Response:
         response = await call_next(request)
-        
+
         # Content Security
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
-        
+
         # HTTPS enforcement
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
-        
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=31536000; includeSubDomains; preload"
+        )
+
         # Enhanced Content Security Policy
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
@@ -39,15 +43,17 @@ def setup_security_middleware(app: FastAPI) -> None:
             "connect-src 'self' ws: wss:; "
             "frame-ancestors 'none';"
         )
-        
+
         # Additional security headers
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+        response.headers["Permissions-Policy"] = (
+            "geolocation=(), microphone=(), camera=()"
+        )
         response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
-        
+
         # Remove server information
         response.headers.pop("Server", None)
-        
+
         return response
 
     # IP whitelist middleware
@@ -58,6 +64,7 @@ def setup_security_middleware(app: FastAPI) -> None:
             return Response(status_code=403, content="Access denied")
         return await call_next(request)
 
+
 def _is_sensitive_route(path: str) -> bool:
     """Check if the route is sensitive and requires IP whitelisting."""
     sensitive_routes = {
@@ -66,6 +73,7 @@ def _is_sensitive_route(path: str) -> bool:
         "/api/v1/keys",
     }
     return any(path.startswith(route) for route in sensitive_routes)
+
 
 def _is_whitelisted_ip(ip: Optional[str]) -> bool:
     """Check if the IP is in the whitelist."""

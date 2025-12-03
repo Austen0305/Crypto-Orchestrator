@@ -39,7 +39,7 @@ async def track_web_vitals(metric: WebVitalsMetric):
 
         # In production, store in database or time-series DB
         # For now, just log it
-        
+
         # You could store in Redis or database:
         # await cache_service.set(f"web-vitals:{metric.id}", metric.dict(), ttl=86400)
         # await db.execute(INSERT INTO web_vitals_metrics ...)
@@ -56,4 +56,3 @@ async def track_web_vitals(metric: WebVitalsMetric):
             "status": "error",
             "message": str(e),
         }
-

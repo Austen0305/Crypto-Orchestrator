@@ -27,18 +27,33 @@ class CreateDCABotRequest(BaseModel):
     order_amount: float = Field(..., gt=0, description="Amount per order")
     interval_minutes: int = Field(..., ge=1, description="Minutes between orders")
     trading_mode: str = Field(default="paper", pattern="^(paper|real)$")
-    max_orders: Optional[int] = Field(None, ge=1, description="Maximum number of orders")
-    use_martingale: bool = Field(default=False, description="Enable martingale strategy")
-    martingale_multiplier: float = Field(default=1.5, ge=1.0, description="Martingale multiplier")
-    martingale_max_multiplier: float = Field(default=5.0, ge=1.0, description="Maximum multiplier")
-    take_profit_percent: Optional[float] = Field(None, gt=0, description="Take profit at % gain")
-    stop_loss_percent: Optional[float] = Field(None, gt=0, description="Stop loss at % loss")
+    max_orders: Optional[int] = Field(
+        None, ge=1, description="Maximum number of orders"
+    )
+    use_martingale: bool = Field(
+        default=False, description="Enable martingale strategy"
+    )
+    martingale_multiplier: float = Field(
+        default=1.5, ge=1.0, description="Martingale multiplier"
+    )
+    martingale_max_multiplier: float = Field(
+        default=5.0, ge=1.0, description="Maximum multiplier"
+    )
+    take_profit_percent: Optional[float] = Field(
+        None, gt=0, description="Take profit at % gain"
+    )
+    stop_loss_percent: Optional[float] = Field(
+        None, gt=0, description="Stop loss at % loss"
+    )
     config: Optional[Dict[str, Any]] = None
 
-    @field_validator('martingale_max_multiplier')
+    @field_validator("martingale_max_multiplier")
     @classmethod
     def validate_max_multiplier(cls, v, info):
-        if info.data.get('martingale_multiplier') and v < info.data['martingale_multiplier']:
+        if (
+            info.data.get("martingale_multiplier")
+            and v < info.data["martingale_multiplier"]
+        ):
             raise ValueError("Max multiplier must be >= base multiplier")
         return v
 
@@ -53,7 +68,7 @@ class CreateDCABotRequest(BaseModel):
                 "interval_minutes": 60,
                 "trading_mode": "paper",
                 "max_orders": 10,
-                "use_martingale": False
+                "use_martingale": False,
             }
         }
     }
@@ -91,11 +106,16 @@ class DCABotResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-@router.post("/dca-bots", response_model=Dict[str, str], status_code=status.HTTP_201_CREATED, tags=["DCA Trading"])
+@router.post(
+    "/dca-bots",
+    response_model=Dict[str, str],
+    status_code=status.HTTP_201_CREATED,
+    tags=["DCA Trading"],
+)
 async def create_dca_bot(
     request: CreateDCABotRequest,
     current_user: dict = Depends(get_current_user),
-    db_session: AsyncSession = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session),
 ):
     """Create a new DCA (Dollar Cost Averaging) trading bot."""
     try:
@@ -115,27 +135,24 @@ async def create_dca_bot(
             martingale_max_multiplier=request.martingale_max_multiplier,
             take_profit_percent=request.take_profit_percent,
             stop_loss_percent=request.stop_loss_percent,
-            config=request.config
+            config=request.config,
         )
-        
+
         if not bot_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Failed to create DCA bot"
+                detail="Failed to create DCA bot",
             )
-        
+
         return {"id": bot_id, "message": "DCA bot created successfully"}
-    
+
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Error creating DCA bot: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create DCA bot"
+            detail="Failed to create DCA bot",
         )
 
 
@@ -144,19 +161,19 @@ async def list_dca_bots(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     current_user: dict = Depends(get_current_user),
-    db_session: AsyncSession = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session),
 ):
     """List all DCA bots for the current user."""
     try:
         service = DCATradingService(session=db_session)
         bots = await service.list_user_dca_bots(current_user["id"], skip, limit)
         return bots
-    
+
     except Exception as e:
         logger.error(f"Error listing DCA bots: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to list DCA bots"
+            detail="Failed to list DCA bots",
         )
 
 
@@ -164,123 +181,128 @@ async def list_dca_bots(
 async def get_dca_bot(
     bot_id: str,
     current_user: dict = Depends(get_current_user),
-    db_session: AsyncSession = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session),
 ):
     """Get a specific DCA bot by ID."""
     try:
         service = DCATradingService(session=db_session)
         bot = await service.get_dca_bot(bot_id, current_user["id"])
-        
+
         if not bot:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="DCA bot not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="DCA bot not found"
             )
-        
+
         return bot
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error getting DCA bot: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get DCA bot"
+            detail="Failed to get DCA bot",
         )
 
 
-@router.post("/dca-bots/{bot_id}/start", response_model=Dict[str, str], tags=["DCA Trading"])
+@router.post(
+    "/dca-bots/{bot_id}/start", response_model=Dict[str, str], tags=["DCA Trading"]
+)
 async def start_dca_bot(
     bot_id: str,
     current_user: dict = Depends(get_current_user),
-    db_session: AsyncSession = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session),
 ):
     """Start a DCA trading bot."""
     try:
         service = DCATradingService(session=db_session)
         success = await service.start_dca_bot(bot_id, current_user["id"])
-        
+
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Failed to start DCA bot"
+                detail="Failed to start DCA bot",
             )
-        
+
         return {"message": "DCA bot started successfully"}
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error starting DCA bot: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to start DCA bot"
+            detail="Failed to start DCA bot",
         )
 
 
-@router.post("/dca-bots/{bot_id}/stop", response_model=Dict[str, str], tags=["DCA Trading"])
+@router.post(
+    "/dca-bots/{bot_id}/stop", response_model=Dict[str, str], tags=["DCA Trading"]
+)
 async def stop_dca_bot(
     bot_id: str,
     current_user: dict = Depends(get_current_user),
-    db_session: AsyncSession = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session),
 ):
     """Stop a DCA trading bot."""
     try:
         service = DCATradingService(session=db_session)
         success = await service.stop_dca_bot(bot_id, current_user["id"])
-        
+
         if not success:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Failed to stop DCA bot"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to stop DCA bot"
             )
-        
+
         return {"message": "DCA bot stopped successfully"}
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error stopping DCA bot: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to stop DCA bot"
+            detail="Failed to stop DCA bot",
         )
 
 
-@router.delete("/dca-bots/{bot_id}", response_model=Dict[str, str], tags=["DCA Trading"])
+@router.delete(
+    "/dca-bots/{bot_id}", response_model=Dict[str, str], tags=["DCA Trading"]
+)
 async def delete_dca_bot(
     bot_id: str,
     current_user: dict = Depends(get_current_user),
-    db_session: AsyncSession = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session),
 ):
     """Delete a DCA trading bot."""
     try:
         # First stop the bot if it's running
         service = DCATradingService(session=db_session)
         await service.stop_dca_bot(bot_id, current_user["id"])
-        
+
         # Then soft delete
         from ...repositories.dca_bot_repository import DCABotRepository
+
         repository = DCABotRepository()
-        bot = await repository.get_by_user_and_id(db_session, bot_id, current_user["id"])
-        
+        bot = await repository.get_by_user_and_id(
+            db_session, bot_id, current_user["id"]
+        )
+
         if not bot:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="DCA bot not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="DCA bot not found"
             )
-        
+
         bot.soft_delete()
         await db_session.commit()
-        
+
         return {"message": "DCA bot deleted successfully"}
-    
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error deleting DCA bot: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete DCA bot"
+            detail="Failed to delete DCA bot",
         )
-

@@ -58,7 +58,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # Strict Transport Security (HSTS) - Only in production with HTTPS
         if self.is_production:
-            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains; preload"
+            )
 
         # X-Content-Type-Options
         response.headers["X-Content-Type-Options"] = "nosniff"
@@ -99,4 +101,3 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             del response.headers["server"]
 
         return response
-

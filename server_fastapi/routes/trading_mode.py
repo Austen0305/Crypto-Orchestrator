@@ -32,7 +32,9 @@ class ModeSwitchLog(BaseModel):
     timestamp: str
 
 
-@router.get("/check-real-money-requirements", response_model=RealMoneyRequirementsResponse)
+@router.get(
+    "/check-real-money-requirements", response_model=RealMoneyRequirementsResponse
+)
 async def check_real_money_requirements(
     current_user: dict = Depends(get_current_user),
 ):
@@ -44,7 +46,9 @@ async def check_real_money_requirements(
 
         # Check for exchange API keys
         api_keys = await exchange_key_service.list_api_keys(str(user_id))
-        has_api_keys = len(api_keys) > 0 and any(key.get("is_validated", False) for key in api_keys)
+        has_api_keys = len(api_keys) > 0 and any(
+            key.get("is_validated", False) for key in api_keys
+        )
 
         # Check for 2FA from database
         has_2fa = False
@@ -53,29 +57,39 @@ async def check_real_money_requirements(
             from ...database import get_db_context
             from ...models.base import User
             from sqlalchemy import select
-            
+
             # Convert user_id to int
-            user_id_int = int(user_id) if isinstance(user_id, str) and user_id.isdigit() else user_id
+            user_id_int = (
+                int(user_id)
+                if isinstance(user_id, str) and user_id.isdigit()
+                else user_id
+            )
             if not isinstance(user_id_int, int):
                 user_id_int = int(user_id) if user_id else 1
-            
+
             async with get_db_context() as session:
                 result = await session.execute(
                     select(User).where(User.id == user_id_int)
                 )
                 user = result.scalar_one_or_none()
-                
+
                 if user:
                     has_2fa = user.mfa_enabled or False
                     has_verified_email = user.is_verified or False
         except Exception as e:
             logger.warning(f"Failed to check 2FA/email from database: {e}")
             # Fallback to JWT claims
-            has_2fa = current_user.get("two_factor_enabled", False) or current_user.get("mfa_enabled", False)
-            has_verified_email = current_user.get("email_verified", False) or current_user.get("is_verified", False)
+            has_2fa = current_user.get("two_factor_enabled", False) or current_user.get(
+                "mfa_enabled", False
+            )
+            has_verified_email = current_user.get(
+                "email_verified", False
+            ) or current_user.get("is_verified", False)
 
         # Check for accepted terms (placeholder - implement based on your system)
-        has_accepted_terms = current_user.get("terms_accepted", True)  # Default to True for now
+        has_accepted_terms = current_user.get(
+            "terms_accepted", True
+        )  # Default to True for now
 
         can_trade_real_money = (
             has_api_keys and has_2fa and has_verified_email and has_accepted_terms
@@ -122,4 +136,3 @@ async def log_mode_switch(
     except Exception as e:
         logger.error(f"Failed to log mode switch: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-

@@ -52,7 +52,7 @@ class TrailingBotService:
         initial_price: Optional[float] = None,
         max_price: Optional[float] = None,
         min_price: Optional[float] = None,
-        config: Optional[Dict[str, Any]] = None
+        config: Optional[Dict[str, Any]] = None,
     ) -> Optional[str]:
         """Create a new trailing bot."""
         try:
@@ -93,7 +93,7 @@ class TrailingBotService:
                     status="stopped",
                     highest_price=initial_price,
                     lowest_price=initial_price,
-                    config=json.dumps(config or {})
+                    config=json.dumps(config or {}),
                 )
 
                 session.add(trailing_bot)
@@ -104,7 +104,10 @@ class TrailingBotService:
                 return bot_id
 
         except Exception as e:
-            logger.error(f"Error creating trailing bot for user {user_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error creating trailing bot for user {user_id}: {str(e)}",
+                exc_info=True,
+            )
             raise
 
     async def start_trailing_bot(self, bot_id: str, user_id: int) -> bool:
@@ -126,7 +129,9 @@ class TrailingBotService:
                 return updated_bot is not None
 
         except Exception as e:
-            logger.error(f"Error starting trailing bot {bot_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error starting trailing bot {bot_id}: {str(e)}", exc_info=True
+            )
             return False
 
     async def stop_trailing_bot(self, bot_id: str, user_id: int) -> bool:
@@ -145,10 +150,14 @@ class TrailingBotService:
                 return updated_bot is not None
 
         except Exception as e:
-            logger.error(f"Error stopping trailing bot {bot_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error stopping trailing bot {bot_id}: {str(e)}", exc_info=True
+            )
             return False
 
-    async def process_trailing_bot_cycle(self, bot_id: str, user_id: int) -> Dict[str, Any]:
+    async def process_trailing_bot_cycle(
+        self, bot_id: str, user_id: int
+    ) -> Dict[str, Any]:
         """Process one trailing bot cycle: check price and execute order if conditions met."""
         try:
             async with self._get_session() as session:
@@ -168,7 +177,12 @@ class TrailingBotService:
                 lowest_price = min(bot.lowest_price, current_price)
 
                 await self.repository.update_trailing_price(
-                    session, bot.id, bot.user_id, current_price, highest_price, lowest_price
+                    session,
+                    bot.id,
+                    bot.user_id,
+                    current_price,
+                    highest_price,
+                    lowest_price,
                 )
 
                 # Check if order should be triggered
@@ -181,13 +195,24 @@ class TrailingBotService:
                             return {"action": "skipped", "reason": "above_max_price"}
 
                         # Execute buy order
-                        result = await self._execute_trailing_order(bot, "buy", current_price, session)
+                        result = await self._execute_trailing_order(
+                            bot, "buy", current_price, session
+                        )
                         if result["success"]:
                             # Update trailing price to current price
                             await self.repository.update_trailing_price(
-                                session, bot.id, bot.user_id, current_price, highest_price, lowest_price
+                                session,
+                                bot.id,
+                                bot.user_id,
+                                current_price,
+                                highest_price,
+                                lowest_price,
                             )
-                            return {"action": "executed", "side": "buy", "price": current_price}
+                            return {
+                                "action": "executed",
+                                "side": "buy",
+                                "price": current_price,
+                            }
 
                 elif bot.bot_type == "trailing_sell":
                     # Trailing sell: sell when price rises by trailing_percent
@@ -198,26 +223,35 @@ class TrailingBotService:
                             return {"action": "skipped", "reason": "below_min_price"}
 
                         # Execute sell order
-                        result = await self._execute_trailing_order(bot, "sell", current_price, session)
+                        result = await self._execute_trailing_order(
+                            bot, "sell", current_price, session
+                        )
                         if result["success"]:
                             # Update trailing price to current price
                             await self.repository.update_trailing_price(
-                                session, bot.id, bot.user_id, current_price, highest_price, lowest_price
+                                session,
+                                bot.id,
+                                bot.user_id,
+                                current_price,
+                                highest_price,
+                                lowest_price,
                             )
-                            return {"action": "executed", "side": "sell", "price": current_price}
+                            return {
+                                "action": "executed",
+                                "side": "sell",
+                                "price": current_price,
+                            }
 
                 return {"action": "monitoring", "current_price": current_price}
 
         except Exception as e:
-            logger.error(f"Error processing trailing bot cycle: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error processing trailing bot cycle: {str(e)}", exc_info=True
+            )
             return {"action": "error", "error": str(e)}
 
     async def _execute_trailing_order(
-        self,
-        bot: TrailingBot,
-        side: str,
-        price: float,
-        session: AsyncSession
+        self, bot: TrailingBot, side: str, price: float, session: AsyncSession
     ) -> Dict[str, Any]:
         """Execute a trailing order."""
         try:
@@ -227,24 +261,21 @@ class TrailingBotService:
                     "success": True,
                     "order_id": f"paper-{uuid.uuid4().hex[:12]}",
                     "price": price,
-                    "amount": bot.order_amount
+                    "amount": bot.order_amount,
                 }
             else:
                 # Real trading - place actual order
                 exchange_service = ExchangeService(bot.exchange)
                 order = await exchange_service.place_order(
-                    pair=bot.symbol,
-                    side=side,
-                    type_="market",
-                    amount=bot.order_amount
+                    pair=bot.symbol, side=side, type_="market", amount=bot.order_amount
                 )
-                
+
                 if order:
                     return {
                         "success": True,
                         "order_id": order.get("id"),
                         "price": price,
-                        "amount": bot.order_amount
+                        "amount": bot.order_amount,
                     }
                 else:
                     return {"success": False, "error": "Order placement failed"}
@@ -253,7 +284,9 @@ class TrailingBotService:
             logger.error(f"Error executing trailing order: {str(e)}", exc_info=True)
             return {"success": False, "error": str(e)}
 
-    async def get_trailing_bot(self, bot_id: str, user_id: int) -> Optional[Dict[str, Any]]:
+    async def get_trailing_bot(
+        self, bot_id: str, user_id: int
+    ) -> Optional[Dict[str, Any]]:
         """Get trailing bot details."""
         try:
             async with self._get_session() as session:
@@ -262,16 +295,21 @@ class TrailingBotService:
                     return None
                 return bot.to_dict()
         except Exception as e:
-            logger.error(f"Error getting trailing bot {bot_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error getting trailing bot {bot_id}: {str(e)}", exc_info=True
+            )
             return None
 
-    async def list_user_trailing_bots(self, user_id: int, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
+    async def list_user_trailing_bots(
+        self, user_id: int, skip: int = 0, limit: int = 100
+    ) -> List[Dict[str, Any]]:
         """List all trailing bots for a user."""
         try:
             async with self._get_session() as session:
-                bots = await self.repository.get_user_trailing_bots(session, user_id, skip, limit)
+                bots = await self.repository.get_user_trailing_bots(
+                    session, user_id, skip, limit
+                )
                 return [bot.to_dict() for bot in bots]
         except Exception as e:
             logger.error(f"Error listing trailing bots: {str(e)}", exc_info=True)
             return []
-

@@ -1,6 +1,7 @@
 """
 OpenTelemetry Observability Module
 """
+
 from .opentelemetry_setup import (
     setup_opentelemetry,
     instrument_fastapi,
@@ -10,7 +11,7 @@ from .opentelemetry_setup import (
     get_meter,
     create_span,
     record_metric,
-    OTEL_AVAILABLE
+    OTEL_AVAILABLE,
 )
 
 __all__ = [
@@ -22,6 +23,5 @@ __all__ = [
     "get_meter",
     "create_span",
     "record_metric",
-    "OTEL_AVAILABLE"
+    "OTEL_AVAILABLE",
 ]
-

@@ -20,7 +20,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
     def __init__(self, app: ASGIApp):
         super().__init__(app)
-        self.is_production = os.getenv("NODE_ENV") == "production" or os.getenv("ENVIRONMENT") == "production"
+        self.is_production = (
+            os.getenv("NODE_ENV") == "production"
+            or os.getenv("ENVIRONMENT") == "production"
+        )
 
     async def dispatch(self, request: Request, call_next):
         response: Response = await call_next(request)
@@ -60,7 +63,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # Strict Transport Security (HSTS) - Only in production with HTTPS
         if self.is_production:
-            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains; preload"
+            )
 
         # X-Content-Type-Options
         response.headers["X-Content-Type-Options"] = "nosniff"
@@ -98,4 +103,3 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             del response.headers["server"]
 
         return response
-
