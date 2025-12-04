@@ -117,6 +117,8 @@ build/
 !CHANGELOG.md
 !END_TO_END_FIX_SUMMARY.md
 !LIMITATIONS_FIXED_SUMMARY.md
+!CONTINUED_IMPROVEMENTS.md
+!FINAL_STATUS_REPORT.md
 Master-Todo-List*
 comprehensive_feature_validation.py
 test_real_money_trading.py
