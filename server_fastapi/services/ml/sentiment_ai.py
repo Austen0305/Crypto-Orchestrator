@@ -92,18 +92,31 @@ class SentimentAIService:
         # Initialize sentiment analyzers
         self.vader_analyzer = SentimentIntensityAnalyzer() if VADER_AVAILABLE else None
         self.transformer_pipeline = None
+        self._transformer_loading_attempted = False
 
-        if TRANSFORMERS_AVAILABLE:
-            try:
-                self.transformer_pipeline = pipeline(
-                    "sentiment-analysis",
-                    model="distilbert-base-uncased-finetuned-sst-2-english",
-                    return_all_scores=True,
-                )
-            except Exception as e:
-                logger.warning(f"Failed to load transformer model: {e}")
-
+        # Don't load transformer model during initialization to avoid blocking
+        # It will be loaded on first use with a timeout
         logger.info("Sentiment AI Service initialized")
+
+    def _load_transformer_model(self):
+        """Lazy load transformer model with timeout"""
+        if not TRANSFORMERS_AVAILABLE or self._transformer_loading_attempted:
+            return
+
+        self._transformer_loading_attempted = True
+        try:
+            # Try to load with a short timeout by setting environment variable
+            import os
+            os.environ['HF_HUB_OFFLINE'] = '1'  # Force offline mode if model not cached
+            
+            self.transformer_pipeline = pipeline(
+                "sentiment-analysis",
+                model="distilbert-base-uncased-finetuned-sst-2-english",
+                return_all_scores=True,
+            )
+            logger.info("Transformer sentiment model loaded successfully")
+        except Exception as e:
+            logger.warning(f"Failed to load transformer model (will use VADER/TextBlob instead): {e}")
 
     def analyze_text(self, text: str, method: str = "vader") -> SentimentScore:
         """Analyze sentiment of text"""
@@ -141,8 +154,13 @@ class SentimentAIService:
                     confidence=1.0 - subjectivity,
                 )
 
-            elif method == "transformer" and self.transformer_pipeline:
-                results = self.transformer_pipeline(text)
+            elif method == "transformer":
+                # Lazy load transformer model
+                if not self.transformer_pipeline and not self._transformer_loading_attempted:
+                    self._load_transformer_model()
+                
+                if self.transformer_pipeline:
+                    results = self.transformer_pipeline(text)
 
                 # Parse transformer results
                 positive_score = 0.0

@@ -1845,7 +1845,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Bot Model Api Bots  Bot Id  Model Get"
                 }
               }
@@ -2132,7 +2131,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Bot Learning Metrics Api Bots  Bot Id  Learning Metrics Get"
                 }
               }
@@ -2193,7 +2191,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Bot Learning Patterns Api Bots  Bot Id  Learning Patterns Get"
                 }
               }
@@ -2244,7 +2241,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Retrain Bot Model Api Bots  Bot Id  Learning Retrain Post"
                 }
               }
@@ -3765,7 +3761,7 @@
               "anyOf": [
                 {
                   "type": "number",
-                  "exclusiveMinimum": 0
+                  "exclusiveMinimum": 0.0
                 },
                 {
                   "type": "null"
@@ -3782,7 +3778,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Close Futures Position Api Futures Positions  Position Id  Close Post"
                 }
               }
@@ -3833,7 +3828,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Update Position Pnl Api Futures Positions  Position Id  Update Pnl Post"
                 }
               }
@@ -5153,7 +5147,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Price Api Markets Price  Pair  Get"
                 }
               }
@@ -5976,8 +5969,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "type": "object"
                   },
                   "title": "Response Get Pnl Chart Api Analytics Pnl Chart Get"
                 }
@@ -6045,8 +6037,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "type": "object"
                   },
                   "title": "Response Get Win Rate Chart Api Analytics Win Rate Chart Get"
                 }
@@ -6114,8 +6105,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "type": "object"
                   },
                   "title": "Response Get Drawdown Chart Api Analytics Drawdown Chart Get"
                 }
@@ -6379,7 +6369,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Backtesting Performance Metrics Api Analytics Backtesting Performance Metrics Get"
                 }
               }
@@ -6774,7 +6763,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Key Performance Indicators Api Analytics Dashboard Kpis Get"
                 }
               }
@@ -6807,7 +6795,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Alerts Summary Api Analytics Dashboard Alerts Summary Get"
                 }
@@ -7161,7 +7148,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Notifications Api Notifications  Get"
                 }
               }
@@ -7197,7 +7183,6 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true,
                 "title": "Notification Data"
               }
             }
@@ -7210,7 +7195,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Create Notification Api Notifications  Post"
                 }
               }
@@ -7388,7 +7372,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Notification Stats Api Notifications Stats Get"
                 }
@@ -7487,7 +7470,6 @@
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": true,
                 "type": "object",
                 "title": "Broadcast Data"
               }
@@ -7588,7 +7570,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Execute Paper Trade Api Backtesting Paper Trade Post"
                 }
@@ -7634,7 +7615,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Paper Portfolio Api Backtesting Paper Portfolio  User Id  Get"
                 }
               }
@@ -7696,7 +7676,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Paper Trades Api Backtesting Paper Trades  User Id  Get"
                 }
               }
@@ -7741,7 +7720,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Reset Paper Trading Api Backtesting Paper Reset  User Id  Post"
                 }
               }
@@ -7784,7 +7762,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Run Strategy Optimization Api Backtesting Optimize Post"
                 }
@@ -7828,7 +7805,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Run Parameter Sweep Api Backtesting Parameter Sweep Post"
                 }
@@ -7891,7 +7867,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Optimal Parameters Api Backtesting Optimal Parameters  Strategy Name  Get"
                 }
               }
@@ -8288,7 +8263,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Kill Switch State Api Risk Kill Switch State Get"
                 }
@@ -8342,7 +8316,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Activate Kill Switch Api Risk Kill Switch Activate Post"
                 }
               }
@@ -8400,7 +8373,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Deactivate Kill Switch Api Risk Kill Switch Deactivate Post"
                 }
               }
@@ -8454,7 +8426,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Kill Switch Events Api Risk Kill Switch Events Get"
                 }
               }
@@ -8498,7 +8469,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Update Kill Switch Config Api Risk Kill Switch Config Post"
                 }
@@ -8548,7 +8518,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Calculate Var Api Risk Var Calculate Post"
                 }
@@ -8627,7 +8596,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Calculate Multi Horizon Var Api Risk Var Multi Horizon Post"
                 }
               }
@@ -8671,7 +8639,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Run Monte Carlo Simulation Api Risk Monte Carlo Simulate Post"
                 }
@@ -8776,7 +8743,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Calculate Risk Of Ruin Api Risk Monte Carlo Risk Of Ruin Post"
                 }
               }
@@ -8856,7 +8822,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get System Health Api Monitoring Health Get"
                 }
@@ -8882,7 +8847,6 @@
               "application/json": {
                 "schema": {
                   "additionalProperties": {
-                    "additionalProperties": true,
                     "type": "object"
                   },
                   "type": "object",
@@ -8921,7 +8885,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Exchange Health Api Monitoring Exchange  Exchange Name  Get"
                 }
               }
@@ -8956,7 +8919,6 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "additionalProperties": true,
                     "type": "object"
                   },
                   "type": "array",
@@ -8988,7 +8950,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Trading Metrics Api Monitoring Metrics Get"
                 }
@@ -9012,7 +8973,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Status Api Integrations Status Get"
                 }
@@ -9192,8 +9152,13 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/IntegrationTestRequest",
-                "default": {}
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/IntegrationTestRequest"
+                  }
+                ],
+                "default": {},
+                "title": "Request"
               }
             }
           }
@@ -9205,7 +9170,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Run Integration Test Api Integrations Integrations  Name  Test Post"
                 }
               }
@@ -9570,7 +9534,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Adapter Health Api Integrations Adapter  Name  Health Get"
                 }
               }
@@ -10398,7 +10361,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Startup Probe Health Startup Get"
                 }
@@ -10988,7 +10950,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Cache Warmer Status Api Cache Warmer Status Get"
                 }
@@ -11042,7 +11003,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Trigger Warmup Api Cache Warmer Warmup Post"
                 }
               }
@@ -11076,7 +11036,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Start Cache Warmer Api Cache Warmer Start Post"
                 }
@@ -11106,7 +11065,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Stop Cache Warmer Api Cache Warmer Stop Post"
                 }
@@ -11331,7 +11289,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Metrics Summary Metrics Summary Get"
                 }
@@ -11848,8 +11805,13 @@
             "in": "query",
             "required": false,
             "schema": {
-              "$ref": "#/components/schemas/SubscriptionTier",
-              "default": "free"
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/SubscriptionTier"
+                }
+              ],
+              "default": "free",
+              "title": "Tier"
             }
           }
         ],
@@ -13272,8 +13234,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "type": "object"
                   },
                   "title": "Response Get Templates Api Strategies Templates Get"
                 }
@@ -13325,7 +13286,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Template Api Strategies Templates  Template Id  Get"
                 }
               }
@@ -13800,7 +13760,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Create Customer Api Payments Customers Post"
                 }
               }
@@ -13844,7 +13803,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Create Subscription Api Payments Subscriptions Post"
                 }
@@ -13901,7 +13859,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Subscription Api Payments Subscriptions  Subscription Id  Get"
                 }
               }
@@ -13960,7 +13917,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Update Subscription Api Payments Subscriptions  Subscription Id  Patch"
                 }
               }
@@ -14019,7 +13975,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Cancel Subscription Api Payments Subscriptions  Subscription Id  Delete"
                 }
               }
@@ -14063,7 +14018,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Create Payment Intent Api Payments Payment Intents Post"
                 }
@@ -14152,7 +14106,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Pricing Api Payments Pricing Get"
                 }
@@ -14187,7 +14140,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Generate License Api Licensing Generate Post"
                 }
@@ -14237,7 +14189,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Validate License Api Licensing Validate Post"
                 }
@@ -14287,7 +14238,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Activate License Api Licensing Activate Post"
                 }
@@ -14327,7 +14277,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Machine Id Api Licensing Machine Id Get"
                 }
@@ -14357,7 +14306,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get License Types Api Licensing Types Get"
                 }
@@ -14382,7 +14330,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Demo Status Api Demo Mode Status Get"
                 }
@@ -14412,7 +14359,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Available Features Api Demo Mode Features Get"
                 }
@@ -14459,7 +14405,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Check Feature Api Demo Mode Features  Feature Name  Get"
                 }
               }
@@ -14510,7 +14455,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Update License Status Api Demo Mode Update License Post"
                 }
               }
@@ -14554,7 +14498,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Optimize Hyperparameters Api Ml V2 Automl Optimize Post"
                 }
@@ -14604,7 +14547,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Train Rl Agent Api Ml V2 Rl Train Post"
                 }
@@ -14644,7 +14586,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Q Learning Stats Api Ml V2 Rl Q Learning Stats Get"
                 }
@@ -14684,7 +14625,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Analyze Sentiment Api Ml V2 Sentiment Analyze Post"
                 }
@@ -14734,7 +14674,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Aggregate Sentiment Api Ml V2 Sentiment Aggregate Post"
                 }
@@ -14784,7 +14723,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Detect Market Regime Api Ml V2 Regime Detect Post"
                 }
@@ -14851,7 +14789,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Regime Strategy Api Ml V2 Regime Strategy  Regime  Get"
                 }
               }
@@ -14902,7 +14839,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Binance Ticker Api Exchanges Binance Ticker  Symbol  Get"
                 }
               }
@@ -14965,7 +14901,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Binance Orderbook Api Exchanges Binance Orderbook  Symbol  Get"
                 }
               }
@@ -14999,7 +14934,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Binance Fees Api Exchanges Binance Fees Get"
                 }
@@ -15049,7 +14983,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Binance Trading Pairs Api Exchanges Binance Trading Pairs Get"
                 }
               }
@@ -15100,7 +15033,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Coinbase Ticker Api Exchanges Coinbase Ticker  Symbol  Get"
                 }
               }
@@ -15134,7 +15066,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Coinbase Fees Api Exchanges Coinbase Fees Get"
                 }
@@ -15164,7 +15095,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Coinbase Account Info Api Exchanges Coinbase Account Info Get"
                 }
@@ -15211,7 +15141,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Kucoin Ticker Api Exchanges Kucoin Ticker  Symbol  Get"
                 }
               }
@@ -15245,7 +15174,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Kucoin Fees Api Exchanges Kucoin Fees Get"
                 }
@@ -15295,7 +15223,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Kucoin Symbols Api Exchanges Kucoin Symbols Get"
                 }
               }
@@ -15339,7 +15266,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Smart Routing Quote Api Exchanges Smart Routing Quote Post"
                 }
@@ -15389,7 +15315,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Compare Exchange Prices Api Exchanges Smart Routing Compare Post"
                 }
@@ -15439,7 +15364,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Explain Trade Api Ai Copilot Trade Explain Post"
                 }
@@ -15489,7 +15413,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Generate Strategy Api Ai Copilot Strategy Generate Post"
                 }
@@ -15539,7 +15462,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Optimize Strategy Api Ai Copilot Strategy Optimize Post"
                 }
@@ -15589,7 +15511,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Summarize Backtest Api Ai Copilot Backtest Summarize Post"
                 }
@@ -15656,7 +15577,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Start Hedging Api Automation Hedging Start Post"
                 }
               }
@@ -15707,7 +15627,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Stop Hedging Api Automation Hedging Stop Post"
                 }
               }
@@ -15765,7 +15684,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Hedge Positions Api Automation Hedging Positions Get"
                 }
               }
@@ -15826,7 +15744,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Start Strategy Switching Api Automation Strategy Switching Start Post"
                 }
               }
@@ -15877,7 +15794,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Stop Strategy Switching Api Automation Strategy Switching Stop Post"
                 }
               }
@@ -15947,7 +15863,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Switch History Api Automation Strategy Switching History Get"
                 }
               }
@@ -15991,7 +15906,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Create Alert Rule Api Automation Alerts Rules Post"
                 }
@@ -16047,7 +15961,6 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true,
                 "title": "Updates"
               }
             }
@@ -16060,7 +15973,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Update Alert Rule Api Automation Alerts Rules  Rule Id  Put"
                 }
               }
@@ -16109,7 +16021,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Delete Alert Rule Api Automation Alerts Rules  Rule Id  Delete"
                 }
               }
@@ -16167,7 +16078,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Active Alerts Api Automation Alerts Active Get"
                 }
               }
@@ -16218,7 +16128,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Acknowledge Alert Api Automation Alerts  Alert Id  Acknowledge Post"
                 }
               }
@@ -16288,7 +16197,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Alert History Api Automation Alerts History Get"
                 }
               }
@@ -16332,7 +16240,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Optimize Portfolio Api Automation Portfolio Optimize Post"
                 }
@@ -17415,7 +17322,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Wallet Health Check Api Health Wallet Get"
                 }
@@ -17444,7 +17350,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Staking Health Check Api Health Staking Get"
                 }
@@ -17484,7 +17389,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Create Setup Intent Api Payment Methods Setup Intent Post"
                 }
@@ -17534,7 +17438,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Attach Payment Method Api Payment Methods Attach Post"
                 }
@@ -17599,8 +17502,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "type": "object"
                   },
                   "title": "Response List Payment Methods Api Payment Methods  Get"
                 }
@@ -17652,7 +17554,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Delete Payment Method Api Payment Methods  Payment Method Id  Delete"
                 }
               }
@@ -17696,7 +17597,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Initiate Crypto Transfer Api Crypto Transfer Initiate Post"
                 }
@@ -17746,7 +17646,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Confirm Crypto Transfer Api Crypto Transfer Confirm Post"
                 }
@@ -17796,7 +17695,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Withdraw Crypto Api Crypto Transfer Withdraw Post"
                 }
@@ -17869,7 +17767,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Deposit Address Api Crypto Transfer Deposit Address  Currency  Get"
                 }
               }
@@ -17929,7 +17826,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Check Cold Storage Eligibility Api Cold Storage Check Eligibility Post"
                 }
               }
@@ -17973,7 +17869,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Initiate Cold Storage Transfer Api Cold Storage Initiate Post"
                 }
@@ -18037,7 +17932,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Cold Storage Balance Api Cold Storage Balance Get"
                 }
               }
@@ -18071,7 +17965,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Query Statistics Api Query Optimization Statistics Get"
                 }
@@ -18133,8 +18026,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "type": "object"
                   },
                   "title": "Response Get Slow Queries Api Query Optimization Slow Queries Get"
                 }
@@ -18179,7 +18071,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Optimize Query Api Query Optimization Optimize Post"
                 }
@@ -18219,7 +18110,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Pool Stats Api Query Optimization Pool Stats Get"
                 }
@@ -18304,7 +18194,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Jobs Status Api Background Jobs Status Get"
                 }
@@ -18415,7 +18304,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Jobs Statistics Api Background Jobs Stats Get"
                 }
@@ -18445,7 +18333,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Check Deposit Consistency Api Deposit Safety Consistency Check Get"
                 }
@@ -18485,7 +18372,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Reconcile Deposit Api Deposit Safety Reconcile Post"
                 }
@@ -18569,7 +18455,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Get Total Revenue Api Platform Revenue Total Get"
                 }
               }
@@ -18626,8 +18511,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "type": "object"
                   },
                   "title": "Response Get Daily Revenue Api Platform Revenue Daily Get"
                 }
@@ -18672,7 +18556,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Create Backup Api Backups Create Post"
                 }
@@ -18713,7 +18596,6 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "additionalProperties": true,
                     "type": "object"
                   },
                   "type": "array",
@@ -18755,7 +18637,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Restore Backup Api Backups Restore Post"
                 }
@@ -18795,7 +18676,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Backup Status Api Backups Status Get"
                 }
@@ -18826,7 +18706,6 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "additionalProperties": true,
                     "type": "object"
                   },
                   "type": "array",
@@ -18866,7 +18745,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Add Ip To Whitelist Api Security Whitelists Ip Post"
                 }
@@ -18914,7 +18792,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Remove Ip From Whitelist Api Security Whitelists Ip Delete"
                 }
@@ -18970,7 +18847,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Add Withdrawal Address Api Security Whitelists Withdrawal Post"
                 }
               }
@@ -19018,7 +18894,6 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true,
                   "title": "Response Remove Withdrawal Address Api Security Whitelists Withdrawal Delete"
                 }
               }
@@ -19077,8 +18952,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "type": "object"
                   },
                   "title": "Response Get Withdrawal Whitelist Api Security Whitelists Withdrawal Get"
                 }
@@ -19123,7 +18997,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Analyze Transaction Api Fraud Detection Analyze Post"
                 }
@@ -19163,7 +19036,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Risk Profile Api Fraud Detection Risk Profile Get"
                 }
@@ -19356,12 +19228,10 @@
             "title": "Insights"
           },
           "market_sentiment": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Market Sentiment"
           },
           "risk_assessment": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Risk Assessment"
           },
@@ -19727,7 +19597,6 @@
           },
           "news_articles": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -19736,7 +19605,6 @@
           },
           "social_posts": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -19789,7 +19657,6 @@
             "default": true
           },
           "conditions": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Conditions"
           },
@@ -20201,7 +20068,6 @@
           "best_opportunity": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -20349,7 +20215,6 @@
           "details": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -20614,7 +20479,6 @@
           },
           "trades": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -20622,7 +20486,6 @@
           },
           "equityCurve": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -20662,7 +20525,6 @@
             "title": "Backtest Id"
           },
           "backtest_data": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Backtest Data"
           },
@@ -20792,7 +20654,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^password$"
+                "pattern": "password"
               },
               {
                 "type": "null"
@@ -20806,7 +20668,6 @@
           },
           "password": {
             "type": "string",
-            "format": "password",
             "title": "Password"
           },
           "scope": {
@@ -20834,7 +20695,6 @@
                 "type": "null"
               }
             ],
-            "format": "password",
             "title": "Client Secret"
           }
         },
@@ -20872,7 +20732,6 @@
             "title": "Is Active"
           },
           "config": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Config"
           },
@@ -20958,7 +20817,6 @@
           "stats": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -20970,7 +20828,6 @@
           "redis": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -20982,7 +20839,6 @@
           "warming": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -21265,7 +21121,6 @@
           "details": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -21381,7 +21236,6 @@
           "config": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -21483,7 +21337,6 @@
             "title": "Strategy"
           },
           "config": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Config"
           }
@@ -21619,7 +21472,6 @@
           "config": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -21801,7 +21653,6 @@
           "config": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -21892,7 +21743,6 @@
           "config": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -21982,7 +21832,6 @@
           "config": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -22274,7 +22123,6 @@
           "config": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -22500,7 +22348,6 @@
             "title": "Next Order At"
           },
           "config": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Config"
           },
@@ -22657,7 +22504,6 @@
           "details": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -23348,7 +23194,6 @@
             "title": "Closed At"
           },
           "config": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Config"
           }
@@ -23501,12 +23346,10 @@
             "title": "Win Rate"
           },
           "grid_state": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Grid State"
           },
           "config": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Config"
           },
@@ -23750,12 +23593,10 @@
             "title": "Grid Adjustments"
           },
           "grid_state": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Grid State"
           },
           "config": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Config"
           },
@@ -23892,7 +23733,6 @@
             "title": "Enabled"
           },
           "status": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Status"
           },
@@ -23908,7 +23748,6 @@
             "title": "Version"
           },
           "config": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Config"
           }
@@ -23931,7 +23770,6 @@
           "data": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -23999,14 +23837,12 @@
             "title": "Name"
           },
           "status": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Status"
           },
           "details": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -24028,7 +23864,6 @@
           "config": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -24657,7 +24492,6 @@
           },
           "top_providers": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -24856,7 +24690,6 @@
             "title": "Confidence Level"
           },
           "base_metrics": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Base Metrics"
           },
@@ -24883,18 +24716,15 @@
             "title": "Expected Return"
           },
           "worst_case": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Worst Case"
           },
           "best_case": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Best Case"
           },
           "percentile_metrics": {
             "additionalProperties": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "object",
@@ -25134,7 +24964,6 @@
           },
           "paramRanges": {
             "additionalProperties": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "object",
@@ -25142,7 +24971,6 @@
           },
           "historicalData": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -25225,7 +25053,6 @@
           "metadata": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -25253,7 +25080,6 @@
           },
           "datasets": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -25311,7 +25137,6 @@
           "freqtrade": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -25323,7 +25148,6 @@
           "jesse": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -25497,7 +25321,6 @@
       "PortfolioOptimizationRequest": {
         "properties": {
           "portfolio": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Portfolio"
           },
@@ -25511,7 +25334,6 @@
           "preferences": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -25587,7 +25409,6 @@
           },
           "data": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -25707,7 +25528,6 @@
           },
           "market_data": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -25721,7 +25541,6 @@
           "config": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -26411,7 +26230,6 @@
           },
           "historicalData": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -26494,7 +26312,6 @@
             "title": "Last Reset"
           },
           "configuration": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Configuration"
           }
@@ -26853,14 +26670,12 @@
             "title": "Category"
           },
           "config": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Config"
           },
           "logic": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -26909,7 +26724,6 @@
           "market_conditions": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -26921,7 +26735,6 @@
           "preferences": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -26954,7 +26767,6 @@
           "constraints": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -27003,14 +26815,12 @@
             "title": "Category"
           },
           "config": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Config"
           },
           "logic": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -27223,7 +27033,6 @@
           "config": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -27235,7 +27044,6 @@
           "logic": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -27268,14 +27076,12 @@
             "title": "Name"
           },
           "config": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Config"
           },
           "logic": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -27657,14 +27463,12 @@
             "title": "Trade Id"
           },
           "trade_data": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Trade Data"
           },
           "market_data": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -28003,7 +27807,6 @@
           },
           "current_positions": {
             "additionalProperties": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "object",
@@ -28059,7 +27862,6 @@
           "adjustments": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -28437,7 +28239,6 @@
             "title": "Lowest Price"
           },
           "config": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Config"
           },
@@ -28486,7 +28287,6 @@
           },
           "price_data": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -28544,7 +28344,6 @@
           "metadata": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -28629,7 +28428,6 @@
           "config": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -28778,7 +28576,6 @@
           "uiSettings": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -28790,7 +28587,6 @@
           "tradingSettings": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -28810,7 +28606,11 @@
             "title": "Userid"
           },
           "theme": {
-            "$ref": "#/components/schemas/Theme",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Theme"
+              }
+            ],
             "default": "dark"
           },
           "notifications": {
@@ -28827,7 +28627,6 @@
             }
           },
           "uiSettings": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Uisettings",
             "default": {
@@ -28839,7 +28638,6 @@
             }
           },
           "tradingSettings": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Tradingsettings",
             "default": {
@@ -29089,7 +28887,6 @@
           },
           "in_sample_metrics": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -29097,14 +28894,12 @@
           },
           "out_sample_metrics": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
             "title": "Out Sample Metrics"
           },
           "overall_metrics": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Overall Metrics"
           },
@@ -29118,7 +28913,6 @@
           },
           "optimal_parameters": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -29678,7 +29472,6 @@
           },
           "trades": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -29686,7 +29479,6 @@
           },
           "equityCurve": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -29727,7 +29519,6 @@
           },
           "parameters": {
             "additionalProperties": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "object",
@@ -29759,7 +29550,6 @@
           },
           "historicalData": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -29815,7 +29605,6 @@
             "title": "Final Capital"
           },
           "metrics": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Metrics"
           },
@@ -29831,7 +29620,6 @@
           },
           "trades": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -29839,7 +29627,6 @@
           },
           "drawdown_periods": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -29883,7 +29670,6 @@
           },
           "checks": {
             "additionalProperties": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "object",
@@ -29923,7 +29709,6 @@
             "title": "Components"
           },
           "system_metrics": {
-            "additionalProperties": true,
             "type": "object",
             "title": "System Metrics"
           }
@@ -30020,7 +29805,6 @@
             "default": 10000.0
           },
           "strategy_params": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Strategy Params",
             "description": "Strategy parameters"
@@ -30053,14 +29837,12 @@
           },
           "circuit_breakers": {
             "additionalProperties": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "object",
             "title": "Circuit Breakers"
           },
           "database": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Database"
           },
@@ -30315,7 +30097,6 @@
         "properties": {
           "results": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
