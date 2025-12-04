@@ -22,6 +22,7 @@ from ..database import get_db_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..repositories.candle_repository import CandleRepository
 from ..models.candle import Candle
+from ..middleware.query_cache import cache_query_result
 
 logger = logging.getLogger(__name__)
 
