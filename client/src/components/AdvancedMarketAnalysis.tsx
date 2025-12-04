@@ -39,6 +39,7 @@ import { formatCurrency, formatPercentage } from "@/lib/formatters";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorRetry } from "@/components/ErrorRetry";
 import { EmptyState } from "@/components/EmptyState";
+import type { MarketAnalysisData } from "@shared/types/api";
 
 interface AdvancedMarketAnalysisProps {
   pair: string;
@@ -51,7 +52,7 @@ export const AdvancedMarketAnalysis = React.memo(function AdvancedMarketAnalysis
   const { data: analysis, isLoading, refetch, error } = useAdvancedMarketAnalysis(pair, indicators);
 
   // Use real analysis data from API, show loading/error states if not available
-  const analysisData = analysis;
+  const analysisData = analysis as MarketAnalysisData | undefined;
 
   // Generate historical indicator data from real analysis data
   const historicalData = analysisData?.historical_data || [];
@@ -105,7 +106,6 @@ export const AdvancedMarketAnalysis = React.memo(function AdvancedMarketAnalysis
         ) : error ? (
           <ErrorRetry
             title="Failed to load market analysis"
-            message={error instanceof Error ? error.message : "Unable to fetch advanced market analysis. Please try again."}
             onRetry={() => refetch()}
             error={error as Error}
           />

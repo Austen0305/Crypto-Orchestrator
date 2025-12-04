@@ -120,7 +120,6 @@ export function ArbitrageDashboard() {
         <CardContent>
           <ErrorRetry
             title="Failed to load arbitrage data"
-            message={error instanceof Error ? error.message : "Unable to fetch arbitrage information. Please try again."}
             onRetry={() => {
               refetchStatus();
               refetchOpportunities();

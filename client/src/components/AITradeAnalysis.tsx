@@ -143,7 +143,6 @@ export function AITradeAnalysis({ botId }: AITradeAnalysisProps) {
         <CardContent>
           <ErrorRetry
             title="Failed to load AI analysis"
-            message={error instanceof Error ? error.message : 'No data available'}
             onRetry={() => refetch()}
             error={error as Error}
           />
