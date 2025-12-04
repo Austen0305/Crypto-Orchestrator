@@ -72,6 +72,1432 @@
         }
       }
     },
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "Authentication",
+          "Authentication"
+        ],
+        "summary": "Register",
+        "description": "Register a new user",
+        "operationId": "register_api_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/server_fastapi__routes__auth_saas__RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication",
+          "Authentication"
+        ],
+        "summary": "Login",
+        "description": "Login user",
+        "operationId": "login_api_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_login_api_auth_login_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/verify-mfa": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Verify Mfa",
+        "operationId": "verify_mfa_api_auth_verify_mfa_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MFATokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/setup-mfa": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Setup Mfa",
+        "operationId": "setup_mfa_api_auth_setup_mfa_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/enable-mfa": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Enable Mfa",
+        "operationId": "enable_mfa_api_auth_enable_mfa_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnableMFARequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/setup-mfa-choice": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Setup Mfa Choice",
+        "operationId": "setup_mfa_choice_api_auth_setup_mfa_choice_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupTwoFactorChoiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/verify-mfa-code": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Verify Mfa Code",
+        "operationId": "verify_mfa_code_api_auth_verify_mfa_code_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyTwoFactorCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/mfa/recovery/generate": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Generate Recovery Codes",
+        "description": "Generate and persist a new set of MFA recovery codes.\nCodes are one-time use; previously issued codes are replaced.",
+        "operationId": "generate_recovery_codes_api_auth_mfa_recovery_generate_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateRecoveryCodesResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/mfa/recovery/verify": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Verify Recovery Code",
+        "operationId": "verify_recovery_code_api_auth_mfa_recovery_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyRecoveryCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/verify-mfa-login-code": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Verify Mfa Login Code",
+        "operationId": "verify_mfa_login_code_api_auth_verify_mfa_login_code_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyTwoFactorLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/forgot-password": {
+      "post": {
+        "tags": [
+          "Authentication",
+          "Authentication"
+        ],
+        "summary": "Forgot Password",
+        "description": "Request password reset",
+        "operationId": "forgot_password_api_auth_forgot_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "tags": [
+          "Authentication",
+          "Authentication"
+        ],
+        "summary": "Reset Password",
+        "description": "Reset password with token",
+        "operationId": "reset_password_api_auth_reset_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetConfirm"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/profile": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get Profile",
+        "operationId": "get_profile_api_auth_profile_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Update Profile",
+        "operationId": "update_profile_api_auth_profile_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "tags": [
+          "Authentication",
+          "Authentication"
+        ],
+        "summary": "Refresh Token",
+        "description": "Refresh access token",
+        "operationId": "refresh_token_api_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/server_fastapi__routes__auth_saas__RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Logout",
+        "operationId": "logout_api_auth_logout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/verify-email": {
+      "post": {
+        "tags": [
+          "Authentication",
+          "Authentication"
+        ],
+        "summary": "Verify Email",
+        "description": "Verify email address with token",
+        "operationId": "verify_email_api_auth_verify_email_post",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/resend-verification": {
+      "post": {
+        "tags": [
+          "Authentication",
+          "Authentication"
+        ],
+        "summary": "Resend Verification Email",
+        "description": "Resend email verification",
+        "operationId": "resend_verification_email_api_auth_resend_verification_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication",
+          "Authentication"
+        ],
+        "summary": "Get Current User Info",
+        "description": "Get current user information",
+        "operationId": "get_current_user_info_api_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/billing/plans": {
+      "get": {
+        "tags": [
+          "Billing",
+          "Billing"
+        ],
+        "summary": "Get Plans",
+        "description": "Get available subscription plans",
+        "operationId": "get_plans_api_billing_plans_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/billing/subscription": {
+      "get": {
+        "tags": [
+          "Billing",
+          "Billing"
+        ],
+        "summary": "Get Subscription",
+        "description": "Get current user's subscription",
+        "operationId": "get_subscription_api_billing_subscription_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/billing/checkout": {
+      "post": {
+        "tags": [
+          "Billing",
+          "Billing"
+        ],
+        "summary": "Create Checkout",
+        "description": "Create Stripe checkout session",
+        "operationId": "create_checkout_api_billing_checkout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCheckoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/billing/portal": {
+      "post": {
+        "tags": [
+          "Billing",
+          "Billing"
+        ],
+        "summary": "Create Portal",
+        "description": "Create Stripe Customer Portal session",
+        "operationId": "create_portal_api_billing_portal_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/billing/cancel": {
+      "post": {
+        "tags": [
+          "Billing",
+          "Billing"
+        ],
+        "summary": "Cancel Subscription",
+        "description": "Cancel user subscription",
+        "operationId": "cancel_subscription_api_billing_cancel_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "immediately",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Immediately"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/billing/webhook": {
+      "post": {
+        "tags": [
+          "Billing",
+          "Billing"
+        ],
+        "summary": "Stripe Webhook",
+        "description": "Handle Stripe webhook events",
+        "operationId": "stripe_webhook_api_billing_webhook_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/stats": {
+      "get": {
+        "tags": [
+          "Admin",
+          "Admin"
+        ],
+        "summary": "Get Admin Stats",
+        "description": "Get admin dashboard statistics",
+        "operationId": "get_admin_stats_api_admin_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "tags": [
+          "Admin",
+          "Admin"
+        ],
+        "summary": "Get Users",
+        "description": "Get list of users with pagination",
+        "operationId": "get_users_api_admin_users_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Role"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/{user_id}": {
+      "get": {
+        "tags": [
+          "Admin",
+          "Admin"
+        ],
+        "summary": "Get User",
+        "description": "Get detailed user information",
+        "operationId": "get_user_api_admin_users__user_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/{user_id}/activate": {
+      "post": {
+        "tags": [
+          "Admin",
+          "Admin"
+        ],
+        "summary": "Activate User",
+        "description": "Activate a user account",
+        "operationId": "activate_user_api_admin_users__user_id__activate_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/{user_id}/deactivate": {
+      "post": {
+        "tags": [
+          "Admin",
+          "Admin"
+        ],
+        "summary": "Deactivate User",
+        "description": "Deactivate a user account",
+        "operationId": "deactivate_user_api_admin_users__user_id__deactivate_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/logs": {
+      "get": {
+        "tags": [
+          "Admin",
+          "Admin"
+        ],
+        "summary": "Get Logs",
+        "description": "Get system logs (if stored in database)",
+        "operationId": "get_logs_api_admin_logs_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Level"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/exchange-keys": {
+      "post": {
+        "tags": [
+          "Exchange Keys",
+          "Exchange Keys"
+        ],
+        "summary": "Create Exchange Key",
+        "description": "Create encrypted exchange API key",
+        "operationId": "create_exchange_key_api_exchange_keys_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExchangeKeyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Exchange Keys",
+          "Exchange Keys"
+        ],
+        "summary": "Get Exchange Keys",
+        "description": "Get user's exchange API keys",
+        "operationId": "get_exchange_keys_api_exchange_keys_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exchange",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Exchange"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/exchange-keys/{exchange}": {
+      "delete": {
+        "tags": [
+          "Exchange Keys",
+          "Exchange Keys"
+        ],
+        "summary": "Delete Exchange Key",
+        "description": "Delete exchange API key",
+        "operationId": "delete_exchange_key_api_exchange_keys__exchange__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exchange",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Exchange"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/exchange-keys/{exchange}/test": {
+      "post": {
+        "tags": [
+          "Exchange Keys",
+          "Exchange Keys"
+        ],
+        "summary": "Test Connection",
+        "description": "Test exchange API connection",
+        "operationId": "test_connection_api_exchange_keys__exchange__test_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exchange",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Exchange"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/bots/": {
       "get": {
         "tags": [
@@ -3496,6 +4922,653 @@
         }
       }
     },
+    "/api/markets/": {
+      "get": {
+        "tags": [
+          "Markets"
+        ],
+        "summary": "Get Markets",
+        "description": "Get all available trading pairs",
+        "operationId": "get_markets_api_markets__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TradingPair"
+                  },
+                  "type": "array",
+                  "title": "Response Get Markets Api Markets  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/markets/{pair}/ohlcv": {
+      "get": {
+        "tags": [
+          "Markets"
+        ],
+        "summary": "Get Ohlcv",
+        "description": "Get OHLCV data for a trading pair",
+        "operationId": "get_ohlcv_api_markets__pair__ohlcv_get",
+        "parameters": [
+          {
+            "name": "pair",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pair"
+            }
+          },
+          {
+            "name": "timeframe",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Timeframe (1m, 5m, 15m, 30m, 1h, 4h, 1d, etc.)",
+              "default": "1h",
+              "title": "Timeframe"
+            },
+            "description": "Timeframe (1m, 5m, 15m, 30m, 1h, 4h, 1d, etc.)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "Number of candles to return",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "Number of candles to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceChartResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/markets/{pair}/history": {
+      "get": {
+        "tags": [
+          "Markets"
+        ],
+        "summary": "Get Candle History",
+        "description": "Return stored candle history from the DB for a symbol/timeframe.",
+        "operationId": "get_candle_history_api_markets__pair__history_get",
+        "parameters": [
+          {
+            "name": "pair",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pair"
+            }
+          },
+          {
+            "name": "timeframe",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Timeframe for stored candles",
+              "default": "1m",
+              "title": "Timeframe"
+            },
+            "description": "Timeframe for stored candles"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 5000,
+              "minimum": 1,
+              "default": 500,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandleHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/markets/{pair}/orderbook": {
+      "get": {
+        "tags": [
+          "Markets"
+        ],
+        "summary": "Get Order Book",
+        "description": "Get order book for a trading pair",
+        "operationId": "get_order_book_api_markets__pair__orderbook_get",
+        "parameters": [
+          {
+            "name": "pair",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pair"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderBook"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/markets/price/{pair}": {
+      "get": {
+        "tags": [
+          "Markets"
+        ],
+        "summary": "Get Price",
+        "description": "Get current price for a trading pair",
+        "operationId": "get_price_api_markets_price__pair__get",
+        "parameters": [
+          {
+            "name": "pair",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pair"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Price Api Markets Price  Pair  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/markets/tickers": {
+      "get": {
+        "tags": [
+          "Markets"
+        ],
+        "summary": "Get Tickers",
+        "description": "Get ticker data for multiple trading pairs",
+        "operationId": "get_tickers_api_markets_tickers_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Number of tickers to return",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Number of tickers to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TickerResponse"
+                  },
+                  "title": "Response Get Tickers Api Markets Tickers Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/markets/summary": {
+      "get": {
+        "tags": [
+          "Markets"
+        ],
+        "summary": "Get Market Summary",
+        "description": "Get market summary with total statistics and top pairs",
+        "operationId": "get_market_summary_api_markets_summary_get",
+        "parameters": [
+          {
+            "name": "top_count",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Number of top pairs to include",
+              "default": 10,
+              "title": "Top Count"
+            },
+            "description": "Number of top pairs to include"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/markets/trading-pairs/search": {
+      "get": {
+        "tags": [
+          "Markets"
+        ],
+        "summary": "Search Trading Pairs",
+        "description": "Search for trading pairs by symbol",
+        "operationId": "search_trading_pairs_api_markets_trading_pairs_search_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Search query for pair symbols",
+              "title": "Query"
+            },
+            "description": "Search query for pair symbols"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Maximum number of results",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Maximum number of results"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TradingPair"
+                  },
+                  "title": "Response Search Trading Pairs Api Markets Trading Pairs Search Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/markets/{pair}/details": {
+      "get": {
+        "tags": [
+          "Markets"
+        ],
+        "summary": "Get Trading Pair Details",
+        "description": "Get detailed information about a specific trading pair",
+        "operationId": "get_trading_pair_details_api_markets__pair__details_get",
+        "parameters": [
+          {
+            "name": "pair",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pair"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TradingPairDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/markets/favorites": {
+      "get": {
+        "tags": [
+          "Markets"
+        ],
+        "summary": "Get Favorite Pairs",
+        "description": "Get user's favorite trading pairs (requires authentication)",
+        "operationId": "get_favorite_pairs_api_markets_favorites_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TradingPair"
+                  },
+                  "type": "array",
+                  "title": "Response Get Favorite Pairs Api Markets Favorites Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/markets/watchlist": {
+      "get": {
+        "tags": [
+          "Markets"
+        ],
+        "summary": "Get Watchlist",
+        "description": "Get user's watchlist (requires authentication)",
+        "operationId": "get_watchlist_api_markets_watchlist_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TradingPair"
+                  },
+                  "type": "array",
+                  "title": "Response Get Watchlist Api Markets Watchlist Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/markets/advanced/{pair}/analysis": {
+      "get": {
+        "tags": [
+          "Markets"
+        ],
+        "summary": "Get Advanced Market Analysis",
+        "description": "Get advanced market analysis with technical indicators (requires authentication)",
+        "operationId": "get_advanced_market_analysis_api_markets_advanced__pair__analysis_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pair",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pair"
+            }
+          },
+          {
+            "name": "indicators",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Technical indicators to calculate",
+              "default": [
+                "rsi",
+                "macd",
+                "bollinger"
+              ],
+              "title": "Indicators"
+            },
+            "description": "Technical indicators to calculate"
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Period for indicators",
+              "default": 14,
+              "title": "Period"
+            },
+            "description": "Period for indicators"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketAnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/markets/realtime/{pair}/price-stream": {
+      "get": {
+        "tags": [
+          "Markets"
+        ],
+        "summary": "Get Realtime Price Stream",
+        "description": "Get realtime price stream info (requires authentication)",
+        "operationId": "get_realtime_price_stream_api_markets_realtime__pair__price_stream_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pair",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pair"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealTimeMarketData"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/trades/": {
       "get": {
         "tags": [
@@ -3697,7 +5770,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/PerformanceMetrics"
+                    "$ref": "#/components/schemas/server_fastapi__routes__analytics__PerformanceMetrics"
                   },
                   "title": "Response Get Performance Metrics Api Analytics Performance Get"
                 }
@@ -4998,6 +7071,457 @@
         ]
       }
     },
+    "/api/notifications/": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Get Notifications",
+        "description": "Get user's notifications with filtering",
+        "operationId": "get_notifications_api_notifications__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "unread_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Unread Only"
+            }
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Priority"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Notifications Api Notifications  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Create Notification",
+        "description": "Create a new notification (primarily for testing/admin purposes)",
+        "operationId": "create_notification_api_notifications__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Notification Data"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Create Notification Api Notifications  Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/{notification_id}/read": {
+      "patch": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Mark Notification Read",
+        "description": "Mark a specific notification as read",
+        "operationId": "mark_notification_read_api_notifications__notification_id__read_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "notification_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Notification Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/read-all": {
+      "patch": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Mark All Notifications Read",
+        "description": "Mark all notifications as read, optionally filtered by category",
+        "operationId": "mark_all_notifications_read_api_notifications_read_all_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/{notification_id}": {
+      "delete": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Delete Notification",
+        "description": "Delete a specific notification",
+        "operationId": "delete_notification_api_notifications__notification_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "notification_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Notification Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/stats": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Get Notification Stats",
+        "description": "Get notification statistics for the user",
+        "operationId": "get_notification_stats_api_notifications_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Notification Stats Api Notifications Stats Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/notifications/unread-count": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Get Unread Count",
+        "description": "Get count of unread notifications with optional filters",
+        "operationId": "get_unread_count_api_notifications_unread_count_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Priority"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/broadcast": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Broadcast Notification",
+        "description": "Broadcast notification to multiple users (admin only)",
+        "operationId": "broadcast_notification_api_notifications_broadcast_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Broadcast Data"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/backtesting/run": {
       "post": {
         "tags": [
@@ -6269,6 +8793,52 @@
             }
           }
         }
+      }
+    },
+    "/api/risk-scenarios/simulate": {
+      "post": {
+        "tags": [
+          "Risk Scenarios"
+        ],
+        "summary": "Simulate Scenario",
+        "operationId": "simulate_scenario_api_risk_scenarios_simulate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/monitoring/health": {
@@ -7685,6 +10255,92 @@
         ]
       }
     },
+    "/api/health/api/health/": {
+      "get": {
+        "tags": [
+          "Health",
+          "Health"
+        ],
+        "summary": "Get Health",
+        "description": "Comprehensive health check endpoint\n\nReturns:\n- Overall system status\n- Individual component health\n- Response times\n- System uptime",
+        "operationId": "get_health_api_health_api_health__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/server_fastapi__routes__health__HealthStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health/api/health/ready": {
+      "get": {
+        "tags": [
+          "Health",
+          "Health"
+        ],
+        "summary": "Get Readiness",
+        "description": "Kubernetes readiness probe endpoint\n\nReturns 200 if the service is ready to accept traffic\nReturns 503 if the service is not ready",
+        "operationId": "get_readiness_api_health_api_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health/api/health/live": {
+      "get": {
+        "tags": [
+          "Health",
+          "Health"
+        ],
+        "summary": "Get Liveness",
+        "description": "Kubernetes liveness probe endpoint\n\nReturns 200 if the service is alive\nReturns 503 if the service should be restarted",
+        "operationId": "get_liveness_api_health_api_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health/api/health/startup": {
+      "get": {
+        "tags": [
+          "Health",
+          "Health"
+        ],
+        "summary": "Get Startup",
+        "description": "Kubernetes startup probe endpoint\n\nReturns 200 if the service has finished starting up\nReturns 503 if the service is still starting",
+        "operationId": "get_startup_api_health_api_health_startup_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/health/live": {
       "get": {
         "tags": [
@@ -8463,6 +11119,185 @@
             "HTTPBearer": []
           }
         ]
+      }
+    },
+    "/api/metrics/current": {
+      "get": {
+        "tags": [
+          "Metrics & Monitoring",
+          "Metrics & Monitoring"
+        ],
+        "summary": "Get Current Metrics",
+        "description": "Get comprehensive current system metrics\n\nIncludes:\n- System resources (CPU, memory, disk, network)\n- Application metrics (uptime, requests, cache)\n- Circuit breaker status\n- Database health",
+        "operationId": "get_current_metrics_api_metrics_current_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/server_fastapi__routes__metrics_monitoring__PerformanceMetrics"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/metrics/alerts": {
+      "get": {
+        "tags": [
+          "Metrics & Monitoring",
+          "Metrics & Monitoring"
+        ],
+        "summary": "Get Active Alerts",
+        "description": "Get list of active metric alerts",
+        "operationId": "get_active_alerts_api_metrics_alerts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MetricsAlert"
+                  },
+                  "type": "array",
+                  "title": "Response Get Active Alerts Api Metrics Alerts Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/metrics/alerts/thresholds": {
+      "get": {
+        "tags": [
+          "Metrics & Monitoring",
+          "Metrics & Monitoring"
+        ],
+        "summary": "Get Alert Thresholds",
+        "description": "Get configured alert thresholds",
+        "operationId": "get_alert_thresholds_api_metrics_alerts_thresholds_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AlertThreshold"
+                  },
+                  "type": "array",
+                  "title": "Response Get Alert Thresholds Api Metrics Alerts Thresholds Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Metrics & Monitoring",
+          "Metrics & Monitoring"
+        ],
+        "summary": "Add Alert Threshold",
+        "description": "Add a new alert threshold",
+        "operationId": "add_alert_threshold_api_metrics_alerts_thresholds_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertThreshold"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/metrics/alerts/thresholds/{metric}": {
+      "delete": {
+        "tags": [
+          "Metrics & Monitoring",
+          "Metrics & Monitoring"
+        ],
+        "summary": "Remove Alert Threshold",
+        "description": "Remove an alert threshold",
+        "operationId": "remove_alert_threshold_api_metrics_alerts_thresholds__metric__delete",
+        "parameters": [
+          {
+            "name": "metric",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Metric"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/metrics/health-score": {
+      "get": {
+        "tags": [
+          "Metrics & Monitoring",
+          "Metrics & Monitoring"
+        ],
+        "summary": "Get Health Score",
+        "description": "Calculate overall system health score (0-100)\n\nBased on:\n- System resource usage\n- Application performance\n- Circuit breaker status\n- Error rates",
+        "operationId": "get_health_score_api_metrics_health_score_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
       }
     },
     "/metrics": {
@@ -13522,6 +16357,346 @@
         ]
       }
     },
+    "/api/copy-trading/follow": {
+      "post": {
+        "tags": [
+          "Copy Trading"
+        ],
+        "summary": "Follow Trader",
+        "description": "Follow a trader to copy their trades",
+        "operationId": "follow_trader_api_copy_trading_follow_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FollowTraderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/copy-trading/follow/{trader_id}": {
+      "delete": {
+        "tags": [
+          "Copy Trading"
+        ],
+        "summary": "Unfollow Trader",
+        "description": "Unfollow a trader",
+        "operationId": "unfollow_trader_api_copy_trading_follow__trader_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trader_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Trader Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/copy-trading/followed": {
+      "get": {
+        "tags": [
+          "Copy Trading"
+        ],
+        "summary": "Get Followed Traders",
+        "description": "Get list of traders being followed",
+        "operationId": "get_followed_traders_api_copy_trading_followed_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/copy-trading/copy": {
+      "post": {
+        "tags": [
+          "Copy Trading"
+        ],
+        "summary": "Copy Trade",
+        "description": "Copy a specific trade from a trader",
+        "operationId": "copy_trade_api_copy_trading_copy_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyTradeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/copy-trading/stats": {
+      "get": {
+        "tags": [
+          "Copy Trading"
+        ],
+        "summary": "Get Copy Trading Stats",
+        "description": "Get copy trading statistics",
+        "operationId": "get_copy_trading_stats_api_copy_trading_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/leaderboard/": {
+      "get": {
+        "tags": [
+          "Leaderboard"
+        ],
+        "summary": "Get Leaderboard",
+        "description": "Get trader leaderboard",
+        "operationId": "get_leaderboard_api_leaderboard__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "metric",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Ranking metric: total_pnl, win_rate, profit_factor, sharpe_ratio",
+              "default": "total_pnl",
+              "title": "Metric"
+            },
+            "description": "Ranking metric: total_pnl, win_rate, profit_factor, sharpe_ratio"
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Time period: 24h, 7d, 30d, all_time",
+              "default": "all_time",
+              "title": "Period"
+            },
+            "description": "Time period: 24h, 7d, 30d, all_time"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "Number of top traders",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "Number of top traders"
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Trading mode: paper or real",
+              "default": "paper",
+              "title": "Mode"
+            },
+            "description": "Trading mode: paper or real"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/leaderboard/my-rank": {
+      "get": {
+        "tags": [
+          "Leaderboard"
+        ],
+        "summary": "Get My Rank",
+        "description": "Get current user's rank on the leaderboard",
+        "operationId": "get_my_rank_api_leaderboard_my_rank_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "metric",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "total_pnl",
+              "title": "Metric"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "all_time",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "paper",
+              "title": "Mode"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/2fa/setup": {
       "post": {
         "tags": [
@@ -13745,6 +16920,533 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/wallet/balance": {
+      "get": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Get Wallet Balance",
+        "description": "Get wallet balance for current user",
+        "operationId": "get_wallet_balance_api_wallet_balance_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "currency",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Currency code",
+              "default": "USD",
+              "title": "Currency"
+            },
+            "description": "Currency code"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wallet/deposit": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Deposit Funds",
+        "description": "Deposit funds into wallet.\n\nNote: A 5% deposit fee applies (5 cents per dollar).\nFor example: $100 deposit = $5 fee, $95 credited to wallet.",
+        "operationId": "deposit_funds_api_wallet_deposit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DepositRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/wallet/withdraw": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Withdraw Funds",
+        "description": "Withdraw funds from wallet",
+        "operationId": "withdraw_funds_api_wallet_withdraw_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WithdrawRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/wallet/transactions": {
+      "get": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Get Transactions",
+        "description": "Get wallet transactions",
+        "operationId": "get_transactions_api_wallet_transactions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "currency",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by currency",
+              "title": "Currency"
+            },
+            "description": "Filter by currency"
+          },
+          {
+            "name": "transaction_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by type",
+              "title": "Transaction Type"
+            },
+            "description": "Filter by type"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Number of transactions",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Number of transactions"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wallet/deposit/confirm": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Confirm Deposit",
+        "description": "Confirm a deposit transaction (called after payment verification)",
+        "operationId": "confirm_deposit_api_wallet_deposit_confirm_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "transaction_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Transaction Id"
+            }
+          },
+          {
+            "name": "payment_intent_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Payment Intent Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/staking/options": {
+      "get": {
+        "tags": [
+          "Staking"
+        ],
+        "summary": "Get Staking Options",
+        "description": "Get available staking options",
+        "operationId": "get_staking_options_api_staking_options_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/staking/stake": {
+      "post": {
+        "tags": [
+          "Staking"
+        ],
+        "summary": "Stake Assets",
+        "description": "Stake assets to earn rewards",
+        "operationId": "stake_assets_api_staking_stake_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StakeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/staking/unstake": {
+      "post": {
+        "tags": [
+          "Staking"
+        ],
+        "summary": "Unstake Assets",
+        "description": "Unstake assets",
+        "operationId": "unstake_assets_api_staking_unstake_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnstakeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/staking/rewards": {
+      "get": {
+        "tags": [
+          "Staking"
+        ],
+        "summary": "Get Staking Rewards",
+        "description": "Get staking rewards for a user",
+        "operationId": "get_staking_rewards_api_staking_rewards_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Asset to check rewards for",
+              "title": "Asset"
+            },
+            "description": "Asset to check rewards for"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/staking/my-stakes": {
+      "get": {
+        "tags": [
+          "Staking"
+        ],
+        "summary": "Get My Stakes",
+        "description": "Get all staked assets for current user",
+        "operationId": "get_my_stakes_api_staking_my_stakes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/health/wallet": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Wallet Health Check",
+        "description": "Health check for wallet service",
+        "operationId": "wallet_health_check_api_health_wallet_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Wallet Health Check Api Health Wallet Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/health/staking": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Staking Health Check",
+        "description": "Health check for staking service",
+        "operationId": "staking_health_check_api_health_staking_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Staking Health Check Api Health Staking Get"
                 }
               }
             }
@@ -15396,6 +19098,86 @@
         }
       }
     },
+    "/api/fraud-detection/analyze": {
+      "post": {
+        "tags": [
+          "Fraud Detection",
+          "Fraud Detection"
+        ],
+        "summary": "Analyze Transaction",
+        "description": "Analyze a transaction for fraud indicators\n\nNote: This endpoint can be called before processing a transaction\nto check for fraud risks.",
+        "operationId": "analyze_transaction_api_fraud_detection_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Analyze Transaction Api Fraud Detection Analyze Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/fraud-detection/risk-profile": {
+      "get": {
+        "tags": [
+          "Fraud Detection",
+          "Fraud Detection"
+        ],
+        "summary": "Get Risk Profile",
+        "description": "Get user's risk profile",
+        "operationId": "get_risk_profile_api_fraud_detection_risk_profile_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Risk Profile Api Fraud Detection Risk Profile Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/health/": {
       "get": {
         "tags": [
@@ -16038,6 +19820,35 @@
         "title": "AlertRuleRequest",
         "description": "Alert rule request"
       },
+      "AlertThreshold": {
+        "properties": {
+          "metric": {
+            "type": "string",
+            "title": "Metric"
+          },
+          "threshold": {
+            "type": "number",
+            "title": "Threshold"
+          },
+          "operator": {
+            "type": "string",
+            "title": "Operator"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "metric",
+          "threshold",
+          "operator",
+          "severity"
+        ],
+        "title": "AlertThreshold",
+        "description": "Alerting threshold configuration"
+      },
       "AlertType": {
         "type": "string",
         "enum": [
@@ -16108,6 +19919,45 @@
           "worst_performing_bot"
         ],
         "title": "AnalyticsSummary"
+      },
+      "ApplicationMetrics": {
+        "properties": {
+          "uptime_seconds": {
+            "type": "number",
+            "title": "Uptime Seconds"
+          },
+          "active_bots": {
+            "type": "integer",
+            "title": "Active Bots"
+          },
+          "total_requests": {
+            "type": "integer",
+            "title": "Total Requests"
+          },
+          "active_websocket_connections": {
+            "type": "integer",
+            "title": "Active Websocket Connections"
+          },
+          "cache_hit_rate": {
+            "type": "number",
+            "title": "Cache Hit Rate"
+          },
+          "average_response_time_ms": {
+            "type": "number",
+            "title": "Average Response Time Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "uptime_seconds",
+          "active_bots",
+          "total_requests",
+          "active_websocket_connections",
+          "cache_hit_rate",
+          "average_response_time_ms"
+        ],
+        "title": "ApplicationMetrics",
+        "description": "Application-level metrics"
       },
       "ArbitrageConfig": {
         "properties": {
@@ -16936,6 +20786,65 @@
         ],
         "title": "Body_execute_rebalance_api_portfolio_rebalance_execute_post"
       },
+      "Body_login_api_auth_login_post": {
+        "properties": {
+          "grant_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^password$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Type"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "title": "Password"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": ""
+          },
+          "client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "client_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "format": "password",
+            "title": "Client Secret"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Body_login_api_auth_login_post"
+      },
       "BotConfig": {
         "properties": {
           "id": {
@@ -17121,6 +21030,70 @@
         ],
         "title": "CancelOrderRequest",
         "description": "Cancel order request model"
+      },
+      "CandleDTO": {
+        "properties": {
+          "ts": {
+            "type": "integer",
+            "title": "Ts"
+          },
+          "open": {
+            "type": "number",
+            "title": "Open"
+          },
+          "high": {
+            "type": "number",
+            "title": "High"
+          },
+          "low": {
+            "type": "number",
+            "title": "Low"
+          },
+          "close": {
+            "type": "number",
+            "title": "Close"
+          },
+          "volume": {
+            "type": "number",
+            "title": "Volume"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ts",
+          "open",
+          "high",
+          "low",
+          "close",
+          "volume"
+        ],
+        "title": "CandleDTO"
+      },
+      "CandleHistoryResponse": {
+        "properties": {
+          "pair": {
+            "type": "string",
+            "title": "Pair"
+          },
+          "timeframe": {
+            "type": "string",
+            "title": "Timeframe"
+          },
+          "candles": {
+            "items": {
+              "$ref": "#/components/schemas/CandleDTO"
+            },
+            "type": "array",
+            "title": "Candles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pair",
+          "timeframe",
+          "candles"
+        ],
+        "title": "CandleHistoryResponse"
       },
       "CheckTriggersRequest": {
         "properties": {
@@ -17445,6 +21418,29 @@
         "title": "ConfirmTransferRequest",
         "description": "Request to confirm a crypto transfer"
       },
+      "CopyTradeRequest": {
+        "properties": {
+          "trader_id": {
+            "type": "integer",
+            "title": "Trader Id"
+          },
+          "original_trade_id": {
+            "type": "string",
+            "title": "Original Trade Id"
+          },
+          "allocation_percentage": {
+            "type": "number",
+            "title": "Allocation Percentage",
+            "default": 100.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "trader_id",
+          "original_trade_id"
+        ],
+        "title": "CopyTradeRequest"
+      },
       "CorrelationMatrix": {
         "properties": {
           "assets": {
@@ -17500,6 +21496,24 @@
           "config"
         ],
         "title": "CreateBotRequest"
+      },
+      "CreateCheckoutRequest": {
+        "properties": {
+          "price_id": {
+            "type": "string",
+            "title": "Price Id"
+          },
+          "plan": {
+            "type": "string",
+            "title": "Plan"
+          }
+        },
+        "type": "object",
+        "required": [
+          "price_id",
+          "plan"
+        ],
+        "title": "CreateCheckoutRequest"
       },
       "CreateDCABotRequest": {
         "properties": {
@@ -17636,6 +21650,56 @@
           "trading_mode": "paper",
           "use_martingale": false
         }
+      },
+      "CreateExchangeKeyRequest": {
+        "properties": {
+          "exchange": {
+            "type": "string",
+            "title": "Exchange"
+          },
+          "api_key": {
+            "type": "string",
+            "title": "Api Key"
+          },
+          "api_secret": {
+            "type": "string",
+            "title": "Api Secret"
+          },
+          "passphrase": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passphrase"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "is_testnet": {
+            "type": "boolean",
+            "title": "Is Testnet",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "exchange",
+          "api_key",
+          "api_secret"
+        ],
+        "title": "CreateExchangeKeyRequest"
       },
       "CreateFuturesPositionRequest": {
         "properties": {
@@ -18566,7 +22630,7 @@
             "title": "Name"
           },
           "status": {
-            "$ref": "#/components/schemas/HealthStatus"
+            "$ref": "#/components/schemas/server_fastapi__routes__health_comprehensive__HealthStatus"
           },
           "response_time_ms": {
             "anyOf": [
@@ -18611,6 +22675,51 @@
         "title": "DependencyHealth",
         "description": "Individual dependency health status"
       },
+      "DepositRequest": {
+        "properties": {
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "USD"
+          },
+          "payment_method_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Method Id"
+          },
+          "payment_method_type": {
+            "type": "string",
+            "title": "Payment Method Type",
+            "default": "card"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "amount"
+        ],
+        "title": "DepositRequest"
+      },
       "DrawdownPoint": {
         "properties": {
           "date": {
@@ -18639,6 +22748,19 @@
         ],
         "title": "DrawdownPoint",
         "description": "Drawdown data point"
+      },
+      "EnableMFARequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "EnableMFARequest"
       },
       "EnsemblePrediction": {
         "properties": {
@@ -19034,6 +23156,48 @@
         ],
         "title": "FeeResponse"
       },
+      "FollowTraderRequest": {
+        "properties": {
+          "trader_id": {
+            "type": "integer",
+            "title": "Trader Id"
+          },
+          "allocation_percentage": {
+            "type": "number",
+            "title": "Allocation Percentage",
+            "default": 100.0
+          },
+          "max_position_size": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Position Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "trader_id"
+        ],
+        "title": "FollowTraderRequest"
+      },
+      "ForgotPasswordRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "ForgotPasswordRequest"
+      },
       "FuturesPositionResponse": {
         "properties": {
           "id": {
@@ -19254,6 +23418,22 @@
         "title": "GenerateLicenseRequest",
         "description": "Generate license request"
       },
+      "GenerateRecoveryCodesResponse": {
+        "properties": {
+          "codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Codes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codes"
+        ],
+        "title": "GenerateRecoveryCodesResponse"
+      },
       "GridBotResponse": {
         "properties": {
           "id": {
@@ -19376,16 +23556,6 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
-      },
-      "HealthStatus": {
-        "type": "string",
-        "enum": [
-          "healthy",
-          "degraded",
-          "unhealthy"
-        ],
-        "title": "HealthStatus",
-        "description": "Health status values"
       },
       "HedgingConfigRequest": {
         "properties": {
@@ -20200,6 +24370,165 @@
         "title": "LimitOrderRequest",
         "description": "Limit order request model"
       },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "LogoutRequest": {
+        "properties": {
+          "refreshToken": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refreshtoken"
+          }
+        },
+        "type": "object",
+        "title": "LogoutRequest"
+      },
+      "MFATokenRequest": {
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "title": "Userid"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "userId",
+          "token"
+        ],
+        "title": "MFATokenRequest"
+      },
+      "MarketAnalysisResponse": {
+        "properties": {
+          "pair": {
+            "type": "string",
+            "title": "Pair"
+          },
+          "price": {
+            "type": "number",
+            "title": "Price"
+          },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/TechnicalIndicator"
+            },
+            "type": "array",
+            "title": "Indicators"
+          },
+          "trend": {
+            "type": "string",
+            "title": "Trend"
+          },
+          "strength": {
+            "type": "number",
+            "title": "Strength"
+          },
+          "recommendation": {
+            "type": "string",
+            "title": "Recommendation"
+          },
+          "timestamp": {
+            "type": "integer",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pair",
+          "price",
+          "indicators",
+          "trend",
+          "strength",
+          "recommendation",
+          "timestamp"
+        ],
+        "title": "MarketAnalysisResponse"
+      },
+      "MarketData": {
+        "properties": {
+          "pair": {
+            "type": "string",
+            "title": "Pair"
+          },
+          "timestamp": {
+            "type": "integer",
+            "title": "Timestamp"
+          },
+          "open": {
+            "type": "number",
+            "title": "Open"
+          },
+          "high": {
+            "type": "number",
+            "title": "High"
+          },
+          "low": {
+            "type": "number",
+            "title": "Low"
+          },
+          "close": {
+            "type": "number",
+            "title": "Close"
+          },
+          "volume": {
+            "type": "number",
+            "title": "Volume"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pair",
+          "timestamp",
+          "open",
+          "high",
+          "low",
+          "close",
+          "volume"
+        ],
+        "title": "MarketData"
+      },
       "MarketOrderRequest": {
         "properties": {
           "symbol": {
@@ -20290,6 +24619,32 @@
         "title": "MarketSentiment",
         "description": "Market sentiment analysis"
       },
+      "MarketSummary": {
+        "properties": {
+          "total_pairs": {
+            "type": "integer",
+            "title": "Total Pairs"
+          },
+          "total_volume_24h": {
+            "type": "number",
+            "title": "Total Volume 24H"
+          },
+          "top_pairs": {
+            "items": {
+              "$ref": "#/components/schemas/TradingPair"
+            },
+            "type": "array",
+            "title": "Top Pairs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_pairs",
+          "total_volume_24h",
+          "top_pairs"
+        ],
+        "title": "MarketSummary"
+      },
       "MarketplaceStats": {
         "properties": {
           "total_providers": {
@@ -20330,6 +24685,50 @@
         ],
         "title": "MarketplaceStats",
         "description": "Marketplace statistics"
+      },
+      "MetricsAlert": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "metric": {
+            "type": "string",
+            "title": "Metric"
+          },
+          "current_value": {
+            "type": "number",
+            "title": "Current Value"
+          },
+          "threshold": {
+            "type": "number",
+            "title": "Threshold"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "metric",
+          "current_value",
+          "threshold",
+          "severity",
+          "message",
+          "timestamp"
+        ],
+        "title": "MetricsAlert",
+        "description": "Active metric alert"
       },
       "ModeSwitchLog": {
         "properties": {
@@ -20588,6 +24987,36 @@
         "title": "OptimizeQueryRequest",
         "description": "Request to optimize a query"
       },
+      "OrderBook": {
+        "properties": {
+          "bids": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Bids"
+          },
+          "asks": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Asks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bids",
+          "asks"
+        ],
+        "title": "OrderBook"
+      },
       "PairAnalysis": {
         "properties": {
           "symbol": {
@@ -20745,6 +25174,38 @@
         ],
         "title": "ParameterSweepRequest"
       },
+      "PasswordResetConfirm": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "new_password": {
+            "type": "string",
+            "title": "New Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "new_password"
+        ],
+        "title": "PasswordResetConfirm"
+      },
+      "PasswordResetRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "PasswordResetRequest"
+      },
       "PaymentIntentRequest": {
         "properties": {
           "amount": {
@@ -20805,76 +25266,6 @@
           "datasets"
         ],
         "title": "PerformanceChartData"
-      },
-      "PerformanceMetrics": {
-        "properties": {
-          "bot_id": {
-            "type": "string",
-            "title": "Bot Id"
-          },
-          "bot_name": {
-            "type": "string",
-            "title": "Bot Name"
-          },
-          "total_trades": {
-            "type": "integer",
-            "title": "Total Trades"
-          },
-          "winning_trades": {
-            "type": "integer",
-            "title": "Winning Trades"
-          },
-          "losing_trades": {
-            "type": "integer",
-            "title": "Losing Trades"
-          },
-          "win_rate": {
-            "type": "number",
-            "title": "Win Rate"
-          },
-          "total_pnl": {
-            "type": "number",
-            "title": "Total Pnl"
-          },
-          "max_drawdown": {
-            "type": "number",
-            "title": "Max Drawdown"
-          },
-          "sharpe_ratio": {
-            "type": "number",
-            "title": "Sharpe Ratio"
-          },
-          "current_balance": {
-            "type": "number",
-            "title": "Current Balance"
-          },
-          "period_start": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Period Start"
-          },
-          "period_end": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Period End"
-          }
-        },
-        "type": "object",
-        "required": [
-          "bot_id",
-          "bot_name",
-          "total_trades",
-          "winning_trades",
-          "losing_trades",
-          "win_rate",
-          "total_pnl",
-          "max_drawdown",
-          "sharpe_ratio",
-          "current_balance",
-          "period_start",
-          "period_end"
-        ],
-        "title": "PerformanceMetrics"
       },
       "PerformanceSummary": {
         "properties": {
@@ -21276,6 +25667,32 @@
         "title": "PredictionRequest",
         "description": "Prediction request"
       },
+      "PriceChartResponse": {
+        "properties": {
+          "pair": {
+            "type": "string",
+            "title": "Pair"
+          },
+          "timeframe": {
+            "type": "string",
+            "title": "Timeframe"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MarketData"
+            },
+            "type": "array",
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pair",
+          "timeframe",
+          "data"
+        ],
+        "title": "PriceChartResponse"
+      },
       "RLTrainingRequest": {
         "properties": {
           "agent_type": {
@@ -21353,6 +25770,61 @@
           "canTradeRealMoney"
         ],
         "title": "RealMoneyRequirementsResponse"
+      },
+      "RealTimeMarketData": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "price": {
+            "type": "number",
+            "title": "Price"
+          },
+          "change_24h": {
+            "type": "number",
+            "title": "Change 24H"
+          },
+          "volume_24h": {
+            "type": "number",
+            "title": "Volume 24H"
+          },
+          "timestamp": {
+            "type": "integer",
+            "title": "Timestamp"
+          },
+          "bid_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bid Price"
+          },
+          "ask_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ask Price"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "price",
+          "change_24h",
+          "volume_24h",
+          "timestamp"
+        ],
+        "title": "RealTimeMarketData"
       },
       "RealTimeMetrics": {
         "properties": {
@@ -21703,6 +26175,37 @@
         "title": "RemoveWithdrawalAddressRequest",
         "description": "Request to remove withdrawal address from whitelist"
       },
+      "ResendVerificationRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "ResendVerificationRequest"
+      },
+      "ResetPasswordRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "newPassword": {
+            "type": "string",
+            "title": "Newpassword"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "newPassword"
+        ],
+        "title": "ResetPasswordRequest"
+      },
       "RestoreRequest": {
         "properties": {
           "backup_filename": {
@@ -22026,6 +26529,141 @@
         ],
         "title": "SaveBacktestRequest"
       },
+      "ScenarioRequest": {
+        "properties": {
+          "portfolio_value": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Portfolio Value",
+            "description": "Total portfolio value in quote currency"
+          },
+          "baseline_var": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Baseline Var",
+            "description": "Baseline VaR (absolute currency)"
+          },
+          "shock_percent": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": -1.0,
+            "title": "Shock Percent",
+            "description": "Shock percentage, e.g. -0.12 for -12%"
+          },
+          "horizon_days": {
+            "type": "integer",
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Horizon Days",
+            "description": "Projection horizon in days",
+            "default": 1
+          },
+          "correlation_factor": {
+            "type": "number",
+            "maximum": 5.0,
+            "minimum": 0.0,
+            "title": "Correlation Factor",
+            "description": "Correlation amplification factor",
+            "default": 1.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "portfolio_value",
+          "baseline_var",
+          "shock_percent"
+        ],
+        "title": "ScenarioRequest",
+        "example": {
+          "baseline_var": 2500,
+          "correlation_factor": 1.2,
+          "horizon_days": 7,
+          "portfolio_value": 100000,
+          "shock_percent": -0.1
+        }
+      },
+      "ScenarioResponse": {
+        "properties": {
+          "portfolio_value": {
+            "type": "number",
+            "title": "Portfolio Value"
+          },
+          "baseline_var": {
+            "type": "number",
+            "title": "Baseline Var"
+          },
+          "shock_percent": {
+            "type": "number",
+            "title": "Shock Percent"
+          },
+          "correlation_factor": {
+            "type": "number",
+            "title": "Correlation Factor"
+          },
+          "horizon_days": {
+            "type": "integer",
+            "title": "Horizon Days"
+          },
+          "shocked_var": {
+            "type": "number",
+            "title": "Shocked Var"
+          },
+          "projected_var": {
+            "type": "number",
+            "title": "Projected Var"
+          },
+          "stress_loss": {
+            "type": "number",
+            "title": "Stress Loss"
+          },
+          "horizon_scale": {
+            "type": "number",
+            "title": "Horizon Scale"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "portfolio_value",
+          "baseline_var",
+          "shock_percent",
+          "correlation_factor",
+          "horizon_days",
+          "shocked_var",
+          "projected_var",
+          "stress_loss",
+          "horizon_scale",
+          "explanation"
+        ],
+        "title": "ScenarioResponse"
+      },
+      "SetupTwoFactorChoiceRequest": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "phoneNumber": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phonenumber"
+          }
+        },
+        "type": "object",
+        "required": [
+          "method"
+        ],
+        "title": "SetupTwoFactorChoiceRequest"
+      },
       "SignalProvider": {
         "properties": {
           "provider_id": {
@@ -22170,6 +26808,24 @@
         ],
         "title": "SlippageCheckResponse",
         "description": "Response model for slippage check."
+      },
+      "StakeRequest": {
+        "properties": {
+          "asset": {
+            "type": "string",
+            "title": "Asset"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset",
+          "amount"
+        ],
+        "title": "StakeRequest"
       },
       "StrategyCreate": {
         "properties": {
@@ -22668,6 +27324,55 @@
         "title": "SubscriptionTier",
         "description": "Subscription tiers with rate limits"
       },
+      "SystemMetrics": {
+        "properties": {
+          "cpu_percent": {
+            "type": "number",
+            "title": "Cpu Percent"
+          },
+          "memory_percent": {
+            "type": "number",
+            "title": "Memory Percent"
+          },
+          "memory_used_mb": {
+            "type": "number",
+            "title": "Memory Used Mb"
+          },
+          "memory_available_mb": {
+            "type": "number",
+            "title": "Memory Available Mb"
+          },
+          "disk_usage_percent": {
+            "type": "number",
+            "title": "Disk Usage Percent"
+          },
+          "disk_free_gb": {
+            "type": "number",
+            "title": "Disk Free Gb"
+          },
+          "network_sent_mb": {
+            "type": "number",
+            "title": "Network Sent Mb"
+          },
+          "network_recv_mb": {
+            "type": "number",
+            "title": "Network Recv Mb"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cpu_percent",
+          "memory_percent",
+          "memory_used_mb",
+          "memory_available_mb",
+          "disk_usage_percent",
+          "disk_free_gb",
+          "network_sent_mb",
+          "network_recv_mb"
+        ],
+        "title": "SystemMetrics",
+        "description": "System resource metrics"
+      },
       "SystemStatus": {
         "properties": {
           "status": {
@@ -22703,6 +27408,40 @@
           "services"
         ],
         "title": "SystemStatus"
+      },
+      "TechnicalIndicator": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "signal": {
+            "type": "string",
+            "title": "Signal"
+          },
+          "period": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "value",
+          "signal"
+        ],
+        "title": "TechnicalIndicator"
       },
       "TextAnalysisRequest": {
         "properties": {
@@ -22743,6 +27482,44 @@
           "theme"
         ],
         "title": "ThemeUpdate"
+      },
+      "TickerResponse": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "last_price": {
+            "type": "number",
+            "title": "Last Price"
+          },
+          "change_24h": {
+            "type": "number",
+            "title": "Change 24H"
+          },
+          "volume_24h": {
+            "type": "number",
+            "title": "Volume 24H"
+          },
+          "high_24h": {
+            "type": "number",
+            "title": "High 24H"
+          },
+          "low_24h": {
+            "type": "number",
+            "title": "Low 24H"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "last_price",
+          "change_24h",
+          "volume_24h",
+          "high_24h",
+          "low_24h"
+        ],
+        "title": "TickerResponse"
       },
       "TradeCreate": {
         "properties": {
@@ -23300,6 +28077,144 @@
         "title": "TradeValidationResponse",
         "description": "Response model for trade validation."
       },
+      "TradingPair": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "base_asset": {
+            "type": "string",
+            "title": "Base Asset"
+          },
+          "quote_asset": {
+            "type": "string",
+            "title": "Quote Asset"
+          },
+          "current_price": {
+            "type": "number",
+            "title": "Current Price"
+          },
+          "change_24h": {
+            "type": "number",
+            "title": "Change 24H"
+          },
+          "volume_24h": {
+            "type": "number",
+            "title": "Volume 24H"
+          },
+          "high_24h": {
+            "type": "number",
+            "title": "High 24H"
+          },
+          "low_24h": {
+            "type": "number",
+            "title": "Low 24H"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "base_asset",
+          "quote_asset",
+          "current_price",
+          "change_24h",
+          "volume_24h",
+          "high_24h",
+          "low_24h"
+        ],
+        "title": "TradingPair"
+      },
+      "TradingPairDetails": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "base_asset": {
+            "type": "string",
+            "title": "Base Asset"
+          },
+          "quote_asset": {
+            "type": "string",
+            "title": "Quote Asset"
+          },
+          "current_price": {
+            "type": "number",
+            "title": "Current Price"
+          },
+          "change_24h": {
+            "type": "number",
+            "title": "Change 24H"
+          },
+          "volume_24h": {
+            "type": "number",
+            "title": "Volume 24H"
+          },
+          "high_24h": {
+            "type": "number",
+            "title": "High 24H"
+          },
+          "low_24h": {
+            "type": "number",
+            "title": "Low 24H"
+          },
+          "market_cap": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Cap"
+          },
+          "price_precision": {
+            "type": "integer",
+            "title": "Price Precision",
+            "default": 8
+          },
+          "quantity_precision": {
+            "type": "integer",
+            "title": "Quantity Precision",
+            "default": 8
+          },
+          "min_order_size": {
+            "type": "number",
+            "title": "Min Order Size",
+            "default": 0.0
+          },
+          "max_order_size": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Order Size"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "base_asset",
+          "quote_asset",
+          "current_price",
+          "change_24h",
+          "volume_24h",
+          "high_24h",
+          "low_24h"
+        ],
+        "title": "TradingPairDetails"
+      },
       "TradingRecommendations": {
         "properties": {
           "topPairs": {
@@ -23611,6 +28526,60 @@
         "title": "TrainModelRequest",
         "description": "Model training request"
       },
+      "TransactionAnalysisRequest": {
+        "properties": {
+          "transaction_type": {
+            "type": "string",
+            "title": "Transaction Type"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "USD"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "transaction_type",
+          "amount"
+        ],
+        "title": "TransactionAnalysisRequest",
+        "description": "Request to analyze a transaction for fraud"
+      },
+      "UnstakeRequest": {
+        "properties": {
+          "asset": {
+            "type": "string",
+            "title": "Asset"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset",
+          "amount"
+        ],
+        "title": "UnstakeRequest"
+      },
       "UpdateBotRequest": {
         "properties": {
           "name": {
@@ -23752,6 +28721,19 @@
           "maxPositionSize": 15,
           "minDiversification": 0.5
         }
+      },
+      "UpdateProfileRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "UpdateProfileRequest"
       },
       "UpdateSubscriptionRequest": {
         "properties": {
@@ -23983,6 +28965,37 @@
         ],
         "title": "ValidationError"
       },
+      "VerifyEmailRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "VerifyEmailRequest"
+      },
+      "VerifyRecoveryCodeRequest": {
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "title": "Userid"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "userId",
+          "code"
+        ],
+        "title": "VerifyRecoveryCodeRequest"
+      },
       "VerifyTokenRequest": {
         "properties": {
           "token": {
@@ -23995,6 +29008,37 @@
           "token"
         ],
         "title": "VerifyTokenRequest"
+      },
+      "VerifyTwoFactorCodeRequest": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "VerifyTwoFactorCodeRequest"
+      },
+      "VerifyTwoFactorLoginRequest": {
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "title": "Userid"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "userId",
+          "code"
+        ],
+        "title": "VerifyTwoFactorLoginRequest"
       },
       "WalkForwardConfig": {
         "properties": {
@@ -24196,6 +29240,46 @@
         "title": "WithdrawCryptoRequest",
         "description": "Request to withdraw crypto to external address"
       },
+      "WithdrawRequest": {
+        "properties": {
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "USD"
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "amount"
+        ],
+        "title": "WithdrawRequest"
+      },
       "server_fastapi__routes__analytics__AssetAllocation": {
         "properties": {
           "asset": {
@@ -24304,6 +29388,76 @@
         ],
         "title": "BacktestResult"
       },
+      "server_fastapi__routes__analytics__PerformanceMetrics": {
+        "properties": {
+          "bot_id": {
+            "type": "string",
+            "title": "Bot Id"
+          },
+          "bot_name": {
+            "type": "string",
+            "title": "Bot Name"
+          },
+          "total_trades": {
+            "type": "integer",
+            "title": "Total Trades"
+          },
+          "winning_trades": {
+            "type": "integer",
+            "title": "Winning Trades"
+          },
+          "losing_trades": {
+            "type": "integer",
+            "title": "Losing Trades"
+          },
+          "win_rate": {
+            "type": "number",
+            "title": "Win Rate"
+          },
+          "total_pnl": {
+            "type": "number",
+            "title": "Total Pnl"
+          },
+          "max_drawdown": {
+            "type": "number",
+            "title": "Max Drawdown"
+          },
+          "sharpe_ratio": {
+            "type": "number",
+            "title": "Sharpe Ratio"
+          },
+          "current_balance": {
+            "type": "number",
+            "title": "Current Balance"
+          },
+          "period_start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Period Start"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Period End"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bot_id",
+          "bot_name",
+          "total_trades",
+          "winning_trades",
+          "losing_trades",
+          "win_rate",
+          "total_pnl",
+          "max_drawdown",
+          "sharpe_ratio",
+          "current_balance",
+          "period_start",
+          "period_end"
+        ],
+        "title": "PerformanceMetrics"
+      },
       "server_fastapi__routes__analytics__RiskMetrics": {
         "properties": {
           "portfolio_value": {
@@ -24346,6 +29500,140 @@
           "sharpe_ratio"
         ],
         "title": "RiskMetrics"
+      },
+      "server_fastapi__routes__auth__RefreshTokenRequest": {
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "title": "Refreshtoken"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refreshToken"
+        ],
+        "title": "RefreshTokenRequest"
+      },
+      "server_fastapi__routes__auth__RegisterRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "RegisterRequest"
+      },
+      "server_fastapi__routes__auth_saas__RefreshTokenRequest": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshTokenRequest"
+      },
+      "server_fastapi__routes__auth_saas__RegisterRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "username",
+          "password"
+        ],
+        "title": "RegisterRequest"
       },
       "server_fastapi__routes__backtesting__BacktestSummary": {
         "properties": {
@@ -24575,6 +29863,44 @@
         "title": "BacktestResult",
         "description": "Backtesting result"
       },
+      "server_fastapi__routes__health__HealthStatus": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "uptime_seconds": {
+            "type": "number",
+            "title": "Uptime Seconds"
+          },
+          "checks": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Checks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "timestamp",
+          "version",
+          "uptime_seconds",
+          "checks"
+        ],
+        "title": "HealthStatus",
+        "description": "Health status response"
+      },
       "server_fastapi__routes__health_advanced__HealthResponse": {
         "properties": {
           "status": {
@@ -24615,7 +29941,7 @@
       "server_fastapi__routes__health_comprehensive__HealthResponse": {
         "properties": {
           "status": {
-            "$ref": "#/components/schemas/HealthStatus"
+            "$ref": "#/components/schemas/server_fastapi__routes__health_comprehensive__HealthStatus"
           },
           "timestamp": {
             "type": "string",
@@ -24658,6 +29984,16 @@
         ],
         "title": "HealthResponse",
         "description": "Comprehensive health response"
+      },
+      "server_fastapi__routes__health_comprehensive__HealthStatus": {
+        "type": "string",
+        "enum": [
+          "healthy",
+          "degraded",
+          "unhealthy"
+        ],
+        "title": "HealthStatus",
+        "description": "Health status values"
       },
       "server_fastapi__routes__integrations__BacktestRequest": {
         "properties": {
@@ -24706,6 +30042,43 @@
           },
           "symbol": "BTC/USDT"
         }
+      },
+      "server_fastapi__routes__metrics_monitoring__PerformanceMetrics": {
+        "properties": {
+          "system": {
+            "$ref": "#/components/schemas/SystemMetrics"
+          },
+          "application": {
+            "$ref": "#/components/schemas/ApplicationMetrics"
+          },
+          "circuit_breakers": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Circuit Breakers"
+          },
+          "database": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Database"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "system",
+          "application",
+          "circuit_breakers",
+          "database",
+          "timestamp"
+        ],
+        "title": "PerformanceMetrics",
+        "description": "Performance and health metrics"
       },
       "server_fastapi__routes__ml_v2__OptimizationRequest": {
         "properties": {
