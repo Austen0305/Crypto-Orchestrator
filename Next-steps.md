@@ -44,6 +44,50 @@
 
 ---
 
+# 💰 Best Free Stack (December 2025)
+
+For those looking to deploy without initial costs, here's the recommended free tier stack:
+
+## Backend Hosting
+- **Render** or **Koyeb** - $0, no credit card required
+  - Render: 750 hours/month free compute
+  - Koyeb: 2 services, 512MB RAM each
+  - Both support Python/FastAPI deployment
+
+## Database
+- **Neon** - $0 for 20 projects × 0.5 GB each
+  - PostgreSQL compatible
+  - Generous free tier for development and small production apps
+  - Serverless with automatic scaling
+
+## Redis Cache
+- **Upstash** - 500K commands/month free
+  - Serverless Redis
+  - Perfect for session storage and caching
+  - Global edge locations
+
+## CDN & Edge
+- **Cloudflare** - Unlimited bandwidth ($0)
+  - Free SSL certificates
+  - DDoS protection included
+  - Global CDN network
+  - DNS management
+
+## Bot Protection
+- **hCaptcha** - 100K requests/month free
+  - Privacy-focused alternative to reCAPTCHA
+  - Easy integration
+  - No credit card required
+
+## Static Frontend
+- **Netlify** or **Cloudflare Pages** - $0
+  - Netlify: 100GB bandwidth/month
+  - Cloudflare Pages: Unlimited bandwidth
+  - Both offer automatic deployments from Git
+  - Built-in CI/CD
+
+---
+
 # 📋 PRIORITIZED ACTION PLAN
 
 ## Phase 1: Infrastructure Foundation (0-3 months)
