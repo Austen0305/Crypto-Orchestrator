@@ -11,6 +11,7 @@ import sys
 import asyncio
 from pathlib import Path
 from typing import Tuple, Optional
+import re
 
 # Add parent directory to path to import from server_fastapi
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -20,6 +21,11 @@ try:
     load_dotenv()
 except ImportError:
     print("Warning: python-dotenv not installed, using environment variables only")
+
+
+# Constants
+SSL_PARAM_PATTERN = r'[?&]sslmode=[^&]*(&|$)'
+TRAILING_SEPARATOR_PATTERN = r'[?&]$'
 
 
 # Color codes
@@ -59,6 +65,26 @@ def print_info(message: str):
     print(f"{Colors.BLUE}ℹ {message}{Colors.END}")
 
 
+def remove_ssl_params(connection_string: str) -> str:
+    """
+    Remove SSL parameters from connection string for asyncpg.
+    
+    AsyncPg requires SSL to be set programmatically, not via URL parameters.
+    This helper removes sslmode parameters while preserving URL structure.
+    
+    Args:
+        connection_string: PostgreSQL connection string
+        
+    Returns:
+        Connection string with SSL parameters removed
+    """
+    # Remove SSL parameter (handles both ? and & separators)
+    cleaned = re.sub(SSL_PARAM_PATTERN, r'\1', connection_string)
+    # Clean up trailing ? or & if they exist
+    cleaned = re.sub(TRAILING_SEPARATOR_PATTERN, '', cleaned)
+    return cleaned
+
+
 async def validate_connection() -> Tuple[bool, dict]:
     """
     Validate the Neon database connection and gather diagnostic info.
@@ -96,11 +122,7 @@ async def validate_connection() -> Tuple[bool, dict]:
         print_info("Neon requires SSL. Add ?sslmode=require to your DATABASE_URL")
     
     # Remove SSL parameters for asyncpg (we'll set it programmatically)
-    # Handle both ? and & separators
-    import re
-    conn_str = re.sub(r'[?&]sslmode=[^&]*(&|$)', r'\1', conn_str)
-    # Clean up trailing ? or & if they exist
-    conn_str = re.sub(r'[?&]$', '', conn_str)
+    conn_str = remove_ssl_params(conn_str)
     
     info = {
         'url': database_url,
@@ -185,13 +207,11 @@ async def check_tables():
     """Check if any tables exist in the database."""
     try:
         import asyncpg
-        import re
         
         database_url = os.getenv('DATABASE_URL', '')
         conn_str = database_url.replace('postgresql+asyncpg://', 'postgresql://')
-        # Remove SSL parameters properly with regex
-        conn_str = re.sub(r'[?&]sslmode=[^&]*(&|$)', r'\1', conn_str)
-        conn_str = re.sub(r'[?&]$', '', conn_str)
+        # Remove SSL parameters using helper function
+        conn_str = remove_ssl_params(conn_str)
         
         conn = await asyncio.wait_for(
             asyncpg.connect(conn_str, ssl='require'),

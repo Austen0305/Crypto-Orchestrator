@@ -180,8 +180,10 @@ echo ""
 echo -e "${BOLD}Step 5: Updating Alembic Configuration${NC}"
 
 if [ -f "alembic.ini" ]; then
-    # Convert back to sync format for Alembic
+    # Convert to sync format for Alembic (remove +asyncpg if present)
     SYNC_CONNECTION_STRING="${NEON_CONNECTION_STRING//postgresql+asyncpg:\/\//postgresql://}"
+    # Also ensure plain postgresql:// stays as is
+    SYNC_CONNECTION_STRING="${SYNC_CONNECTION_STRING//postgresql:\/\//postgresql://}"
     
     # Use sed to replace the sqlalchemy.url line
     if [[ "$OSTYPE" == "darwin"* ]]; then
