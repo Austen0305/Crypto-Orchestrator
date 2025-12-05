@@ -19,6 +19,15 @@ This comprehensive documentation framework provides complete guidance for deploy
 | **[AUDIT_TRAILS.md](AUDIT_TRAILS.md)** | Audit logging and compliance frameworks | Auditors, Compliance Teams |
 | **[DOCUMENTATION_MAINTENANCE.md](DOCUMENTATION_MAINTENANCE.md)** | Documentation versioning and maintenance | Technical Writers, Documentation Teams |
 
+### Free Stack Deployment Guides (NEW)
+
+| Document | Purpose | Audience | Cost |
+|----------|---------|----------|------|
+| **[FREE_STACK_DEPLOYMENT.md](FREE_STACK_DEPLOYMENT.md)** | **START HERE** - Complete free deployment guide | All Users, DevOps | $0/month |
+| **[CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md)** | CDN, security, and performance optimization | System Administrators | $0/month |
+| **[HCAPTCHA_SETUP.md](HCAPTCHA_SETUP.md)** | Bot protection integration with code examples | Developers | $0/month |
+| **[MONITORING_SETUP.md](MONITORING_SETUP.md)** | Prometheus + Grafana + Loki observability stack | DevOps, SRE | $0/month |
+
 ### Troubleshooting and Support
 
 | Document | Purpose | Audience |
@@ -27,6 +36,23 @@ This comprehensive documentation framework provides complete guidance for deploy
 | **[troubleshooting/faq.md](troubleshooting/faq.md)** | Frequently asked questions | All Users |
 
 ## Quick Start Guides
+
+### For Free Stack Deployment (NEW - $0/month)
+1. **Start with [FREE_STACK_DEPLOYMENT.md](FREE_STACK_DEPLOYMENT.md)** - Complete step-by-step guide
+2. **Set up Cloudflare** using [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md) - Security & CDN
+3. **Add bot protection** with [HCAPTCHA_SETUP.md](HCAPTCHA_SETUP.md) - Integrate hCaptcha
+4. **Deploy monitoring** using [MONITORING_SETUP.md](MONITORING_SETUP.md) - Prometheus + Grafana + Loki
+
+**Services Used (All Free Tier):**
+- Render/Koyeb (backend hosting)
+- Neon (PostgreSQL database)
+- Upstash (Redis cache)
+- Netlify/Cloudflare Pages (frontend hosting)
+- Cloudflare (CDN & security)
+- hCaptcha (bot protection)
+- UptimeRobot (uptime monitoring)
+
+**Total Cost: $0/month** within free tier limits
 
 ### For New Users
 1. **Read the [User Guide](USER_GUIDE.md)** to understand platform features
