@@ -35,6 +35,7 @@ See [SaaS Setup Guide](docs/SAAS_SETUP.md) for detailed instructions.
 ## 📚 Documentation
 
 - **[SaaS Setup Guide](docs/SAAS_SETUP.md)** - Complete setup instructions
+- **[Neon Setup Guide](docs/NEON_SETUP.md)** - Free PostgreSQL database setup
 - **[API Documentation](docs/api.md)** - API reference
 - **[Architecture](docs/architecture.md)** - System architecture
 - **[Privacy Policy](docs/PRIVACY_POLICY.md)** - Privacy policy
@@ -278,10 +279,39 @@ For detailed architecture documentation, see [docs/architecture.md](docs/archite
 
 - **Node.js** 18+ and npm
 - **Python** 3.12+ (3.12.3 recommended)
-- **PostgreSQL** 15+ (optional, SQLite supported for development)
+- **Database** (choose one):
+  - **Neon PostgreSQL** (recommended for production - free tier available)
+  - **PostgreSQL** 15+ (local development)
+  - **SQLite** (quick testing)
 - **Redis** (optional, for caching and rate limiting)
 
 ### Quick Start
+
+#### Option 1: Neon Database (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/CryptoOrchestrator.git
+cd CryptoOrchestrator
+
+# Install Node.js dependencies
+npm install --legacy-peer-deps
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Set up Neon database (interactive setup)
+npm run setup:neon
+
+# Run database migrations
+npm run migrate
+
+# Start development server
+npm run dev:fastapi  # Backend
+npm run dev          # Frontend
+```
+
+#### Option 2: Local Development
 
 ```bash
 # Clone the repository
@@ -299,14 +329,16 @@ cp .env.example .env
 # Edit .env with your configuration
 
 # Run database migrations (if using PostgreSQL)
-alembic upgrade head
+npm run migrate
 
 # Start development server
 npm run dev:fastapi  # Backend
 npm run dev          # Frontend
 ```
 
-For detailed installation instructions, see [docs/installation.md](docs/installation.md).
+For detailed installation instructions, see:
+- **[Neon Setup Guide](docs/NEON_SETUP.md)** - Set up free Neon PostgreSQL
+- **[Installation Guide](docs/installation.md)** - General installation instructions
 
 ## 💻 Development
 

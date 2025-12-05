@@ -47,6 +47,8 @@
     "migrate": "alembic upgrade head",
     "migrate:create": "alembic revision --autogenerate -m",
     "migrate:rollback": "alembic downgrade -1",
+    "setup:neon": "python scripts/setup_neon.py",
+    "setup:neon:validate": "python scripts/validate_neon_connection.py",
     "setup:dev": "python scripts/dev_setup.py",
     "load:test": "python scripts/load_test.py",
     "load:test:comprehensive": "python scripts/load_test.py --comprehensive",
