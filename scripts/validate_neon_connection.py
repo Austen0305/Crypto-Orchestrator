@@ -90,13 +90,17 @@ async def validate_connection() -> Tuple[bool, dict]:
     conn_str = database_url.replace('postgresql+asyncpg://', 'postgresql://')
     
     # Check for SSL requirement
-    has_ssl = 'sslmode=require' in conn_str
+    has_ssl = 'sslmode=' in conn_str
     if not has_ssl:
         print_warning("SSL mode not found in connection string")
         print_info("Neon requires SSL. Add ?sslmode=require to your DATABASE_URL")
     
-    # Remove SSL parameter for asyncpg (we'll set it programmatically)
-    conn_str = conn_str.replace('?sslmode=require', '').replace('&sslmode=require', '')
+    # Remove SSL parameters for asyncpg (we'll set it programmatically)
+    # Handle both ? and & separators
+    import re
+    conn_str = re.sub(r'[?&]sslmode=[^&]*(&|$)', r'\1', conn_str)
+    # Clean up trailing ? or & if they exist
+    conn_str = re.sub(r'[?&]$', '', conn_str)
     
     info = {
         'url': database_url,
@@ -181,10 +185,13 @@ async def check_tables():
     """Check if any tables exist in the database."""
     try:
         import asyncpg
+        import re
         
         database_url = os.getenv('DATABASE_URL', '')
         conn_str = database_url.replace('postgresql+asyncpg://', 'postgresql://')
-        conn_str = conn_str.replace('?sslmode=require', '').replace('&sslmode=require', '')
+        # Remove SSL parameters properly with regex
+        conn_str = re.sub(r'[?&]sslmode=[^&]*(&|$)', r'\1', conn_str)
+        conn_str = re.sub(r'[?&]$', '', conn_str)
         
         conn = await asyncio.wait_for(
             asyncpg.connect(conn_str, ssl='require'),

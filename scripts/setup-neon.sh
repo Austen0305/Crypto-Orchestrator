@@ -56,7 +56,12 @@ fi
 
 if [[ ! "$NEON_CONNECTION_STRING" =~ sslmode=require ]]; then
     echo -e "${YELLOW}⚠ Warning: Missing sslmode=require parameter${NC}"
-    NEON_CONNECTION_STRING="${NEON_CONNECTION_STRING}?sslmode=require"
+    # Add SSL parameter properly based on whether URL already has query params
+    if [[ "$NEON_CONNECTION_STRING" =~ \? ]]; then
+        NEON_CONNECTION_STRING="${NEON_CONNECTION_STRING}&sslmode=require"
+    else
+        NEON_CONNECTION_STRING="${NEON_CONNECTION_STRING}?sslmode=require"
+    fi
 fi
 
 echo -e "${GREEN}✓ Valid connection string format${NC}"
