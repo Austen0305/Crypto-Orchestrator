@@ -2,19 +2,36 @@
 
 Welcome to Crypto Orchestrator! This guide will help you get up and running quickly with production-ready automated trading.
 
-## Quick Start (5 Minutes)
+## 🚀 Choose Your Setup Path
+
+### 🌟 Recommended: Neon PostgreSQL Setup
+For a production-ready setup with a free PostgreSQL database in the cloud:
+
+**👉 [Get Started with Neon](./docs/GETTING_STARTED_NEON.md)** - Complete setup in 10 minutes
+
+This is the recommended approach for:
+- Production deployments
+- Teams collaborating on development
+- Projects that need cloud database features
+- Anyone who wants the best free tier experience
+
+### ⚡ Quick Local Development
+For rapid local development with minimal setup:
+
+Continue with the guide below for SQLite-based local development.
+
+---
+
+## Quick Start (5 Minutes) - Local SQLite
 
 ### 1. Install Dependencies
 
 ```bash
 # Python dependencies
-pip install fastapi uvicorn pydantic sqlalchemy ccxt redis python-dotenv
+pip install -r requirements.txt
 
-# Optional: ML capabilities
-pip install tensorflow scikit-learn pandas numpy
-
-# Optional: Testing
-pip install pytest pytest-asyncio httpx
+# Node.js dependencies
+npm install --legacy-peer-deps
 ```
 
 ### 2. Configure Environment
@@ -27,16 +44,12 @@ cp .env.example .env
 
 **Essential Settings:**
 ```env
-# API Keys (for real trading - leave empty for paper trading)
-BINANCE_TESTNET_ENABLED=true
-BINANCE_TESTNET_API_KEY=your_testnet_api_key
-BINANCE_TESTNET_SECRET_KEY=your_testnet_secret_key
-
 # Database (SQLite for quick start)
-DATABASE_URL=sqlite:///./crypto_orchestrator.db
+DATABASE_URL=sqlite+aiosqlite:///./crypto_orchestrator.db
 
-# Security
+# Security (change these!)
 JWT_SECRET=change-this-to-a-random-secret-key
+EXCHANGE_KEY_ENCRYPTION_KEY=your-encryption-key-32-chars-minimum
 ```
 
 ### 3. Start the Application
