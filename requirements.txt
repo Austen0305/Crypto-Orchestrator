@@ -67,7 +67,7 @@ opentelemetry-sdk~=1.22.0
 opentelemetry-instrumentation-fastapi>=0.42b0,<1.0.0
 opentelemetry-instrumentation-sqlalchemy>=0.42b0,<1.0.0
 opentelemetry-instrumentation-requests>=0.42b0,<1.0.0
-opentelemetry-exporter-otlp-proto-grpc~=1.22.0
+opentelemetry-exporter-otlp-proto-grpc~=1.39.0
 opentelemetry-exporter-prometheus==0.43b0
 
 # SMS notifications
